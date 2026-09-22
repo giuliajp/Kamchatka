@@ -1,0 +1,11 @@
+{
+  "name": "avacha-frontend",
+  "private": true,
+  "version": "0.0.1",
+  "description": "VK Mini App — гонка «Авача». Заготовка, стек и зависимости уточняются командой.",
+  "scripts": {
+    "dev": "echo \"TODO: инициализировать сборку (например, vite) и заменить этот скрипт\"",
+    "build": "echo \"TODO\"",
+    "lint": "echo \"TODO\""
+  }
+}

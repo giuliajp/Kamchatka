@@ -1,0 +1,10 @@
+{
+  "name": "avacha-admin-panel",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Админ-панель организаторов гонки «Авача». Стек уточняется командой.",
+  "scripts": {
+    "dev": "echo \"TODO: инициализировать сборку и заменить этот скрипт\"",
+    "build": "echo \"TODO\""
+  }
+}
