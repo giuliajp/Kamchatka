@@ -1,4 +1,4 @@
-# Авача — мини-приложение ВКонтакте
+# Авача — мини-приложение
 
 Цифровой хаб гонки «Авача» и зимнего фестиваля «Берингия» (Министерство туризма Камчатского края).
 
@@ -20,9 +20,6 @@ kamchatka-avacha/
 └── design/          # брендбук проекта, ссылки на Figma, экспортированные ассеты бренда
 ```
 
-Это монорепозиторий: frontend, backend и admin-panel живут в одном репо, но
-это независимые приложения — у каждого свой `package.json`/`requirements.txt` и своя папка `src/`/`app/`.
-
 ## С чего начать
 
 1. Прочитайте `docs/brief-summary.md` — сжатая выжимка брифа заказчика.
@@ -34,7 +31,6 @@ kamchatka-avacha/
 ## Технологии (по ТЗ заказчика)
 
 | Слой | Технологии |
-| --- | --- |
 | Frontend | React + TypeScript, VKUI, VK Bridge, VK ID |
 | Backend | Python, Flask, SQLAlchemy, БД, хостинг на территории РФ (152-ФЗ) |
 | Трекинг | Iridium360 API (спутниковые трекеры) |
@@ -47,7 +43,4 @@ kamchatka-avacha/
 - Сообщество ВК: https://vk.ru/avacha.race
 - Telegram: t.me/sleddogrussia
 - Платформа трекинга: https://www.iridium360.ru
-- Брендбук проекта: уже в репозитории — `design/brandbook/kamchatka-brandbook.pdf`.
-
-> Файл брифа (.docx), который вам прислал заказчик, в репозиторий **не включён** —
-> добавьте его в `docs/` вручную, если бриф можно хранить в приватном репо.
+- Брендбук проекта: `design/brandbook/kamchatka-brandbook.pdf`
