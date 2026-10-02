@@ -3,13 +3,14 @@
 
     python run.py
 
-В продакшене приложение запускается через WSGI-сервер (например, gunicorn),
-а не через этот файл — см. README.md.
+Сервер перезапускается сам при изменении кода (reload=True).
+Документация API: http://127.0.0.1:8000/docs
+
+В продакшене запуск другой, например:
+    uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 """
 
-from app import create_app
-
-app = create_app()
+import uvicorn
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)

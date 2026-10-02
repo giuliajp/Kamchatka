@@ -2,6 +2,9 @@
 
 Адреса API начинаются с `/api` (кроме служебного `/health`). Локально: `http://127.0.0.1:8000/...`
 
+**Актуальная документация генерируется автоматически:** http://127.0.0.1:8000/docs
+(Swagger — все адреса, схемы ответов, кнопка «Try it out»). Этот файл — обзор и план.
+
 ## Формат ответов
 
 Каждый ответ имеет одинаковую структуру.
@@ -13,10 +16,20 @@
 
 Ошибка:
 ```json
-{ "data": null, "error": { "code": "not_found", "message": "Не найдено" } }
+{ "data": null, "error": { "code": "not_found", "message": "Не найдено", "details": null } }
 ```
 
 `code` — для программы (фронтенд проверяет его), `message` — текст для человека.
+
+Коды ошибок: `bad_request` (400), `unauthorized` (401), `forbidden` (403), `not_found` (404),
+`method_not_allowed` (405), `validation_error` (422), `too_many_requests` (429),
+`internal_error` (500), `database_unavailable` (503).
+
+При `validation_error` в `details` — список неверных полей:
+```json
+{ "data": null, "error": { "code": "validation_error", "message": "Данные заполнены неверно",
+  "details": [ { "field": "bib_number", "problem": "Input should be a valid integer" } ] } }
+```
 
 Даты и время всегда в UTC, формат ISO 8601: `2027-03-01T02:00:00+00:00`.
 

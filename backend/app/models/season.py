@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import Date, Enum, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.extensions import db
+from app.db import Base
 from app.models.base import TimestampMixin
 from app.models.enums import SeasonStatus
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from app.models.stage import Stage
 
 
-class Season(TimestampMixin, db.Model):
+class Season(TimestampMixin, Base):
     __tablename__ = "seasons"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -44,10 +44,10 @@ class Season(TimestampMixin, db.Model):
     stale_after_minutes: Mapped[int] = mapped_column(default=45, nullable=False)
 
     stages: Mapped[list["Stage"]] = relationship(
-        back_populates="season", order_by="Stage.number", cascade="all, delete-orphan"
+        lazy="raise_on_sql", back_populates="season", order_by="Stage.number", cascade="all, delete-orphan"
     )
     entries: Mapped[list["Entry"]] = relationship(
-        back_populates="season", cascade="all, delete-orphan"
+        lazy="raise_on_sql", back_populates="season", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

@@ -17,7 +17,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.extensions import db
+from app.db import Base
 from app.models.base import TimestampMixin, utcnow
 from app.models.enums import AlertType, PositionSource
 
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from app.models.stage import Stage
 
 
-class Tracker(TimestampMixin, db.Model):
+class Tracker(TimestampMixin, Base):
     """Физическое устройство Iridium."""
     __tablename__ = "trackers"
 
@@ -35,13 +35,13 @@ class Tracker(TimestampMixin, db.Model):
     label: Mapped[Optional[str]] = mapped_column(String(100))  # «Трекер 07» — для людей
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
 
-    assignments: Mapped[list["TrackerAssignment"]] = relationship(back_populates="tracker")
+    assignments: Mapped[list["TrackerAssignment"]] = relationship(lazy="raise_on_sql", back_populates="tracker")
 
     def __repr__(self) -> str:
         return f"<Tracker {self.imei}>"
 
 
-class TrackerAssignment(TimestampMixin, db.Model):
+class TrackerAssignment(TimestampMixin, Base):
     """
     Какой трекер у какого участника и с какого по какое время.
     stage_id пустой → трекер закреплён на весь сезон.
@@ -57,12 +57,12 @@ class TrackerAssignment(TimestampMixin, db.Model):
     active_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     active_to: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
-    tracker: Mapped["Tracker"] = relationship(back_populates="assignments")
-    entry: Mapped["Entry"] = relationship(back_populates="tracker_assignments")
-    stage: Mapped[Optional["Stage"]] = relationship()
+    tracker: Mapped["Tracker"] = relationship(lazy="raise_on_sql", back_populates="assignments")
+    entry: Mapped["Entry"] = relationship(lazy="raise_on_sql", back_populates="tracker_assignments")
+    stage: Mapped[Optional["Stage"]] = relationship(lazy="raise_on_sql")
 
 
-class TrackerPosition(db.Model):
+class TrackerPosition(Base):
     """
     Одна подтверждённая точка.
     Таблица будет самой большой, поэтому без updated_at и с индексами.
@@ -96,14 +96,14 @@ class TrackerPosition(db.Model):
         nullable=False,
     )
 
-    tracker: Mapped["Tracker"] = relationship()
-    entry: Mapped[Optional["Entry"]] = relationship()
+    tracker: Mapped["Tracker"] = relationship(lazy="raise_on_sql")
+    entry: Mapped[Optional["Entry"]] = relationship(lazy="raise_on_sql")
 
     def __repr__(self) -> str:
         return f"<TrackerPosition tracker={self.tracker_id} {self.recorded_at}>"
 
 
-class TrackerAlert(TimestampMixin, db.Model):
+class TrackerAlert(TimestampMixin, Base):
     """
     Тревожный сигнал (SOS).
     ВНИМАНИЕ: только для админ-панели. Никогда не отдаём в публичное API.
@@ -128,5 +128,5 @@ class TrackerAlert(TimestampMixin, db.Model):
     acknowledged_by: Mapped[Optional[str]] = mapped_column(String(200))
     note: Mapped[Optional[str]] = mapped_column(Text)
 
-    tracker: Mapped["Tracker"] = relationship()
-    entry: Mapped[Optional["Entry"]] = relationship()
+    tracker: Mapped["Tracker"] = relationship(lazy="raise_on_sql")
+    entry: Mapped[Optional["Entry"]] = relationship(lazy="raise_on_sql")

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import Enum, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.extensions import db
+from app.db import Base
 from app.models.base import TimestampMixin
 from app.models.enums import EntryStatus
 
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from app.models.tracking import TrackerAssignment
 
 
-class Discipline(TimestampMixin, db.Model):
+class Discipline(TimestampMixin, Base):
     """Дисциплина гонки (например, «Упряжка 12 собак»). Нужна для фильтров."""
     __tablename__ = "disciplines"
 
@@ -37,7 +37,7 @@ class Discipline(TimestampMixin, db.Model):
         return f"<Discipline {self.code}>"
 
 
-class Participant(TimestampMixin, db.Model):
+class Participant(TimestampMixin, Base):
     """Каюр — человек."""
     __tablename__ = "participants"
 
@@ -48,7 +48,7 @@ class Participant(TimestampMixin, db.Model):
     bio: Mapped[Optional[str]] = mapped_column(Text)
     photo_url: Mapped[Optional[str]] = mapped_column(String(500))
 
-    entries: Mapped[list["Entry"]] = relationship(back_populates="participant")
+    entries: Mapped[list["Entry"]] = relationship(lazy="raise_on_sql", back_populates="participant")
 
     @property
     def full_name(self) -> str:
@@ -58,7 +58,7 @@ class Participant(TimestampMixin, db.Model):
         return f"<Participant {self.full_name}>"
 
 
-class Entry(TimestampMixin, db.Model):
+class Entry(TimestampMixin, Base):
     """Участие каюра в сезоне."""
     __tablename__ = "entries"
     __table_args__ = (
@@ -81,18 +81,18 @@ class Entry(TimestampMixin, db.Model):
         nullable=False,
     )
 
-    season: Mapped["Season"] = relationship(back_populates="entries")
-    participant: Mapped["Participant"] = relationship(back_populates="entries")
-    discipline: Mapped[Optional["Discipline"]] = relationship()
+    season: Mapped["Season"] = relationship(lazy="raise_on_sql", back_populates="entries")
+    participant: Mapped["Participant"] = relationship(lazy="raise_on_sql", back_populates="entries")
+    discipline: Mapped[Optional["Discipline"]] = relationship(lazy="raise_on_sql")
 
     checkpoint_marks: Mapped[list["CheckpointMark"]] = relationship(
-        back_populates="entry", cascade="all, delete-orphan"
+        lazy="raise_on_sql", back_populates="entry", cascade="all, delete-orphan"
     )
     penalties: Mapped[list["Penalty"]] = relationship(
-        back_populates="entry", cascade="all, delete-orphan"
+        lazy="raise_on_sql", back_populates="entry", cascade="all, delete-orphan"
     )
     tracker_assignments: Mapped[list["TrackerAssignment"]] = relationship(
-        back_populates="entry"
+        lazy="raise_on_sql", back_populates="entry"
     )
 
     def __repr__(self) -> str:

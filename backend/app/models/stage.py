@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import DateTime, Enum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.extensions import db
+from app.db import Base
 from app.models.base import TimestampMixin
 from app.models.enums import CheckpointType
 
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from app.models.season import Season
 
 
-class Stage(TimestampMixin, db.Model):
+class Stage(TimestampMixin, Base):
     __tablename__ = "stages"
     __table_args__ = (
         UniqueConstraint("season_id", "number", name="uq_stage_season_number"),
@@ -38,26 +38,29 @@ class Stage(TimestampMixin, db.Model):
     tracking_interval_minutes: Mapped[Optional[int]] = mapped_column(Integer)
     stale_after_minutes: Mapped[Optional[int]] = mapped_column(Integer)
 
-    season: Mapped["Season"] = relationship(back_populates="stages")
+    season: Mapped["Season"] = relationship(lazy="raise_on_sql", back_populates="stages")
     checkpoints: Mapped[list["Checkpoint"]] = relationship(
-        back_populates="stage", order_by="Checkpoint.order_index", cascade="all, delete-orphan"
+        lazy="raise_on_sql", back_populates="stage", order_by="Checkpoint.order_index", cascade="all, delete-orphan"
     )
 
     @property
     def effective_interval_minutes(self) -> int:
-        """Интервал трекинга для этапа с учётом значения сезона."""
+        """
+        Интервал трекинга для этапа с учётом значения сезона.
+        Сезон должен быть загружен: select(Stage).options(selectinload(Stage.season))
+        """
         return self.tracking_interval_minutes or self.season.tracking_interval_minutes
 
     @property
     def effective_stale_after_minutes(self) -> int:
-        """Порог «позиция неактуальна» с учётом значения сезона."""
+        """Порог «позиция неактуальна» с учётом значения сезона (сезон должен быть загружен)."""
         return self.stale_after_minutes or self.season.stale_after_minutes
 
     def __repr__(self) -> str:
         return f"<Stage {self.number} {self.name}>"
 
 
-class Checkpoint(TimestampMixin, db.Model):
+class Checkpoint(TimestampMixin, Base):
     __tablename__ = "checkpoints"
     __table_args__ = (
         UniqueConstraint("stage_id", "order_index", name="uq_checkpoint_stage_order"),
@@ -84,7 +87,7 @@ class Checkpoint(TimestampMixin, db.Model):
     # Обязательная остановка на этом КП, в минутах (0 — не нужна).
     required_rest_minutes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
-    stage: Mapped["Stage"] = relationship(back_populates="checkpoints")
+    stage: Mapped["Stage"] = relationship(lazy="raise_on_sql", back_populates="checkpoints")
 
     def __repr__(self) -> str:
         return f"<Checkpoint {self.code} stage={self.stage_id}>"

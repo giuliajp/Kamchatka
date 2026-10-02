@@ -1,40 +1,62 @@
 """
-Ошибки в едином JSON-формате. Без этого Flask отдаёт ошибки HTML-страницей,
-а фронтенду нужен JSON.
+Ошибки в едином JSON-формате {"data": null, "error": {...}}.
+
+Чтобы вернуть ошибку из эндпоинта:
+    from fastapi import HTTPException
+    raise HTTPException(status_code=404, detail="Участник не найден")
 """
-from flask import Flask
-from werkzeug.exceptions import HTTPException
 
-from app.api.responses import error
-from app.extensions import db
+import logging
 
-# тексты для частых ошибок
-MESSAGES = {
-    400: "Некорректный запрос",
-    401: "Требуется авторизация",
-    403: "Доступ запрещён",
-    404: "Не найдено",
-    405: "Этот метод не поддерживается для данного адреса",
-    429: "Слишком много запросов, попробуйте позже",
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+logger = logging.getLogger("avacha")
+
+# Короткие коды и русские тексты для частых ошибок.
+ERRORS = {
+    400: ("bad_request", "Некорректный запрос"),
+    401: ("unauthorized", "Требуется авторизация"),
+    403: ("forbidden", "Доступ запрещён"),
+    404: ("not_found", "Не найдено"),
+    405: ("method_not_allowed", "Этот метод не поддерживается для данного адреса"),
+    422: ("validation_error", "Данные заполнены неверно"),
+    429: ("too_many_requests", "Слишком много запросов, попробуйте позже"),
 }
 
 
-def register_error_handlers(app: Flask) -> None:
+def error_response(status: int, code: str, message: str, details=None) -> JSONResponse:
+    return JSONResponse(
+        status_code=status,
+        content={"data": None, "error": {"code": code, "message": message, "details": details}},
+    )
 
-    @app.errorhandler(HTTPException)
-    def handle_http_error(exc: HTTPException):
-        # 404 «не найдено», 405 «метод не разрешён» и т. п.
-        status = exc.code or 500
-        code = (exc.name or "error").lower().replace(" ", "_")
-        message = MESSAGES.get(status, exc.description or exc.name)
-        return error(code, message, status)
 
-    @app.errorhandler(Exception)
-    def handle_unexpected_error(exc: Exception):
-        # Непредвиденная ошибка в коде: откатываем незавершённые изменения
-        # в базе и не показываем пользователю внутренние подробности.
-        db.session.rollback()
-        app.logger.exception("Необработанная ошибка: %s", exc)
-        if app.debug or app.testing:
-            raise exc
-        return error("internal_error", "Внутренняя ошибка сервера", 500)
+def register_error_handlers(app: FastAPI) -> None:
+
+    @app.exception_handler(StarletteHTTPException)
+    async def handle_http_error(request: Request, exc: StarletteHTTPException):
+        code, default_message = ERRORS.get(exc.status_code, ("error", "Ошибка"))
+        # Стандартные английские тексты заменяем русскими, свои (из detail) оставляем.
+        message = exc.detail if isinstance(exc.detail, str) and exc.detail not in (
+            "Not Found", "Method Not Allowed",
+        ) else default_message
+        return error_response(exc.status_code, code, message)
+
+    @app.exception_handler(RequestValidationError)
+    async def handle_validation_error(request: Request, exc: RequestValidationError):
+        # Какие поля неверны — в details, чтобы фронтенд мог подсветить их.
+        details = [
+            {"field": ".".join(str(p) for p in err["loc"][1:]), "problem": err["msg"]}
+            for err in exc.errors()
+        ]
+        code, message = ERRORS[422]
+        return error_response(422, code, message, details)
+
+    @app.exception_handler(Exception)
+    async def handle_unexpected_error(request: Request, exc: Exception):
+        # Непредвиденная ошибка в коде: пишем в лог, пользователю — без подробностей.
+        logger.exception("Необработанная ошибка: %s", exc)
+        return error_response(500, "internal_error", "Внутренняя ошибка сервера")

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.extensions import db
+from app.db import Base
 from app.models.base import TimestampMixin
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from app.models.stage import Checkpoint, Stage
 
 
-class CheckpointMark(TimestampMixin, db.Model):
+class CheckpointMark(TimestampMixin, Base):
     """Отметка судьи: участник прошёл КП в такое-то время."""
     __tablename__ = "checkpoint_marks"
     __table_args__ = (
@@ -37,14 +37,14 @@ class CheckpointMark(TimestampMixin, db.Model):
     entered_by: Mapped[Optional[str]] = mapped_column(String(200))  # кто внёс (позже — ссылка на админа)
     note: Mapped[Optional[str]] = mapped_column(Text)
 
-    entry: Mapped["Entry"] = relationship(back_populates="checkpoint_marks")
-    checkpoint: Mapped["Checkpoint"] = relationship()
+    entry: Mapped["Entry"] = relationship(lazy="raise_on_sql", back_populates="checkpoint_marks")
+    checkpoint: Mapped["Checkpoint"] = relationship(lazy="raise_on_sql")
 
     def __repr__(self) -> str:
         return f"<CheckpointMark entry={self.entry_id} cp={self.checkpoint_id}>"
 
 
-class Penalty(TimestampMixin, db.Model):
+class Penalty(TimestampMixin, Base):
     """Штраф участнику (в минутах)."""
     __tablename__ = "penalties"
 
@@ -55,8 +55,8 @@ class Penalty(TimestampMixin, db.Model):
     minutes: Mapped[int] = mapped_column(Integer, nullable=False)
     reason: Mapped[str] = mapped_column(Text, nullable=False)
 
-    entry: Mapped["Entry"] = relationship(back_populates="penalties")
-    stage: Mapped[Optional["Stage"]] = relationship()
+    entry: Mapped["Entry"] = relationship(lazy="raise_on_sql", back_populates="penalties")
+    stage: Mapped[Optional["Stage"]] = relationship(lazy="raise_on_sql")
 
     def __repr__(self) -> str:
         return f"<Penalty entry={self.entry_id} {self.minutes} min>"
