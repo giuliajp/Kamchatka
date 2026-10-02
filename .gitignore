@@ -42,3 +42,8 @@ __pycache__/
 .mypy_cache/
 *.egg-info/
 
+
+# Локальная база данных (SQLite)
+backend/instance/
+*.db
+*.sqlite3

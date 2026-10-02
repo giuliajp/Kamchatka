@@ -14,12 +14,19 @@ load_dotenv()  # подхватывает .env, если он есть рядо�
 
 class Config:
     ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+    SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me")
 
-    # База данных
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DATABASE_URL", "postgresql://user:password@localhost:5432/avacha"
-    )
+    # База данных. По умолчанию — локальный файл SQLite (backend/instance/avacha.db).
+    # На сервере в .env указывается PostgreSQL.
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///avacha.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # С каких адресов фронтенду можно обращаться к /api/*
+    CORS_ORIGINS = [
+        origin.strip()
+        for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+        if origin.strip()
+    ]
 
     # VK
     VK_APP_ID = os.getenv("VK_APP_ID", "")
@@ -29,6 +36,14 @@ class Config:
     IRIDIUM360_API_URL = os.getenv("IRIDIUM360_API_URL", "https://www.iridium360.ru")
     IRIDIUM360_API_KEY = os.getenv("IRIDIUM360_API_KEY", "")
 
-    # Базовый интервал опроса трекеров, секунды (по брифу — 20 минут по умолчанию,
-    # но должен быть настраиваемым, а не захардкоженным)
+    # Как часто наш бэкенд опрашивает Iridium360, секунды.
+    # Это НЕ интервал передачи точек трекером (20 мин по брифу) — тот хранится в БД
+    # в Season.tracking_interval_minutes и может переопределяться на этапе (Stage).
+    # Подходящее значение уточним при разборе API Iridium360 (задача 1.4).
     TRACKER_POLL_INTERVAL_SECONDS = int(os.getenv("TRACKER_POLL_INTERVAL_SECONDS", "1200"))
+
+
+class TestingConfig(Config):
+    """Для тестов: отдельная временная база в памяти."""
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"

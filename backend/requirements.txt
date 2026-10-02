@@ -1,22 +1,22 @@
 # Backend «Авача» — зависимости
 # Устанавливать: pip install -r requirements.txt
-# Версии зафиксированы примерно, команда может уточнить при инициализации.
 
-Flask>=3.0
-Flask-SQLAlchemy>=3.1
-Flask-Cors>=4.0
-python-dotenv>=1.0
+Flask>=3.1,<4
+Flask-SQLAlchemy>=3.1,<4
+SQLAlchemy>=2.0,<3
+Flask-Cors>=5.0,<7
+python-dotenv>=1.0,<2
 
-# БД (PostgreSQL)
+# Миграции БД (изменение структуры базы без потери данных)
+Flask-Migrate>=4.0,<5
+
+# Драйвер PostgreSQL (для сервера; локально работаем на SQLite)
 psycopg2-binary>=2.9
-
-# Миграции БД
-# Flask-Migrate>=4.0
 
 # HTTP-клиент для обращения к Iridium360 API
 requests>=2.31
 
-# Фоновые задачи / периодический опрос Iridium360
+# Фоновые задачи / периодический опрос Iridium360 — подключим в задаче 2.7
 # APScheduler>=3.10
 
 # Продакшен WSGI-сервер
