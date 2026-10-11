@@ -1,5 +1,5 @@
 # Backend «Авача» — зависимости
-# Устанавливать: pip install -r requirements.txt
+# Устанавливать: python -m pip install -r backend/requirements.txt
 
 # Веб-фреймворк и сервер
 fastapi>=0.115
@@ -10,8 +10,7 @@ pydantic-settings>=2.4
 
 # База данных (асинхронно)
 sqlalchemy[asyncio]>=2.0,<3
-aiosqlite>=0.20        # локально — SQLite
-asyncpg>=0.29          # на сервере — PostgreSQL
+asyncpg>=0.29          # PostgreSQL
 
 # Миграции БД
 alembic>=1.13

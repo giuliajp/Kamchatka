@@ -11,19 +11,40 @@
 """
 
 from functools import lru_cache
+from pathlib import Path
+
+from sqlalchemy import URL
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=Path(__file__).resolve().parents[1] / ".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
     environment: str = "development"
     secret_key: str = "dev-secret-change-me"
 
-    # База данных. По умолчанию — локальный файл SQLite (backend/instance/avacha.db).
-    # На сервере в .env указывается postgresql+asyncpg://...
-    database_url: str = "sqlite+aiosqlite:///./instance/avacha.db"
+    # PostgreSQL: общие настройки с Docker Compose из backend/.env.
+    postgres_db: str
+    postgres_user: str
+    postgres_password: str
+    postgres_host: str
+    postgres_port: int
+
+    @property
+    def database_url(self) -> str:
+        return URL.create(
+            "postgresql+asyncpg",
+            username=self.postgres_user,
+            password=self.postgres_password,
+            host=self.postgres_host,
+            port=self.postgres_port,
+            database=self.postgres_db,
+        ).render_as_string(hide_password=False)
 
     # С каких адресов фронтенду можно обращаться к API (через запятую)
     cors_origins: str = "http://localhost:5173"

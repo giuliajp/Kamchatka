@@ -1,12 +1,12 @@
 """
 Настройка Alembic (миграций) для асинхронной базы.
 
-Адрес базы берётся из настроек приложения (.env → DATABASE_URL),
+Адрес базы берётся из настроек приложения (backend/.env → POSTGRES_*),
 список таблиц — из app/models.
 
-Команды (из папки backend):
-    alembic upgrade head                              # применить все миграции
-    alembic revision --autogenerate -m "что изменилось"  # создать миграцию после изменения моделей
+Команды (из корня репозитория):
+    python -m alembic -c backend/alembic.ini upgrade head
+    python -m alembic -c backend/alembic.ini revision --autogenerate -m "что изменилось"
 """
 
 import asyncio
@@ -22,16 +22,12 @@ from app.config import get_settings
 from app.db import Base
 
 config = context.config
-config.set_main_option("sqlalchemy.url", get_settings().database_url)
+config.set_main_option("sqlalchemy.url", get_settings().database_url.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
-
-
-def _is_sqlite() -> bool:
-    return config.get_main_option("sqlalchemy.url", "").startswith("sqlite")
 
 
 def run_migrations_offline() -> None:
@@ -40,18 +36,15 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        render_as_batch=_is_sqlite(),
     )
     with context.begin_transaction():
         context.run_migrations()
 
 
 def do_run_migrations(connection: Connection) -> None:
-    # render_as_batch нужен, чтобы изменения таблиц корректно работали в SQLite
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
-        render_as_batch=_is_sqlite(),
     )
     with context.begin_transaction():
         context.run_migrations()
