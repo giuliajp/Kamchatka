@@ -18,10 +18,8 @@
 """
 
 from collections.abc import AsyncIterator
-from pathlib import Path
 
 from sqlalchemy import MetaData
-from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -41,15 +39,7 @@ class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
-def _ensure_sqlite_folder(database_url: str) -> None:
-    """Для SQLite создаём папку под файл базы (например, instance/), если её нет."""
-    url = make_url(database_url)
-    if url.get_backend_name() == "sqlite" and url.database and url.database != ":memory:":
-        Path(url.database).parent.mkdir(parents=True, exist_ok=True)
-
-
 settings = get_settings()
-_ensure_sqlite_folder(settings.database_url)
 
 engine = create_async_engine(settings.database_url)
 

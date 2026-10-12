@@ -8,7 +8,7 @@
 
 Связанные данные загружаем явно: .options(selectinload(Модель.связь))
 
-Запуск из папки backend:  pytest -v
+Запуск из корня: python -m pytest -c backend/pytest.ini backend/tests -v
 """
 
 from datetime import datetime, timedelta, timezone

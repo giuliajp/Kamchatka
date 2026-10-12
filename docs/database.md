@@ -4,7 +4,7 @@
 Миграции — Alembic (`backend/migrations/`). Все даты и время хранятся в **UTC**
 (Камчатка = UTC+12, переводим только при показе).
 
-Локально база — SQLite (`aiosqlite`), на сервере — PostgreSQL (`asyncpg`).
+Локально и на сервере используется PostgreSQL (`asyncpg`) запускается через Docker Compose.
 Связанные данные загружаются явно через `selectinload` — ленивая загрузка запрещена (`lazy="raise_on_sql"`).
 
 ## Схема
