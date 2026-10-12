@@ -57,28 +57,30 @@
 
 | Метод и адрес | Что отдаёт | Задача |
 |---|---|---|
-| `GET /api/seasons/current` | Текущий сезон: год, статус, даты | 2.1 |
-| `GET /api/race/status` | Режим «до гонки / идёт / завершена», дата старта | 2.9 |
-| `GET /api/participants` | Список участников. Параметры: `q`, `discipline`, `sort` | 2.2 |
-| `GET /api/participants/<id>` | Карточка участника | 2.2 |
-| `GET /api/stages` | Этапы сезона | 2.3 |
-| `GET /api/stages/<id>` | Этап: КП, километраж, профиль высот, трек | 2.3 |
-| `GET /api/results` | Сводная таблица лидеров | 2.6 |
-| `GET /api/stages/<id>/results` | Протокол этапа: время на КП, штрафы, остановки | 2.6 |
-| `GET /api/positions` | Последние позиции всех участников с временем и флагом «неактуально» | 3.1 |
-| `GET /api/participants/<id>/track` | История точек участника | 3.2 |
-| `GET /api/program` | Программа. Параметр: `date` | 2.10 |
-| `GET /api/locations` | Зрительские локации | 2.10 |
-| `GET /api/faq` | Вопросы и ответы, контакты | 2.10 |
+| `GET /api/races` | Гонки (текущая и архив) | 2.3 |
+| `GET /api/races/current` | Текущая гонка: статус, даты, дисциплины | 2.3 |
+| `GET /api/races/{id}/participants` | Участники. Параметры: `discipline`, `q`, `sort` | 2.3 |
+| `GET /api/participants/{id}` | Карточка участника, его гонки по годам | 2.3 |
+| `GET /api/races/{id}/stages` | Этапы с датами и статусом | 2.4 |
+| `GET /api/stages/{id}` | Этап: КП по порядку, км, трек, профиль высот | 2.4 |
+| `GET /api/races/{id}/results` | Общий зачёт по дисциплинам: этапы, штрафы, итог, места | 2.5 |
+| `GET /api/stages/{id}/protocols` | Протоколы этапа по дисциплинам (только опубликованные) | 2.5 |
+| `GET /api/races/{id}/positions` | Последние позиции участников со временем и флагом «неактуально» | 3.1 |
+| `GET /api/race-participants/{id}/track` | История точек участника | 3.1 |
+| `GET /api/program`, `/api/locations`, `/api/faq` | Контент | 2.7 |
 
 ### Административная панель (только после входа)
 
 | Метод и адрес | Что делает | Задача |
 |---|---|---|
-| `POST /api/admin/login` | Вход организатора | 3.3 |
-| `POST /api/admin/checkpoint-marks` | Ручная отметка КП | 3.4 |
-| `/api/admin/participants`, `/entries`, `/stages`, `/checkpoints` | Создание, изменение, удаление | 3.5 |
-| `/api/admin/trackers` | Трекеры и их привязка к участникам | 3.5 |
-| `GET /api/admin/trackers/status` | Мониторинг: последнее сообщение, SOS | 3.6 |
-| `/api/admin/faq`, `/program`, `/locations` | Управление контентом | 3.7 |
-| `PUT /api/admin/race/status` | Переключение режима гонки | 3.7 |
+| `POST /api/admin/login` | Вход организатора | 3.2 |
+| `POST /api/admin/protocols/import` | Загрузка протокола файлом | 3.4 |
+| `PATCH /api/admin/stage-results/{id}` | Правка результата (с причиной → журнал) | 3.3 |
+| `POST /api/admin/protocols/{id}/publish` | Опубликовать протокол | 3.3 |
+| `POST /api/admin/protocols/{id}/finalize` | Утвердить окончательный | 3.3 |
+| `POST /api/admin/stage-results/{id}/post-final-correction` | Исправление окончательного (основание, кто утвердил) | 3.3 |
+| `GET /api/admin/protocols/{id}/changes` | Журнал правок протокола | 3.3 |
+| `/api/admin/participants`, `/stages`, `/checkpoints` | Создание, изменение, удаление | 3.5 |
+| `PUT /api/admin/stages/{id}/route` | Загрузить или заменить трек этапа (KML/GPX) | 3.5 |
+| `/api/admin/trackers` | Трекеры и привязка к участникам | 3.5 |
+| `PUT /api/admin/races/{id}/status` | Переключение режима гонки | 3.5 |

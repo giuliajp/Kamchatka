@@ -2,23 +2,30 @@
 Все модели проекта. Импортируем их здесь, чтобы Alembic
 «увидел» все таблицы при создании миграций (см. migrations/env.py).
 
-Использование в коде:
-    from app.models import Participant, Entry
+Описание предметной области — docs/domain.md.
+
+Использование:
+    from app.models import Race, RaceParticipant, Protocol
 """
 from app.models.enums import (
-    AlertType, CheckpointType, EntryStatus, PositionSource, SeasonStatus,
+    AlertType, ChangeAction, CheckpointRole, Equipment, PositionSource, ProtocolStatus,
+    RaceParticipantStatus, RaceStatus, StageResultStatus, StageStatus,
 )
-from app.models.season import Season
-from app.models.participant import Discipline, Entry, Participant
-from app.models.stage import Checkpoint, Stage
-from app.models.results import CheckpointMark, Penalty
-from app.models.tracking import Tracker, TrackerAlert, TrackerAssignment, TrackerPosition
+from app.models.race import Discipline, Participant, Race, RaceParticipant
+from app.models.stage import Checkpoint, CheckpointPass, Stage, StageCheckpoint
+from app.models.protocol import Penalty, Protocol, ResultChangeLog, StageResult
+from app.models.tracking import TrackerAlert, TrackerAssignment, TrackerDevice, TrackerPosition
 
 __all__ = [
-    "AlertType", "CheckpointType", "EntryStatus", "PositionSource", "SeasonStatus",
-    "Season",
-    "Discipline", "Participant", "Entry",
-    "Stage", "Checkpoint",
-    "CheckpointMark", "Penalty",
-    "Tracker", "TrackerAssignment", "TrackerPosition", "TrackerAlert",
+    # перечисления
+    "AlertType", "ChangeAction", "CheckpointRole", "Equipment", "PositionSource",
+    "ProtocolStatus", "RaceParticipantStatus", "RaceStatus", "StageResultStatus", "StageStatus",
+    # гонка и участники
+    "Race", "Discipline", "Participant", "RaceParticipant",
+    # маршрут
+    "Stage", "Checkpoint", "StageCheckpoint", "CheckpointPass",
+    # официальные результаты
+    "Protocol", "StageResult", "Penalty", "ResultChangeLog",
+    # трекинг
+    "TrackerDevice", "TrackerAssignment", "TrackerPosition", "TrackerAlert",
 ]

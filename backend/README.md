@@ -122,8 +122,8 @@ python -m alembic -c backend/alembic.ini current
 docker compose --env-file backend/.env exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt"'
 ```
 
-Ожидаются 12 таблиц приложения и `alembic_version`. Миграция создаёт структуру,
-но не наполняет таблицы данными.
+Ожидаются 16 таблиц приложения и `alembic_version`. Миграции создают структуру
+и справочник дисциплин; остальные таблицы пустые.
 
 ### 7. Запустить сервер
 
@@ -227,8 +227,8 @@ python -m alembic -c backend/alembic.ini current
 docker compose --env-file backend/.env exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt"'
 ```
 
-Ожидаются отметка `(head)`, 12 таблиц приложения и `alembic_version`.
-Миграция создаёт структуру, но не наполняет таблицы данными.
+Ожидаются отметка `(head)`, 16 таблиц приложения и `alembic_version`.
+Миграции создают структуру и справочник дисциплин; остальные таблицы пустые.
 
 ### 5. Запустить backend и проверить API
 
@@ -268,7 +268,7 @@ python backend/run.py
 python -m pytest -c backend/pytest.ini backend/tests -v
 ```
 
-Ожидается `12 passed`. Сервер API для тестов запускать не нужно.
+Ожидается `21 passed`. Сервер API для тестов запускать не нужно.
 Тесты используют отдельные временные схемы PostgreSQL и удаляют их после завершения.
 
 Для запуска кнопкой создайте конфигурацию **Python tests → pytest** с целью
@@ -360,13 +360,26 @@ backend/
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-stmt = select(Entry).options(selectinload(Entry.participant))
-entries = (await session.execute(stmt)).scalars().all()
+stmt = select(RaceParticipant).options(selectinload(RaceParticipant.participant))
+items = (await session.execute(stmt)).scalars().all()
 ```
 
-Если забыть `selectinload` и обратиться к `entry.participant` — будет ошибка
+Если забыть `selectinload` и обратиться к `item.participant` — будет ошибка
 (у всех связей стоит `lazy="raise_on_sql"`). Это специально: так проблему видно сразу.
 Примеры — в `backend/tests/test_models.py`.
+
+## Если база была создана старой миграцией
+
+12 октября структура базы была пересобрана (16 таблиц вместо 12), начальная миграция заменена.
+Если у вас уже есть локальная база со старыми таблицами, пересоздайте её — данные в ней тестовые:
+
+```bash
+docker compose --env-file backend/.env down -v
+docker compose --env-file backend/.env up -d --wait --wait-timeout 90 db
+python -m alembic -c backend/alembic.ini upgrade head
+```
+
+`down -v` удаляет volume с данными PostgreSQL. На сервере так делать нельзя — там только новые миграции.
 
 ## Если изменили модели (таблицы)
 
@@ -383,11 +396,11 @@ python -m alembic -c backend/alembic.ini upgrade head
 
 - Backend сам обращается к API Iridium360 фоновой задачей по расписанию, нормализует данные и сохраняет у себя.
 - **Frontend никогда не обращается к Iridium360 напрямую** — только к нашему backend.
-- Соответствие «устройство (IMEI) → участник → этап» хранится в нашей БД (`Tracker`, `TrackerAssignment`).
+- Соответствие «устройство (IMEI) → участник → этап» хранится в нашей БД (`TrackerDevice`, `TrackerAssignment`).
 - Интервал передачи точек трекером (20 минут) хранится в БД в настройках сезона и этапа.
   `TRACKER_POLL_INTERVAL_SECONDS` в `.env` — как часто наш бэкенд опрашивает Iridium360.
 - SOS-сигнал — отдельная таблица `TrackerAlert`, **никогда не отдаётся** в публичный API, только admin-panel.
-- Официальное время на КП — из судейских отметок (`CheckpointMark`), не из трекера.
+- Официальные результаты — только из судейских протоколов (`Protocol`, `StageResult`), не из трекера и не из отметок на КП.
 
 ## Запуск на сервере (позже)
 
