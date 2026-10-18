@@ -18,6 +18,7 @@ from app.models.base import TimestampMixin, str_enum
 from app.models.enums import Equipment, RaceParticipantStatus, RaceStatus
 
 if TYPE_CHECKING:
+    from app.models.protocol import Penalty
     from app.models.stage import Stage
 
 
@@ -137,6 +138,9 @@ class RaceParticipant(TimestampMixin, Base):
     race: Mapped["Race"] = relationship(lazy="raise_on_sql", back_populates="participants")
     participant: Mapped["Participant"] = relationship(lazy="raise_on_sql", back_populates="race_entries")
     discipline: Mapped["Discipline"] = relationship(lazy="raise_on_sql")
+    penalties: Mapped[list["Penalty"]] = relationship(
+        lazy="raise_on_sql", back_populates="race_participant", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<RaceParticipant #{self.start_number} race={self.race_id}>"
