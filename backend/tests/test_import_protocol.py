@@ -1,8 +1,8 @@
-"""Подготовка гонки и участников из JSON-протокола на PostgreSQL."""
+"""Подготовка основных записей и перенос полного JSON-протокола на PostgreSQL."""
 
 from collections import Counter
 from copy import deepcopy
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -10,14 +10,19 @@ from app.models import (
     Discipline,
     Equipment,
     Participant,
+    Penalty,
+    Protocol,
+    ProtocolStatus,
     Race,
     RaceParticipant,
     RaceParticipantStatus,
     RaceStatus,
     Stage,
+    StageResult,
+    StageResultStatus,
     StageStatus,
 )
-from app.services.protocol_import import prepare_protocol_import
+from app.services.protocol_import import import_protocol, prepare_protocol_import
 from scripts.parse_protocol import parse_protocol
 from sqlalchemy import func, select
 
@@ -264,3 +269,292 @@ async def test_participation_status_for_non_finisher(
         prepared = await prepare_protocol_import(session, document)
 
     assert prepared.entries[10].status == expected
+
+
+async def load_stage_results(session):
+    rows = await session.execute(
+        select(StageResult, Stage.number, RaceParticipant.start_number)
+        .select_from(StageResult)
+        .join(Protocol, StageResult.protocol_id == Protocol.id)
+        .join(Stage, Protocol.stage_id == Stage.id)
+        .join(RaceParticipant, StageResult.race_participant_id == RaceParticipant.id)
+    )
+    return {(number, start_number): result for result, number, start_number in rows}
+
+
+async def test_import_original_archive_with_results_and_penalties(session, document):
+    original = deepcopy(document)
+    async with session.begin():
+        imported = await import_protocol(session, document)
+
+    assert imported.created == {
+        "races": 1,
+        "stages": 6,
+        "disciplines": 3,
+        "participants": 21,
+        "race_participants": 21,
+        "protocols": 18,
+        "stage_results": 118,
+        "penalties": 3,
+    }
+    assert imported.skipped_stage_results == 8
+    assert imported.warnings == []
+    for model, expected in [
+        (Race, 1),
+        (Stage, 6),
+        (RaceParticipant, 21),
+        (Protocol, 18),
+        (StageResult, 118),
+        (Penalty, 3),
+    ]:
+        assert await count(session, model) == expected
+    protocols = (await session.scalars(select(Protocol))).all()
+    for protocol in protocols:
+        assert protocol.status == ProtocolStatus.PRELIMINARY
+        assert protocol.published_at is None
+        assert protocol.finalized_at is None
+        assert protocol.source_filename == document["source_filename"]
+        assert protocol.weather == document["protocol_metadata"]["weather"]
+        assert protocol.chief_judge == document["protocol_metadata"]["chief_judge"]
+        assert (
+            protocol.chief_secretary == document["protocol_metadata"]["chief_secretary"]
+        )
+
+    results = await load_stage_results(session)
+    assert Counter(result.status for result in results.values()) == {
+        StageResultStatus.FINISHED: 116,
+        StageResultStatus.DNF: 1,
+        StageResultStatus.DNS: 1,
+    }
+    assert results[1, 1].status == StageResultStatus.DNF
+    assert (
+        results[1, 1].place is None
+    )  # Итоговое место 5 не является местом на первом этапе.
+    assert not any((number, 1) in results for number in range(2, 7))
+    assert results[3, 10].status == StageResultStatus.DNS
+    assert not any((number, 10) in results for number in range(4, 7))
+    assert results[1, 18].final_time_seconds == 7802
+    assert results[6, 18].place == 1
+    assert all(results[number, 18].place is None for number in range(1, 6))
+    assert all(result.net_time_seconds is None for result in results.values())
+    for participant in document["participants"]:
+        if participant["summary"]["status"] == "finished":
+            number = participant["start_number"]
+            assert (
+                sum(results[stage, number].final_time_seconds for stage in range(1, 7))
+                == (participant["summary"]["total_time_seconds"])
+            )
+    penalties = await session.execute(
+        select(
+            RaceParticipant.start_number,
+            Penalty.seconds,
+            Penalty.reason,
+            Penalty.rule_reference,
+        )
+        .select_from(Penalty)
+        .join(RaceParticipant, Penalty.race_participant_id == RaceParticipant.id)
+    )
+    source_by_number = {p["start_number"]: p for p in document["participants"]}
+    saved_penalties = {}
+    for number, seconds, reason, rule in penalties:
+        source = source_by_number[number]["penalties"][0]
+        saved_penalties[number] = seconds
+        assert reason == source["raw_note"]
+        assert rule == source["rule_reference"]
+    assert saved_penalties == {18: 120, 19: 3, 12: 360}
+    assert document == original
+
+
+async def test_import_again_preserves_records_and_protocol_publication(
+    session, document
+):
+    published_at = datetime(2026, 2, 16, 12, tzinfo=UTC)
+    async with session.begin():
+        first = await import_protocol(session, document)
+        protocol = await session.scalar(select(Protocol).order_by(Protocol.id))
+        protocol.status = ProtocolStatus.FINAL
+        protocol.published_at = published_at
+        protocol.finalized_at = published_at
+        protocol.finalized_by = "Главный судья"
+    protocol_id = protocol.id
+    session.expunge_all()
+    document["participants"].reverse()
+    document["stages"].reverse()
+    for participant in document["participants"]:
+        participant["stage_results"].reverse()
+
+    async with session.begin():
+        second = await import_protocol(session, document)
+
+    assert second.race_id == first.race_id
+    assert second.created == {}
+    assert second.skipped_stage_results == 8
+    assert await count(session, StageResult) == 118
+    assert await count(session, Penalty) == 3
+    loaded = await session.get(Protocol, protocol_id)
+    assert loaded.status == ProtocolStatus.FINAL
+    assert loaded.published_at == published_at
+    assert loaded.finalized_at == published_at
+    assert loaded.finalized_by == "Главный судья"
+
+
+@pytest.mark.parametrize(
+    ("invalid", "message"),
+    [
+        ("unexplained_zero", "пустой результат без предшествующего DNF/DNS"),
+        ("stage_warning", "этап 2: результат требует проверки"),
+        ("stage_time", "Статус и время не соответствуют"),
+        ("dnf_time", "Статус и время не соответствуют"),
+        ("total", "общий результат не равен сумме этапов"),
+        ("penalty_total", "общая сумма штрафов не совпадает"),
+        ("penalty_stage", "stage_number"),
+        ("penalty_warning", "примечание о штрафе требует проверки"),
+        ("penalty_note", "примечание штрафа не совпадает"),
+        ("place", "Не указано место финишировавшего"),
+        ("warning", "Предупреждение требует проверки перед импортом"),
+        ("filename", "Ожидается имя исходного PDF без пути"),
+    ],
+)
+async def test_invalid_results_are_rejected_before_writing(
+    session, document, invalid, message
+):
+    participant = next(p for p in document["participants"] if p["start_number"] == 18)
+    withdrawn = next(p for p in document["participants"] if p["start_number"] == 1)
+    if invalid == "unexplained_zero":
+        participant["stage_results"][0].update(
+            raw_result="00:00:00",
+            status=None,
+            final_time_seconds=None,
+            warning=None,
+        )
+    elif invalid == "stage_warning":
+        withdrawn["stage_results"][1]["warning"] = "Нулевое значение"
+    elif invalid == "stage_time":
+        participant["stage_results"][0]["final_time_seconds"] += 1
+    elif invalid == "dnf_time":
+        withdrawn["stage_results"][0]["final_time_seconds"] = 10
+    elif invalid == "total":
+        participant["summary"].update(raw_result="18:25:11", total_time_seconds=66311)
+    elif invalid == "penalty_total":
+        participant["summary"]["total_penalty_seconds"] += 1
+    elif invalid == "penalty_stage":
+        participant["penalties"][0]["stage_number"] = 1
+    elif invalid == "penalty_warning":
+        participant["penalty_warnings"] = ["Не удалось распознать примечание"]
+    elif invalid == "penalty_note":
+        participant["penalties"][0]["raw_note"] = "Другое примечание"
+    elif invalid == "place":
+        participant["summary"]["source_place"] = None
+    elif invalid == "warning":
+        document["warnings"] = ["Непонятное значение в протоколе"]
+    else:
+        document["source_filename"] = "folder/protocol.pdf"
+
+    with pytest.raises(ValueError, match=message):
+        async with session.begin():
+            await import_protocol(session, document)
+
+    for model in (
+        Race,
+        Stage,
+        Participant,
+        RaceParticipant,
+        Protocol,
+        StageResult,
+        Penalty,
+    ):
+        assert await count(session, model) == 0
+
+
+async def test_missing_metadata_is_reported_and_does_not_prevent_import(
+    session, document
+):
+    document["protocol_metadata"] = {
+        "weather": None,
+        "chief_judge": None,
+        "chief_secretary": None,
+    }
+    document["warnings"] = [
+        f"В протоколе не найдено поле: {label}"
+        for label in ("Погодные условия", "Главный судья", "Главный секретарь")
+    ]
+    async with session.begin():
+        imported = await import_protocol(session, document)
+
+    assert imported.warnings == document["warnings"]
+    assert imported.created["stage_results"] == 118
+    for protocol in await session.scalars(select(Protocol)):
+        assert protocol.weather is None
+        assert protocol.chief_judge is None
+        assert protocol.chief_secretary is None
+
+
+async def test_identical_penalties_keep_their_quantity_on_reimport(session, document):
+    participant = next(p for p in document["participants"] if p["start_number"] == 18)
+    participant["penalties"].append(deepcopy(participant["penalties"][0]))
+    participant["summary"]["total_penalty_seconds"] = 240
+    async with session.begin():
+        first = await import_protocol(session, document)
+    async with session.begin():
+        second = await import_protocol(session, document)
+
+    assert first.created["penalties"] == 4
+    assert second.created["penalties"] == 0
+    assert await count(session, Penalty) == 4
+
+
+@pytest.mark.parametrize(
+    "conflict", ["metadata", "result", "penalty", "skipped_result"]
+)
+async def test_conflicting_protocol_data_is_not_overwritten(
+    session, document, conflict
+):
+    async with session.begin():
+        await import_protocol(session, document)
+        if conflict == "skipped_result":
+            protocol_id = await session.scalar(
+                select(Protocol.id)
+                .join(Stage)
+                .where(Stage.number == 2)
+                .join(Discipline, Protocol.discipline_id == Discipline.id)
+                .where(Discipline.code == "ski_2")
+            )
+            entry_id = await session.scalar(
+                select(RaceParticipant.id).where(RaceParticipant.start_number == 1)
+            )
+            session.add(
+                StageResult(
+                    protocol_id=protocol_id,
+                    race_participant_id=entry_id,
+                    status=StageResultStatus.DNS,
+                )
+            )
+    participant = next(p for p in document["participants"] if p["start_number"] == 18)
+    if conflict == "metadata":
+        document["protocol_metadata"]["chief_judge"] = "Другой судья"
+        message = "конфликт поля chief_judge"
+    elif conflict == "result":
+        participant["stage_results"][0].update(
+            raw_result="02:10:03", final_time_seconds=7803
+        )
+        participant["summary"].update(raw_result="18:25:11", total_time_seconds=66311)
+        message = "конфликт поля final_time_seconds"
+    elif conflict == "penalty":
+        note = "штр.вр. 3 мин. п.П.14.11.14"
+        participant["penalties"][0].update(seconds=180, raw_note=note)
+        participant["summary"].update(total_penalty_seconds=180, raw_note=note)
+        message = "штрафы в БД не совпадают с JSON"
+    else:
+        message = "в БД есть результат, отсутствующий в источнике"
+
+    with pytest.raises(ValueError, match=message):
+        async with session.begin():
+            await import_protocol(session, document)
+
+    assert await count(session, Protocol) == 18
+    assert await count(session, StageResult) == (
+        119 if conflict == "skipped_result" else 118
+    )
+    assert await count(session, Penalty) == 3
+    results = await load_stage_results(session)
+    assert results[1, 18].final_time_seconds == 7802

@@ -1,8 +1,7 @@
-"""Подготовка записей гонки и участников для импорта JSON-протокола.
+"""Перенос JSON-протокола в существующие модели БД.
 
 Транзакцией управляет вызывающий код. Функция выполняет flush, но не commit;
 при ошибке вызывающий код должен откатить всю транзакцию.
-Протоколы, результаты и штрафы добавляются на следующем шаге задачи 2.2.
 """
 
 from collections import Counter, defaultdict
@@ -17,15 +16,22 @@ from app.models import (
     Discipline,
     Equipment,
     Participant,
+    Penalty,
+    Protocol,
     Race,
     RaceParticipant,
     RaceParticipantStatus,
     RaceStatus,
     Stage,
+    StageResult,
     StageResultStatus,
     StageStatus,
 )
-from app.schemas.protocol_import import ParticipantImportData, ProtocolImportData
+from app.schemas.protocol_import import (
+    CompleteProtocolImportData,
+    ParticipantImportData,
+    ProtocolImportData,
+)
 
 ModelT = TypeVar("ModelT", bound=Base)
 ParticipantIdentity = tuple[str, str, str, int]
@@ -62,6 +68,14 @@ class PreparedProtocolImport:
     disciplines: dict[str, Discipline]
     entries: dict[int, RaceParticipant]
     created: Counter[str]
+
+
+@dataclass
+class ProtocolImportResult:
+    race_id: int
+    created: Counter[str]
+    skipped_stage_results: int
+    warnings: list[str]
 
 
 def _check_fields(record: Base, values: dict, context: str) -> None:
@@ -158,7 +172,7 @@ async def prepare_protocol_import(
     Вызывать внутри транзакции, например async with session.begin().
     Возвращает объекты с id для последующего переноса протоколов и результатов.
     Проверка на этом этапе охватывает поля основных сущностей и статусы;
-    полная проверка результатов и штрафов относится к следующему шагу импорта.
+    для полного документа использовать import_protocol.
     """
     data = ProtocolImportData.model_validate(document)
     people = await _find_people(session, data)
@@ -248,3 +262,141 @@ async def prepare_protocol_import(
         entries[number] = entry
     await session.flush()
     return PreparedProtocolImport(race, stages, disciplines, entries, created)
+
+
+async def _import_stage_results(
+    session: AsyncSession,
+    data: CompleteProtocolImportData,
+    prepared: PreparedProtocolImport,
+    protocols: dict[tuple[int, str], Protocol],
+) -> int:
+    existing = (
+        await session.scalars(
+            select(StageResult).where(
+                StageResult.protocol_id.in_(
+                    [protocol.id for protocol in protocols.values()]
+                )
+            )
+        )
+    ).all()
+    by_key = {
+        (result.protocol_id, result.race_participant_id): result for result in existing
+    }
+    last_stage = max(prepared.stages)
+    skipped = 0
+    for participant in data.participants:
+        entry = prepared.entries[participant.start_number]
+        for source in sorted(
+            participant.stage_results, key=lambda item: item.stage_number
+        ):
+            protocol = protocols[source.stage_number, participant.discipline_code]
+            context = (
+                f"Участник №{participant.start_number}, этап {source.stage_number}"
+            )
+            result = by_key.get((protocol.id, entry.id))
+            if source.status is None:
+                if result is not None:
+                    raise ValueError(
+                        f"{context}: в БД есть результат, отсутствующий в источнике"
+                    )
+                skipped += 1
+                continue
+            fields = {
+                "status": source.status,
+                "final_time_seconds": source.final_time_seconds,
+            }
+            if (
+                source.stage_number == last_stage
+                and participant.summary.status == StageResultStatus.FINISHED
+            ):
+                fields["place"] = participant.summary.source_place
+            if result is None:
+                session.add(
+                    StageResult(
+                        protocol_id=protocol.id,
+                        race_participant_id=entry.id,
+                        **fields,
+                    )
+                )
+                prepared.created["stage_results"] += 1
+            else:
+                _check_fields(result, fields, context)
+    await session.flush()
+    return skipped
+
+
+async def _import_penalties(
+    session: AsyncSession,
+    data: CompleteProtocolImportData,
+    prepared: PreparedProtocolImport,
+) -> None:
+    existing = await session.scalars(
+        select(Penalty).where(
+            Penalty.race_participant_id.in_(
+                [entry.id for entry in prepared.entries.values()]
+            )
+        )
+    )
+    by_entry = defaultdict(list)
+    for penalty in existing:
+        by_entry[penalty.race_participant_id].append(penalty)
+    for participant in data.participants:
+        entry = prepared.entries[participant.start_number]
+        expected = Counter(
+            (penalty.seconds, penalty.raw_note, penalty.rule_reference)
+            for penalty in participant.penalties
+        )
+        found = Counter(
+            (penalty.seconds, penalty.reason, penalty.rule_reference)
+            for penalty in by_entry[entry.id]
+        )
+        if found:
+            if found != expected:
+                raise ValueError(
+                    f"Участник №{participant.start_number}: "
+                    "штрафы в БД не совпадают с JSON"
+                )
+            continue
+        for source in participant.penalties:
+            session.add(
+                Penalty(
+                    race_participant_id=entry.id,
+                    seconds=source.seconds,
+                    rule_reference=source.rule_reference,
+                    reason=source.raw_note,
+                )
+            )
+            prepared.created["penalties"] += 1
+    await session.flush()
+
+
+async def import_protocol(
+    session: AsyncSession, document: dict
+) -> ProtocolImportResult:
+    """Проверяет и переносит полный протокол внутри транзакции вызывающего кода.
+
+    Создаёт черновики протоколов, сохраняет явные результаты и штрафы за гонку.
+    Ожидаемые пустые результаты после DNF/DNS пропускает. Время берёт из источника.
+    """
+    data = CompleteProtocolImportData.model_validate(document)
+    prepared = await prepare_protocol_import(session, document)
+    metadata = data.protocol_metadata.model_dump()
+    protocols = {}
+    for stage_number, stage in prepared.stages.items():
+        for code, discipline in prepared.disciplines.items():
+            protocols[stage_number, code] = await _get_or_create(
+                session,
+                Protocol,
+                {"stage_id": stage.id, "discipline_id": discipline.id},
+                {**metadata, "source_filename": data.source_filename},
+                prepared.created,
+                f"Протокол этапа {stage_number}, дисциплина {code}",
+            )
+    skipped = await _import_stage_results(session, data, prepared, protocols)
+    await _import_penalties(session, data, prepared)
+    return ProtocolImportResult(
+        race_id=prepared.race.id,
+        created=prepared.created,
+        skipped_stage_results=skipped,
+        warnings=data.protocol_metadata.warnings,
+    )
