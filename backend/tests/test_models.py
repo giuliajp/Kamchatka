@@ -137,38 +137,102 @@ async def test_same_person_in_two_races(session, race):
 
 # ── Протоколы и результаты ──────────────────────────────────────────────────
 
-async def test_result_with_penalty(session, race):
-    """Как в протоколе: время этапа включает штраф; храним чистое + штраф = итог."""
+async def test_penalties_belong_to_race_participant(session, race):
+    """Штрафы суммируются за гонку и не меняют время отдельного этапа."""
+    entry_id = race["entry"].id
     final = hms("02:10:02")
-    result = StageResult(protocol_id=race["protocol"].id, race_participant_id=race["entry"].id,
-                         net_time_seconds=final - 120, penalty_seconds=120,
-                         final_time_seconds=final, dogs_at_start=10, dogs_at_finish=10)
-    result.penalties = [Penalty(seconds=120, reason="Штрафное время", rule_reference="П.14.11.14")]
-    session.add(result)
+    result = StageResult(
+        protocol_id=race["protocol"].id,
+        race_participant_id=entry_id,
+        final_time_seconds=final,
+    )
+    session.add_all([
+        result,
+        Penalty(race_participant_id=entry_id, seconds=120,
+                reason="Штрафное время", rule_reference="П.14.11.14"),
+        Penalty(race_participant_id=entry_id, seconds=60),
+    ])
     await session.commit()
+    result_id = result.id
 
     session.expunge_all()
-    stmt = select(StageResult).options(selectinload(StageResult.penalties))
+    stmt = (
+        select(RaceParticipant)
+        .where(RaceParticipant.id == entry_id)
+        .options(selectinload(RaceParticipant.penalties))
+    )
     loaded = (await session.execute(stmt)).scalar_one()
-    assert loaded.final_time_seconds == hms("02:10:02")
-    assert sum(p.seconds for p in loaded.penalties) == loaded.penalty_seconds
+    assert len(loaded.penalties) == 2
+    assert sum(p.seconds for p in loaded.penalties) == 180
+    penalty = next(p for p in loaded.penalties if p.seconds == 120)
+    assert penalty.reason == "Штрафное время"
+    assert penalty.rule_reference == "П.14.11.14"
+
+    loaded_result = await session.get(StageResult, result_id)
+    assert loaded_result.final_time_seconds == final
+    assert loaded_result.net_time_seconds is None
 
 
-async def test_final_time_must_equal_net_plus_penalty(session, race):
-    session.add(StageResult(protocol_id=race["protocol"].id, race_participant_id=race["entry"].id,
-                            net_time_seconds=1000, penalty_seconds=60, final_time_seconds=999))
+@pytest.mark.parametrize("seconds", [0, -1])
+async def test_penalty_must_be_positive(session, race, seconds):
+    """База отклоняет нулевое и отрицательное штрафное время."""
+    session.add(Penalty(race_participant_id=race["entry"].id, seconds=seconds))
     with pytest.raises(IntegrityError):
         await session.commit()
 
 
-async def test_dnf_has_no_time(session, race):
-    """DNF/DNS — без времени; участник при этом остаётся в протоколе."""
-    session.add(StageResult(protocol_id=race["protocol"].id, race_participant_id=race["entry"].id,
-                            status=StageResultStatus.DNF))
+@pytest.mark.parametrize("status", [StageResultStatus.DNF, StageResultStatus.DNS, StageResultStatus.DSQ])
+async def test_non_finisher_has_no_time(session, race, status):
+    """DNF/DNS/DSQ сохраняются в протоколе без итогового времени."""
+    result = StageResult(
+        protocol_id=race["protocol"].id,
+        race_participant_id=race["entry"].id,
+        status=status,
+    )
+    session.add(result)
     await session.commit()
-    session.add(StageResult(protocol_id=race["protocol"].id, race_participant_id=race["entry"].id,
-                            status=StageResultStatus.DNS, net_time_seconds=10, final_time_seconds=10))
-    with pytest.raises(IntegrityError):   # и дубль строки, и время у DNS запрещены
+    result_id = result.id
+
+    session.expunge_all()
+    loaded = await session.get(StageResult, result_id)
+    assert loaded.status == status
+    assert loaded.final_time_seconds is None
+
+
+@pytest.mark.parametrize(
+    ("status", "seconds"),
+    [
+        (StageResultStatus.FINISHED, None),
+        (StageResultStatus.DNF, 10),
+        (StageResultStatus.DNS, 10),
+        (StageResultStatus.DSQ, 10),
+    ],
+)
+async def test_result_time_must_match_status(session, race, status, seconds):
+    """Проверяем ограничение времени отдельно от уникальности строки."""
+    session.add(StageResult(
+        protocol_id=race["protocol"].id,
+        race_participant_id=race["entry"].id,
+        status=status,
+        final_time_seconds=seconds,
+    ))
+    with pytest.raises(IntegrityError, match="time_only_if_finished"):
+        await session.commit()
+
+
+async def test_result_unique_for_participant_in_protocol(session, race):
+    """Повторный результат участника отклоняется даже с корректным временем."""
+    protocol_id = race["protocol"].id
+    entry_id = race["entry"].id
+    session.add(StageResult(
+        protocol_id=protocol_id, race_participant_id=entry_id, final_time_seconds=100,
+    ))
+    await session.commit()
+
+    session.add(StageResult(
+        protocol_id=protocol_id, race_participant_id=entry_id, final_time_seconds=200,
+    ))
+    with pytest.raises(IntegrityError, match="uq_stage_results_protocol_participant"):
         await session.commit()
 
 
@@ -207,7 +271,7 @@ async def test_post_final_correction_requires_basis(session, race):
     await session.commit()
 
 
-async def test_total_is_sum_of_stages_real_2026_data(session):
+def test_total_is_sum_of_stages_real_2026_data():
     """Протокол 2026, Шевчук Г. Г.: сумма шести этапов = общий результат 18:25:10."""
     stage_times = ["02:10:02", "03:42:14", "04:37:54", "02:34:30", "03:46:33", "01:33:57"]
     assert sum(hms(t) for t in stage_times) == hms("18:25:10")
