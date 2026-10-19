@@ -152,12 +152,13 @@ def parse_participants(pages: list[str], stages: list[dict]) -> list[dict]:
 
 
 def parse_stage_results(text: str, stages: list[dict]) -> tuple[list[dict], str]:
-    """Разбирает результаты этапов и отделяет текст общего итога."""
+    """Разбирает этапы, учитывая отсутствие результатов после DNF/DNS."""
     tokens = text.split()
     summary_start = len(stages) * 2
     if len(tokens) < summary_start + 2:
         raise ValueError(f"Недостаточно данных для результатов этапов: {text}")
     results = []
+    has_dnf_or_dns = False
     for index, stage in enumerate(stages):
         raw_result, raw_speed = tokens[index * 2 : index * 2 + 2]
         if SPEED_PATTERN.fullmatch(raw_speed) is None:
@@ -165,6 +166,8 @@ def parse_stage_results(text: str, stages: list[dict]) -> tuple[list[dict], str]
                 f"Неожиданное значение скорости этапа {stage['number']}: {raw_speed}"
             )
         status, seconds = parse_result(raw_result)
+        if status in ("dnf", "dns"):
+            has_dnf_or_dns = True
         results.append(
             {
                 "stage_number": stage["number"],
@@ -173,7 +176,7 @@ def parse_stage_results(text: str, stages: list[dict]) -> tuple[list[dict], str]
                 "final_time_seconds": seconds,
                 "warning": (
                     "Нулевое значение: статус этапа требует проверки"
-                    if status is None
+                    if status is None and not has_dnf_or_dns
                     else None
                 ),
             }

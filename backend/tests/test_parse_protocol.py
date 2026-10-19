@@ -67,6 +67,34 @@ def test_parse_stage_results_preserves_status_and_summary(
 
 
 @pytest.mark.parametrize(
+    ("raw_results", "expected_warnings"),
+    [
+        (("DNF", "00:00:00", "00:00:00"), [False, False, False]),
+        (("00:10:00", "DNS", "00:00:00"), [False, False, False]),
+        (("00:00:00", "DNF", "00:00:00"), [True, False, False]),
+        (("00:00:00", "DNS", "00:00:00"), [True, False, False]),
+        (("00:10:00", "00:00:00", "00:00:00"), [False, True, True]),
+        (("DSQ", "00:00:00", "00:00:00"), [False, True, True]),
+    ],
+)
+def test_zero_time_warning_depends_on_prior_dnf_or_dns(raw_results, expected_warnings) -> None:
+    """Только предшествующий DNF/DNS объясняет отсутствие следующих результатов."""
+    stages = [{"number": number, "distance_km": 10.0} for number in (1, 2, 3)]
+    summary = "#ЗНАЧ! DNF 0"
+    stage_text = " ".join(f"{raw_result} 0" for raw_result in raw_results)
+
+    results, summary_text = parse_stage_results(f"{stage_text} {summary}", stages)
+
+    assert [result["raw_result"] for result in results] == list(raw_results)
+    assert [bool(result["warning"]) for result in results] == expected_warnings
+    assert summary_text == summary
+    for result in results:
+        if result["raw_result"] == "00:00:00":
+            assert result["status"] is None
+            assert result["final_time_seconds"] is None
+
+
+@pytest.mark.parametrize(
     ("note", "seconds", "warning"),
     [
         ("штр.вр. 2 мин. п.П.14.11.14", 120, None),
@@ -162,6 +190,12 @@ def test_parse_original_avacha_2026_pdf() -> None:
     } == {1: "dnf", 10: "dns"}
     assert by_number[1]["summary"]["total_time_seconds"] is None
     assert by_number[10]["summary"]["total_time_seconds"] is None
+    assert [r["status"] for r in by_number[1]["stage_results"]] == [
+        "dnf", None, None, None, None, None,
+    ]
+    assert [r["status"] for r in by_number[10]["stage_results"]] == [
+        "finished", "finished", "dns", None, None, None,
+    ]
     assert by_number[18]["stage_results"][0]["final_time_seconds"] == 7802
     assert by_number[18]["summary"]["total_time_seconds"] == 66310
     assert {
@@ -169,9 +203,9 @@ def test_parse_original_avacha_2026_pdf() -> None:
         for p in participants
         if p["penalties"]
     } == {18: 120, 19: 3, 12: 360}
-    assert len(document["warnings"]) == 8
-    assert all("Нулевое значение" in warning for warning in document["warnings"])
+    assert document["warnings"] == []
     for participant in participants:
+        assert all(result["warning"] is None for result in participant["stage_results"])
         assert participant["penalty_warnings"] == []
         assert participant["summary"]["total_penalty_seconds"] == sum(
             penalty["seconds"] for penalty in participant["penalties"]
