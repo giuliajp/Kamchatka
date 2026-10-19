@@ -37,6 +37,7 @@ kamchatka-avacha/
 | `docs/database.md` | Справочник таблиц базы данных |
 | `docs/api.md` | Адреса API: готовые и запланированные, формат ответов |
 | [docs/protocol-parser.md](docs/protocol-parser.md) | PDF-парсер протокола: запуск, устройство, структура JSON, проверки и ограничения |
+| [docs/protocol-import.md](docs/protocol-import.md) | Правила импорта JSON в БД: соответствие полей, статусы, пропуск пустых этапов и повторная загрузка |
 
 ## Технологии (по ТЗ заказчика)
 
