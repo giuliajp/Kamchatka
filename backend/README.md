@@ -277,6 +277,20 @@ python -m pytest -c backend/pytest.ini backend/tests -v
 
 ---
 
+## Импорт итогового протокола
+
+После настройки PostgreSQL и применения миграций можно загрузить JSON,
+подготовленный PDF-парсером. Команда выполняется из корня проекта:
+
+```bash
+python backend/scripts/import_protocol.py --json .cache/protocols/avacha-2026.json
+```
+
+Настройки БД берутся из `backend/.env` и переменных окружения. Команда выводит
+число созданных записей и пропущенных пустых результатов после DNF/DNS;
+при ошибке импорт откатывается. Подготовка JSON, отчёт и правила повторного
+импорта описаны в [документации импорта](../docs/protocol-import.md).
+
 ## Частые проблемы
 
 | Ошибка | Что делать |
@@ -301,6 +315,7 @@ backend/
 ├── run.py                    # точка входа для локального запуска
 ├── alembic.ini, migrations/  # миграции — история изменений структуры базы
 ├── pytest.ini, tests/        # тесты (conftest.py — общие заготовки)
+├── scripts/                 # parse_protocol.py: PDF → JSON; import_protocol.py: JSON → БД
 └── app/
     ├── main.py               # сборка приложения: CORS, ошибки, маршруты
     ├── config.py             # настройки из .env
