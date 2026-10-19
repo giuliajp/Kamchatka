@@ -280,7 +280,7 @@ python -m pytest -c backend/pytest.ini backend/tests -v
 ## Импорт итогового протокола
 
 После настройки PostgreSQL и применения миграций можно загрузить JSON,
-подготовленный PDF-парсером. Команда выполняется из корня проекта:
+подготовленный [PDF-парсером](../docs/protocol-parser.md). Команда выполняется из корня проекта:
 
 ```bash
 python backend/scripts/import_protocol.py --json .cache/protocols/avacha-2026.json
