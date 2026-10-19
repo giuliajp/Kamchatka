@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     vk_app_secret: str = ""
 
     # Iridium360 (трекинг участников) — см. app/services/iridium360/
-    iridium360_api_url: str = "https://www.iridium360.ru"
+    iridium360_api_url: str = "https://api.iridium360.ru"
     iridium360_api_key: str = ""
 
     # Как часто наш бэкенд опрашивает Iridium360, секунды.

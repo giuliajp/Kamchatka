@@ -53,3 +53,14 @@ python backend/scripts/import_protocol.py --json .cache/protocols/avacha-2026.js
 
 В API результатов список участников должен строиться по `RaceParticipant`
 с присоединением `StageResult`; при отсутствии результата показывается «—».
+
+## Публикация
+
+Импорт создаёт протоколы черновиками: API приложения их не показывает.
+Пока в админке нет кнопки «Опубликовать» (задача 3.3), публикуйте командой:
+
+```bash
+python backend/scripts/publish_protocols.py --year 2026
+```
+
+Повторный запуск ничего не меняет. Проверка: http://127.0.0.1:8000/api/races/current
