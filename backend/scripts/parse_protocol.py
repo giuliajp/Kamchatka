@@ -131,6 +131,7 @@ def parse_participants(pages: list[str], stages: list[dict]) -> list[dict]:
             results, summary_text = parse_stage_results(results_text, stages)
             summary = parse_summary(summary_text)
             penalties, penalty_warnings = parse_penalties(summary["raw_note"])
+            summary["total_penalty_seconds"] = sum(penalty["seconds"] for penalty in penalties)
             participants.append(
                 {
                     "start_number": int(number),
@@ -235,7 +236,7 @@ def parse_penalties(raw_note: str) -> tuple[list[dict], list[str]]:
         "raw_note": raw_note,
     }
 
-    return [penalty], ["В примечании не указан этап применения штрафа"]
+    return [penalty], []
 
 
 def parse_race(pages: list[str]) -> dict:

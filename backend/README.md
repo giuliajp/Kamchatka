@@ -401,6 +401,8 @@ python -m alembic -c backend/alembic.ini upgrade head
   `TRACKER_POLL_INTERVAL_SECONDS` в `.env` — как часто наш бэкенд опрашивает Iridium360.
 - SOS-сигнал — отдельная таблица `TrackerAlert`, **никогда не отдаётся** в публичный API, только admin-panel.
 - Официальные результаты — только из судейских протоколов (`Protocol`, `StageResult`), не из трекера и не из отметок на КП.
+- Штрафы относятся к участию в гонке (`Penalty.race_participant_id` → `RaceParticipant.id`).
+  Их общая сумма вычисляется за гонку и показывается отдельно; к времени из протокола штрафы повторно не прибавляются.
 
 ## Запуск на сервере (позже)
 

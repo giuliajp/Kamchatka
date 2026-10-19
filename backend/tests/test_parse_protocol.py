@@ -6,6 +6,7 @@ import pytest
 
 from scripts.parse_protocol import (
     duration_to_seconds,
+    parse_participants,
     parse_penalties,
     parse_protocol,
     parse_stage_results,
@@ -68,8 +69,8 @@ def test_parse_stage_results_preserves_status_and_summary(
 @pytest.mark.parametrize(
     ("note", "seconds", "warning"),
     [
-        ("штр.вр. 2 мин. п.П.14.11.14", 120, "не указан этап"),
-        ("  ШТР. ВР. 3 СЕК. П, П.14.11.14  ", 3, "не указан этап"),
+        ("штр.вр. 2 мин. п.П.14.11.14", 120, None),
+        ("  ШТР. ВР. 3 СЕК. П, П.14.11.14  ", 3, None),
         ("", None, None),
         ("0", None, None),
         ("штр.вр. 0 мин. п.П.14.11.14", None, "Некорректная длительность"),
@@ -95,6 +96,36 @@ def test_parse_penalties_preserves_note_and_reports_ambiguity(note, seconds, war
     else:
         assert len(warnings) == 1
         assert warning in warnings[0]
+
+
+@pytest.mark.parametrize(
+    ("raw_result", "place", "time_seconds", "note", "penalty_seconds"),
+    [
+        ("02:10:02", "1", 7802, "штр.вр. 2 мин. п.П.14.11.14", 120),
+        ("02:10:02", "1", 7802, "0", 0),
+        ("DNF", "", None, "штр.вр. 2 мин. п.П.14.11.14", 120),
+        ("DNS", "", None, "штр.вр. 3 сек. п.П.14.11.14", 3),
+        ("DSQ", "", None, "предупреждение судьи", 0),
+        ("02:10:02", "1", 7802, "штр.вр. 0 мин. п.П.14.11.14", 0),
+    ],
+)
+def test_participant_penalty_total_is_informational(
+    raw_result, place, time_seconds, note, penalty_seconds,
+) -> None:
+    """Сумма распознанных штрафов есть при любом статусе и не меняет время."""
+    pages = [
+        "Дисциплина Нарта-длинная дистанция более 8 собак\n"
+        "1 18 Шевчук Георгий Геннадьевич 1993 Камчатский край "
+        f"{raw_result} 15,5 15,5 {raw_result} {place} {note}"
+    ]
+    stages = [{"number": 1, "distance_km": 33.7}]
+
+    (participant,) = parse_participants(pages, stages)
+
+    assert participant["summary"]["total_penalty_seconds"] == penalty_seconds
+    assert participant["summary"]["raw_result"] == raw_result
+    assert participant["summary"]["total_time_seconds"] == time_seconds
+    assert participant["stage_results"][0]["final_time_seconds"] == time_seconds
 
 
 def test_parse_original_avacha_2026_pdf() -> None:
@@ -133,7 +164,18 @@ def test_parse_original_avacha_2026_pdf() -> None:
     assert by_number[10]["summary"]["total_time_seconds"] is None
     assert by_number[18]["stage_results"][0]["final_time_seconds"] == 7802
     assert by_number[18]["summary"]["total_time_seconds"] == 66310
+    assert {
+        p["start_number"]: p["summary"]["total_penalty_seconds"]
+        for p in participants
+        if p["penalties"]
+    } == {18: 120, 19: 3, 12: 360}
+    assert len(document["warnings"]) == 8
+    assert all("Нулевое значение" in warning for warning in document["warnings"])
     for participant in participants:
+        assert participant["penalty_warnings"] == []
+        assert participant["summary"]["total_penalty_seconds"] == sum(
+            penalty["seconds"] for penalty in participant["penalties"]
+        )
         if participant["summary"]["status"] == "finished":
             assert participant["summary"]["total_time_seconds"] == sum(
                 result["final_time_seconds"] for result in participant["stage_results"]
