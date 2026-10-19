@@ -24,7 +24,19 @@ from app.models import (
 )
 from app.services.protocol_import import import_protocol, prepare_protocol_import
 from scripts.parse_protocol import parse_protocol
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
+from sqlalchemy.exc import IntegrityError
+
+IMPORT_MODELS = (
+    Race,
+    Stage,
+    Discipline,
+    Participant,
+    RaceParticipant,
+    Protocol,
+    StageResult,
+    Penalty,
+)
 
 
 @pytest.fixture(scope="module")
@@ -40,6 +52,14 @@ def document(archive_document):
 
 async def count(session, model):
     return await session.scalar(select(func.count()).select_from(model))
+
+
+async def database_snapshot(session):
+    snapshot = {}
+    for model in IMPORT_MODELS:
+        rows = await session.execute(select(model.__table__).order_by(model.id))
+        snapshot[model.__tablename__] = [dict(row) for row in rows.mappings()]
+    return snapshot
 
 
 async def test_prepare_original_archive(session, document):
@@ -558,3 +578,260 @@ async def test_conflicting_protocol_data_is_not_overwritten(
     assert await count(session, Penalty) == 3
     results = await load_stage_results(session)
     assert results[1, 18].final_time_seconds == 7802
+
+
+async def test_reimport_keeps_all_rows_and_timestamps_unchanged(session, document):
+    async with session.begin():
+        await import_protocol(session, document)
+        before = await database_snapshot(session)
+    session.expunge_all()
+    document["participants"].reverse()
+    document["stages"].reverse()
+    for participant in document["participants"]:
+        participant["stage_results"].reverse()
+        participant["penalties"].reverse()
+
+    async with session.begin():
+        imported = await import_protocol(session, document)
+        assert await database_snapshot(session) == before
+    assert imported.created == {}
+    assert imported.skipped_stage_results == 8
+
+
+async def test_import_completes_existing_draft_records(session, document):
+    source = next(p for p in document["participants"] if p["start_number"] == 18)
+    partial = deepcopy(document)
+    partial["participants"] = [deepcopy(source)]
+    async with session.begin():
+        prepared = await prepare_protocol_import(session, partial)
+        entry = prepared.entries[18]
+        protocol = Protocol(
+            stage_id=prepared.stages[1].id,
+            discipline_id=entry.discipline_id,
+            source_filename=document["source_filename"],
+            **document["protocol_metadata"],
+        )
+        session.add(protocol)
+        await session.flush()
+        result = StageResult(
+            protocol_id=protocol.id,
+            race_participant_id=entry.id,
+            status=StageResultStatus.FINISHED,
+            final_time_seconds=source["stage_results"][0]["final_time_seconds"],
+            net_time_seconds=7700,
+            note="Ручная пометка",
+        )
+        source_penalty = source["penalties"][0]
+        penalty = Penalty(
+            race_participant_id=entry.id,
+            seconds=source_penalty["seconds"],
+            reason=source_penalty["raw_note"],
+            rule_reference=source_penalty["rule_reference"],
+        )
+        session.add_all([result, penalty])
+    result_id, penalty_id, protocol_id = result.id, penalty.id, protocol.id
+    session.expunge_all()
+
+    async with session.begin():
+        imported = await import_protocol(session, document)
+        assert imported.created == {
+            "disciplines": 2,
+            "participants": 20,
+            "race_participants": 20,
+            "protocols": 17,
+            "stage_results": 117,
+            "penalties": 2,
+        }
+        loaded = await session.get(StageResult, result_id)
+        assert loaded.protocol_id == protocol_id
+        assert loaded.net_time_seconds == 7700
+        assert loaded.note == "Ручная пометка"
+        assert (await session.get(Penalty, penalty_id)).seconds == 120
+        assert await count(session, StageResult) == 118
+        assert await count(session, Penalty) == 3
+
+
+async def test_late_conflict_rolls_back_import_and_allows_retry(session, document):
+    source = next(p for p in document["participants"] if p["start_number"] == 12)
+    partial = deepcopy(document)
+    partial["participants"] = [deepcopy(source)]
+    async with session.begin():
+        prepared = await prepare_protocol_import(session, partial)
+        source_penalty = source["penalties"][0]
+        conflicting_penalty = Penalty(
+            race_participant_id=prepared.entries[12].id,
+            seconds=source_penalty["seconds"] + 1,
+            reason=source_penalty["raw_note"],
+            rule_reference=source_penalty["rule_reference"],
+        )
+        session.add(conflicting_penalty)
+
+    async with session.begin():
+        current_race = Race(name="Авача 2027", year=2027, is_current=True)
+        session.add(current_race)
+        await session.flush()
+        before = await database_snapshot(session)
+        # Конфликт штрафов возникает после flush всех 118 результатов.
+        with pytest.raises(ValueError, match="Участник №12: штрафы в БД"):
+            await import_protocol(session, document)
+        assert await database_snapshot(session) == before
+
+        conflicting_penalty.seconds = source_penalty["seconds"]
+        imported = await import_protocol(session, document)
+        assert imported.created["participants"] == 20
+        assert imported.created["stage_results"] == 118
+    assert await count(session, Penalty) == 3
+    assert (await session.get(Race, current_race.id)).is_current is True
+
+
+async def test_database_error_rolls_back_import_and_keeps_session_usable(
+    session, document
+):
+    async with session.begin():
+        # Ограничение существует только в изолированной схеме этого теста.
+        await session.execute(
+            text(
+                "ALTER TABLE penalties ADD CONSTRAINT test_reject_penalty "
+                "CHECK (seconds <> 3)"
+            )
+        )
+        with pytest.raises(IntegrityError, match="test_reject_penalty"):
+            await import_protocol(session, document)
+        for model in IMPORT_MODELS:
+            assert await count(session, model) == 0
+
+        await session.execute(
+            text("ALTER TABLE penalties DROP CONSTRAINT test_reject_penalty")
+        )
+        imported = await import_protocol(session, document)
+    assert imported.created["stage_results"] == 118
+    assert await count(session, Penalty) == 3
+
+
+async def test_import_does_not_commit_outer_transaction(session, document):
+    async with session.begin():
+        session.add(Race(name="Авача 2027", year=2027, is_current=True))
+        await session.flush()
+        before = await database_snapshot(session)
+
+    with pytest.raises(RuntimeError, match="Ошибка вызывающего кода"):
+        async with session.begin():
+            await import_protocol(session, document)
+            assert await count(session, StageResult) == 118
+            raise RuntimeError("Ошибка вызывающего кода")
+    assert await database_snapshot(session) == before
+
+
+async def test_import_requires_caller_transaction(session, document):
+    with pytest.raises(ValueError, match="внутри async with session.begin"):
+        await import_protocol(session, document)
+    assert not session.in_transaction()
+
+
+@pytest.mark.parametrize(
+    ("extra", "message"),
+    [
+        ("stage", "этапы, отсутствующие в JSON"),
+        ("participant", "участники, отсутствующие в JSON"),
+        ("protocol", "протокол этапа 1, дисциплины ski_1"),
+        ("wrong_discipline_result", "не соответствуют JSON"),
+        ("foreign_protocol_result", "не соответствуют JSON"),
+    ],
+)
+async def test_extra_race_data_is_a_conflict(session, document, extra, message):
+    async with session.begin():
+        imported = await import_protocol(session, document)
+        entry = await session.scalar(
+            select(RaceParticipant).where(RaceParticipant.start_number == 18)
+        )
+        stage = await session.scalar(select(Stage).where(Stage.number == 1))
+        if extra == "stage":
+            session.add(Stage(race_id=imported.race_id, number=7))
+        elif extra == "participant":
+            person = Participant(
+                last_name="Лишний", first_name="Участник", birth_year=1990
+            )
+            session.add(person)
+            await session.flush()
+            session.add(
+                RaceParticipant(
+                    race_id=imported.race_id,
+                    participant_id=person.id,
+                    discipline_id=entry.discipline_id,
+                    start_number=99,
+                )
+            )
+        elif extra == "protocol":
+            discipline = Discipline(
+                code="ski_1", name="Одна собака", equipment=Equipment.SKI, dogs_min=1
+            )
+            session.add(discipline)
+            await session.flush()
+            session.add(Protocol(stage_id=stage.id, discipline_id=discipline.id))
+        else:
+            if extra == "wrong_discipline_result":
+                protocol = await session.scalar(
+                    select(Protocol)
+                    .join(Discipline)
+                    .where(
+                        Protocol.stage_id == stage.id,
+                        Discipline.code == "ski_2",
+                    )
+                )
+            else:
+                foreign_race = Race(name="Авача 2027", year=2027)
+                session.add(foreign_race)
+                await session.flush()
+                foreign_stage = Stage(race_id=foreign_race.id, number=1)
+                session.add(foreign_stage)
+                await session.flush()
+                protocol = Protocol(
+                    stage_id=foreign_stage.id, discipline_id=entry.discipline_id
+                )
+                session.add(protocol)
+                await session.flush()
+            session.add(
+                StageResult(
+                    protocol_id=protocol.id,
+                    race_participant_id=entry.id,
+                    status=StageResultStatus.DNS,
+                )
+            )
+        await session.flush()
+        before = await database_snapshot(session)
+
+    with pytest.raises(ValueError, match=message):
+        async with session.begin():
+            await import_protocol(session, document)
+    assert await database_snapshot(session) == before
+
+
+@pytest.mark.parametrize("protected", ["published", "final"])
+@pytest.mark.parametrize("missing", ["result", "penalty"])
+async def test_published_archive_cannot_be_silently_completed(
+    session, document, protected, missing
+):
+    async with session.begin():
+        await import_protocol(session, document)
+        protocol = await session.scalar(select(Protocol).order_by(Protocol.id))
+        protected_at = datetime(2026, 2, 16, 12, tzinfo=UTC)
+        if protected == "published":
+            protocol.published_at = protected_at
+        else:
+            protocol.status = ProtocolStatus.FINAL
+            protocol.finalized_at = protected_at
+        if missing == "result":
+            results = await load_stage_results(session)
+            await session.delete(results[1, 18])
+        else:
+            penalty = await session.scalar(
+                select(Penalty).where(Penalty.seconds == 120)
+            )
+            await session.delete(penalty)
+        await session.flush()
+        before = await database_snapshot(session)
+
+    with pytest.raises(ValueError, match="нельзя дополнять данные после публикации"):
+        async with session.begin():
+            await import_protocol(session, document)
+    assert await database_snapshot(session) == before

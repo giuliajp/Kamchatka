@@ -1,14 +1,15 @@
 """Перенос JSON-протокола в существующие модели БД.
 
-Транзакцией управляет вызывающий код. Функция выполняет flush, но не commit;
-при ошибке вызывающий код должен откатить всю транзакцию.
+Транзакцией управляет вызывающий код. Функции выполняют flush, но не commit.
+Полный импорт использует SAVEPOINT: при ошибке изменения этого запуска
+откатываются, даже если вызывающий код перехватит исключение.
 """
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from typing import TypeVar
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import Base
@@ -264,6 +265,49 @@ async def prepare_protocol_import(
     return PreparedProtocolImport(race, stages, disciplines, entries, created)
 
 
+async def _check_race_scope(
+    session: AsyncSession, prepared: PreparedProtocolImport
+) -> None:
+    """Полный архив не должен молча расходиться с составом гонки в БД."""
+    stage_numbers = set(
+        await session.scalars(
+            select(Stage.number).where(Stage.race_id == prepared.race.id)
+        )
+    )
+    extra_stages = stage_numbers - prepared.stages.keys()
+    if extra_stages:
+        raise ValueError(
+            f"Гонка {prepared.race.year}: в БД есть этапы, отсутствующие в JSON: "
+            f"{sorted(extra_stages)}"
+        )
+    entry_numbers = set(
+        await session.scalars(
+            select(RaceParticipant.start_number).where(
+                RaceParticipant.race_id == prepared.race.id
+            )
+        )
+    )
+    extra_entries = entry_numbers - prepared.entries.keys()
+    if extra_entries:
+        raise ValueError(
+            f"Гонка {prepared.race.year}: в БД есть участники, отсутствующие в JSON: "
+            f"{sorted(extra_entries)}"
+        )
+    protocol_keys = await session.execute(
+        select(Stage.number, Discipline.code)
+        .select_from(Protocol)
+        .join(Stage, Protocol.stage_id == Stage.id)
+        .join(Discipline, Protocol.discipline_id == Discipline.id)
+        .where(Stage.race_id == prepared.race.id)
+    )
+    for number, code in protocol_keys:
+        if number not in prepared.stages or code not in prepared.disciplines:
+            raise ValueError(
+                f"Гонка {prepared.race.year}: в БД есть протокол этапа {number}, "
+                f"дисциплины {code}, отсутствующий в JSON"
+            )
+
+
 async def _import_stage_results(
     session: AsyncSession,
     data: CompleteProtocolImportData,
@@ -273,12 +317,31 @@ async def _import_stage_results(
     existing = (
         await session.scalars(
             select(StageResult).where(
-                StageResult.protocol_id.in_(
-                    [protocol.id for protocol in protocols.values()]
+                or_(
+                    StageResult.protocol_id.in_(
+                        [protocol.id for protocol in protocols.values()]
+                    ),
+                    StageResult.race_participant_id.in_(
+                        [entry.id for entry in prepared.entries.values()]
+                    ),
                 )
             )
         )
     ).all()
+    expected_keys = {
+        (
+            protocols[result.stage_number, participant.discipline_code].id,
+            prepared.entries[participant.start_number].id,
+        )
+        for participant in data.participants
+        for result in participant.stage_results
+    }
+    for result in existing:
+        if (result.protocol_id, result.race_participant_id) not in expected_keys:
+            raise ValueError(
+                f"Результат {result.id}: протокол {result.protocol_id} и участие "
+                f"{result.race_participant_id} не соответствуют JSON"
+            )
     by_key = {
         (result.protocol_id, result.race_participant_id): result for result in existing
     }
@@ -377,26 +440,40 @@ async def import_protocol(
 
     Создаёт черновики протоколов, сохраняет явные результаты и штрафы за гонку.
     Ожидаемые пустые результаты после DNF/DNS пропускает. Время берёт из источника.
+    При ошибке SAVEPOINT откатывает весь импорт, сохраняя работоспособность сессии.
+    Опубликованный или утверждённый архив допускает только совпадающий повтор.
     """
     data = CompleteProtocolImportData.model_validate(document)
-    prepared = await prepare_protocol_import(session, document)
-    metadata = data.protocol_metadata.model_dump()
-    protocols = {}
-    for stage_number, stage in prepared.stages.items():
-        for code, discipline in prepared.disciplines.items():
-            protocols[stage_number, code] = await _get_or_create(
-                session,
-                Protocol,
-                {"stage_id": stage.id, "discipline_id": discipline.id},
-                {**metadata, "source_filename": data.source_filename},
-                prepared.created,
-                f"Протокол этапа {stage_number}, дисциплина {code}",
+    if not session.in_transaction():
+        raise ValueError("Вызывайте import_protocol внутри async with session.begin()")
+    async with session.begin_nested():
+        prepared = await prepare_protocol_import(session, document)
+        await _check_race_scope(session, prepared)
+        metadata = data.protocol_metadata.model_dump()
+        protocols = {}
+        for stage_number, stage in prepared.stages.items():
+            for code, discipline in prepared.disciplines.items():
+                protocols[stage_number, code] = await _get_or_create(
+                    session,
+                    Protocol,
+                    {"stage_id": stage.id, "discipline_id": discipline.id},
+                    {**metadata, "source_filename": data.source_filename},
+                    prepared.created,
+                    f"Протокол этапа {stage_number}, дисциплина {code}",
+                )
+        skipped = await _import_stage_results(session, data, prepared, protocols)
+        await _import_penalties(session, data, prepared)
+        if prepared.created and any(
+            protocol.published_at is not None or protocol.is_final
+            for protocol in protocols.values()
+        ):
+            raise ValueError(
+                f"Гонка {prepared.race.year}: нельзя дополнять данные после "
+                "публикации или утверждения протокола; используйте процедуру правок"
             )
-    skipped = await _import_stage_results(session, data, prepared, protocols)
-    await _import_penalties(session, data, prepared)
-    return ProtocolImportResult(
-        race_id=prepared.race.id,
-        created=prepared.created,
-        skipped_stage_results=skipped,
-        warnings=data.protocol_metadata.warnings,
-    )
+        return ProtocolImportResult(
+            race_id=prepared.race.id,
+            created=prepared.created,
+            skipped_stage_results=skipped,
+            warnings=data.protocol_metadata.warnings,
+        )
