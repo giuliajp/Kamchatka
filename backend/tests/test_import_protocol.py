@@ -155,7 +155,10 @@ async def test_reuses_person_and_preserves_existing_fields(session, document):
     assert current_race.is_current is True
 
 
-async def test_ambiguous_person_is_not_chosen_automatically(session, document):
+@pytest.mark.parametrize("importer", [prepare_protocol_import, import_protocol])
+async def test_ambiguous_person_is_not_chosen_automatically(
+    session, document, importer
+):
     session.add_all(
         [
             Participant(
@@ -176,10 +179,10 @@ async def test_ambiguous_person_is_not_chosen_automatically(session, document):
 
     with pytest.raises(ValueError, match="Участник №18: неоднозначное совпадение"):
         async with session.begin():
-            await prepare_protocol_import(session, document)
+            await importer(session, document)
 
-    assert await count(session, Race) == 0
-    assert await count(session, Participant) == 2
+    for model in IMPORT_MODELS:
+        assert await count(session, model) == (2 if model is Participant else 0)
 
 
 @pytest.mark.parametrize("conflict", ["race", "stage", "region", "number"])
@@ -835,3 +838,153 @@ async def test_published_archive_cannot_be_silently_completed(
         async with session.begin():
             await import_protocol(session, document)
     assert await database_snapshot(session) == before
+
+
+async def test_full_import_reuses_people_without_changing_another_race(
+    session, document
+):
+    # Условная гонка другого года с теми же спортсменами, не архивный источник.
+    other_document = deepcopy(document)
+    other_document["source_filename"] = "test-race-2027.pdf"
+    other_document["race"].update(
+        name="Тестовая гонка 2027",
+        year=2027,
+        start_date="2027-02-06",
+        end_date="2027-02-15",
+    )
+    async with session.begin():
+        other_import = await import_protocol(session, other_document)
+        other_race = await session.get(Race, other_import.race_id)
+        other_race.is_current = True
+        protocol = await session.scalar(select(Protocol).order_by(Protocol.id))
+        protocol.status = ProtocolStatus.FINAL
+        protocol.published_at = datetime(2027, 2, 16, 12, tzinfo=UTC)
+        protocol.finalized_at = protocol.published_at
+        protocol.finalized_by = "Главный судья"
+        person = await session.scalar(select(Participant).order_by(Participant.id))
+        person.bio = "Карточка спортсмена из другой гонки"
+        await session.flush()
+        before = await database_snapshot(session)
+    session.expunge_all()
+
+    async with session.begin():
+        imported = await import_protocol(session, document)
+        after = await database_snapshot(session)
+
+    assert imported.race_id != other_import.race_id
+    assert imported.created == {
+        "races": 1,
+        "stages": 6,
+        "race_participants": 21,
+        "protocols": 18,
+        "stage_results": 118,
+        "penalties": 3,
+    }
+    assert imported.skipped_stage_results == 8
+    for table, previous_rows in before.items():
+        previous_ids = {row["id"] for row in previous_rows}
+        assert [
+            row for row in after[table] if row["id"] in previous_ids
+        ] == previous_rows
+    assert len(after["participants"]) == 21
+    assert len(after["race_participants"]) == 42
+    entries_by_race = {}
+    for entry in after["race_participants"]:
+        entries_by_race.setdefault(entry["race_id"], {})[entry["start_number"]] = entry[
+            "participant_id"
+        ]
+    assert entries_by_race[imported.race_id] == entries_by_race[other_import.race_id]
+    assert (await session.get(Race, other_import.race_id)).is_current is True
+    assert (await session.get(Race, imported.race_id)).is_current is False
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("birth_year", 1994),
+        ("birth_year", None),
+        ("middle_name", None),
+        ("last_name", "Шёвчук"),
+        ("last_name", "Шев-чук"),
+    ],
+)
+async def test_full_import_does_not_merge_distinct_people(
+    session, document, field, value
+):
+    source = next(p for p in document["participants"] if p["start_number"] == 18)
+    document["participants"] = [source]
+    other_person = Participant(
+        last_name="Шевчук",
+        first_name="Георгий",
+        middle_name="Геннадьевич",
+        birth_year=1993,
+        bio="Существующая карточка",
+    )
+    setattr(other_person, field, value)
+    async with session.begin():
+        session.add(other_person)
+        await session.flush()
+        previous_row = (await database_snapshot(session))["participants"][0]
+
+    async with session.begin():
+        imported = await import_protocol(session, document)
+        entry = await session.scalar(
+            select(RaceParticipant).where(RaceParticipant.race_id == imported.race_id)
+        )
+        imported_person = await session.get(Participant, entry.participant_id)
+        saved_people = (await database_snapshot(session))["participants"]
+
+    assert imported.created["participants"] == 1
+    assert len(saved_people) == 2
+    assert imported_person.id != other_person.id
+    assert imported_person.full_name == source["full_name"]
+    assert imported_person.birth_year == 1993
+    assert (
+        next(row for row in saved_people if row["id"] == other_person.id)
+        == previous_row
+    )
+
+
+@pytest.mark.parametrize(
+    ("status", "expected_participation", "expected_results", "expected_skipped"),
+    [
+        ("dns", RaceParticipantStatus.REGISTERED, 1, 5),
+        ("dsq", RaceParticipantStatus.DSQ, 6, 0),
+    ],
+)
+async def test_full_import_preserves_explicit_dns_and_dsq(
+    session,
+    document,
+    status,
+    expected_participation,
+    expected_results,
+    expected_skipped,
+):
+    source = next(p for p in document["participants"] if p["start_number"] == 10)
+    document["participants"] = [source]
+    source["summary"].update(
+        status=status, raw_result=status.upper(), total_time_seconds=None
+    )
+    for index, result in enumerate(source["stage_results"]):
+        empty_after_dns = status == "dns" and index > 0
+        result.update(
+            status=None if empty_after_dns else status,
+            raw_result="00:00:00" if empty_after_dns else status.upper(),
+            final_time_seconds=None,
+            warning=None,
+        )
+
+    async with session.begin():
+        imported = await import_protocol(session, document)
+        entry = await session.scalar(select(RaceParticipant))
+        results = (await session.scalars(select(StageResult))).all()
+
+    assert entry.status == expected_participation
+    assert imported.created["protocols"] == 6
+    assert imported.created["stage_results"] == expected_results
+    assert imported.skipped_stage_results == expected_skipped
+    assert len(results) == expected_results
+    assert all(result.status == StageResultStatus(status) for result in results)
+    assert all(result.final_time_seconds is None for result in results)
+    assert all(result.place is None for result in results)
+    assert await count(session, Penalty) == 0
