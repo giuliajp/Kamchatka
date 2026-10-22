@@ -60,8 +60,11 @@ class Settings(BaseSettings):
     # Как часто наш бэкенд опрашивает Iridium360, секунды.
     # Это НЕ интервал передачи точек трекером (20 мин по брифу) — тот хранится в БД
     # в Season.tracking_interval_minutes и может переопределяться на этапе (Stage).
-    # Подходящее значение уточним при разборе API Iridium360 (задача 1.4).
-    tracker_poll_interval_seconds: int = 1200
+    # Iridium отдаёт последние точки всех устройств одним запросом, поэтому опрашиваем часто:
+    # новая точка появляется на карте не позже чем через 2 минуты после прихода в Iridium.
+    tracker_poll_interval_seconds: int = 120
+    # Выключатель фонового опроса (например, для второго экземпляра сервера).
+    tracker_polling_enabled: bool = True
 
     @property
     def cors_origins_list(self) -> list[str]:

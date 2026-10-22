@@ -5,6 +5,7 @@
 Документация API — автоматически: http://127.0.0.1:8000/docs
 """
 
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -14,12 +15,18 @@ from app.api.routes import health, participants, races, stages
 from app.config import get_settings
 from app.db import engine
 from app.middleware.errors import register_error_handlers
+from app.services.iridium360.poller import polling_enabled, run_poller
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Здесь позже запустим фоновый опрос Iridium360 (задача 2.7).
+    # Фоновый опрос Iridium360 (задача 2.6). Без ключа в .env не запускается.
+    stop = asyncio.Event()
+    poller = asyncio.create_task(run_poller(stop)) if polling_enabled() else None
     yield
+    if poller is not None:
+        stop.set()
+        await poller
     # При остановке сервера аккуратно закрываем соединения с базой.
     await engine.dispose()
 
