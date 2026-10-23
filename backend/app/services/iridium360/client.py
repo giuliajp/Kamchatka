@@ -148,6 +148,17 @@ def parse_point(data: Any) -> IridiumPoint | None:
     )
 
 
+def _text(value: Any) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _is_imei(value: str | None) -> bool:
+    return bool(value) and value.isdigit() and len(value) == 15
+
+
 def parse_devices(payload: Any) -> list[IridiumDevice]:
     if isinstance(payload, dict):
         if _get(payload, "error"):
@@ -160,17 +171,21 @@ def parse_devices(payload: Any) -> list[IridiumDevice]:
     for item in payload:
         if not isinstance(item, dict):
             continue
-        imei = _get(item, "Imei")
-        if imei in (None, ""):
+        imei, number = _text(_get(item, "Imei")), _text(_get(item, "Number"))
+        # В живом ответе (октябрь 2026) поля перепутаны относительно документации:
+        # Imei = «YB#26571» (метка устройства), Number = «300534062293860» (настоящий IMEI).
+        # Храним настоящий IMEI — 15 цифр — откуда бы он ни пришёл.
+        if not _is_imei(imei) and _is_imei(number):
+            imei = number
+        if not imei:
             continue
         track = _get(item, "Track")
         raw_points = _get(track, "Points") if isinstance(track, dict) else None
         points = [p for p in map(parse_point, raw_points or []) if p is not None]
-        number = _get(item, "Number")
         devices.append(IridiumDevice(
-            name=_get(item, "Name"),
-            number=str(number) if number not in (None, "") else None,
-            imei=str(imei).strip(),
+            name=_text(_get(item, "Name")),
+            number=number,            # для запроса трека — как прислал Iridium
+            imei=imei,
             last_position=parse_point(_get(item, "LastKnownPosition")),
             track=tuple(sorted(points, key=lambda p: p.at)),
         ))
@@ -218,11 +233,18 @@ class Iridium360Client:
         if point_id_from:
             params["point_id_from"] = point_id_from
         if date_from:
-            params["date_from"] = date_from.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+            params["date_from"] = date_from.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S")   # проверено: без «Z»
         if date_to:
-            params["date_to"] = date_to.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+            params["date_to"] = date_to.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S")   # проверено: без «Z»
         devices = parse_devices(await self._request(params))
-        return list(devices[0].track) if devices else []
+        mine = [d for d in devices if number in (d.number, d.imei)]
+        if not mine and len(devices) == 1:
+            mine = devices
+        return list(mine[0].track) if mine else []
+
+    async def fetch_raw(self, params: dict[str, str] | None = None) -> Any:
+        """Ответ Iridium как есть — для проверки формата (scripts/poll_iridium.py --raw)."""
+        return await self._request(params or {})
 
     async def _request(self, params: dict[str, str]) -> Any:
         if not self.api_key:

@@ -247,3 +247,27 @@ async def test_stage_from_assignment_wins(maker, setup):
     assert saved.stage_id == stage2.id
     async with maker() as session:
         assert await session.scalar(select(func.count()).select_from(TrackerPosition)) == 1
+
+
+def test_parse_devices_real_layout_imei_in_number():
+    """Живой ответ (окт. 2026): Imei = метка «YB#26571», Number = настоящий IMEI."""
+    payload = [{"Name": "Иридиум360° РокСТАР 26571", "Imei": "YB#26571",
+                "Number": "300534062293860",
+                "LastKnownPosition": {"Id": 1, "Date": "2026-03-25T09:30:00",
+                                      "Lat": 57.14099, "Lon": 161.44705, "Battery": 68}}]
+    device = parse_devices(payload)[0]
+    assert (device.imei, device.number) == ("300534062293860", "300534062293860")
+    assert device.name == "Иридиум360° РокСТАР 26571"
+
+
+async def test_fetch_track_picks_requested_device():
+    def handler(request):
+        return httpx.Response(200, json=[
+            {"Imei": "YB#1", "Number": "300534000000001"},
+            {"Imei": "YB#2", "Number": "300534000000002", "Track": {"Points": [
+                {"Id": 5, "Date": "2027-02-07T02:00:00", "Lat": 53.1, "Lon": 158.7}]}},
+        ])
+
+    async with make_client(handler) as client:
+        points = await client.fetch_track("300534000000002")
+    assert [p.id for p in points] == ["5"]
