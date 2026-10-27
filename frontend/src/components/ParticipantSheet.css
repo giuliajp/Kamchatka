@@ -1,0 +1,22 @@
+.map-participant { padding: 8px 16px 16px; }
+.map-participant, .map-participant * { box-sizing: border-box; }
+.map-participant button:focus-visible { outline: 3px solid var(--vkui--color_stroke_accent); outline-offset: 3px; }
+.map-participant h3 { font-size: .875rem; line-height: 1.125rem; margin: 16px 0; }
+.map-participant__tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.map-participant__tags span { padding: 8px; border-radius: 6px; background: var(--vkui--color_background_accent); color: var(--vkui--color_text_contrast); font-size: .8125rem; }
+.map-participant__tags span + span { background: #7c85c4; color: #fff; }
+.map-participant__bio { border-radius: 8px; box-shadow: 0 2px 8px #0002; overflow: hidden; }
+.map-participant__bio button { margin: 0; }
+.map-participant__biography { padding: 0 12px 12px; font-size: .8125rem; line-height: 1.3; }
+.map-participant__biography h3 { margin: 0 0 16px; font-size: .8125rem; }
+.map-participant__biography p { margin: 0 0 8px; }
+.map-participant__fans { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; font-size: .8125rem; }
+.map-participant__fans span { color: var(--vkui--color_text_accent); }
+.map-participant__position { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.map-place { background: #ff4c3e; color: #fff; padding: 7px 12px; border-radius: 8px; font-size: .875rem; }
+.map-participant__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 16px 0 24px; }
+.map-participant__stats > div { width: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 12px 2px; border-radius: 8px; background: var(--vkui--color_background_secondary); text-align: center; font-size: .875rem; overflow-wrap: anywhere; }
+.map-participant__stats span { font-size: .75rem; color: var(--vkui--color_text_primary); }
+.map-participant__route { display: grid; gap: 12px; }
+.map-participant__actions { display: flex; gap: 12px; margin-top: 24px; }
+.map-participant__actions > :first-child { flex: 1; }

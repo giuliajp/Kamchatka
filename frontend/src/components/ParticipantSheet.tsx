@@ -8,6 +8,7 @@ import { ParticipantCard, type ParticipantCardProps } from './ParticipantCard';
 import { ParticipantPosition, type ParticipantPositionProps } from './ParticipantPosition';
 import { TimeBadge, type TimeBadgeProps } from './TimeBadge';
 import { RoutePoint, type RoutePointProps } from './RoutePoint';
+import './ParticipantSheet.css';
 export interface ParticipantSheetProps {
   open: boolean;
   participant: ParticipantCardProps;
@@ -22,8 +23,9 @@ export interface ParticipantSheetProps {
 export function ParticipantSheet({ open, participant, position, freshness, route, photoAction, details, onShare, onClose }: ParticipantSheetProps) {
   const titleId = useId();
   const [expanded, setExpanded] = useState(details?.expanded ?? false);
+  const badges = freshness.map((badge, index) => <TimeBadge key={index} {...badge} />);
+  const routePoints = route.map(({ id, ...point }) => <RoutePoint key={id} {...point} />);
   return <ModalPage open={open} onClose={onClose} aria-labelledby={titleId} dynamicContentHeight={!details} height={details ? "84dvh" : undefined} settlingHeight={100}
-    className={details ? "map-participant-sheet" : undefined}
     header={<ModalPageHeader><span id={titleId}>Участник №{participant.number}</span></ModalPageHeader>}>
     {details ? <div className="map-participant">
       <div className="map-participant__tags"><span>№{participant.number}</span><span>{details.disciplineLabel}</span></div>
@@ -33,18 +35,18 @@ export function ParticipantSheet({ open, participant, position, freshness, route
         {expanded && <div className="map-participant__biography"><h3>Биография участника</h3>{details.biography.map(text => <p key={text}>{text}</p>)}</div>}
       </div>
       <p className="map-participant__fans"><img src="/figma/map-screen/10c0f.svg" width={20} height={20} alt="" />{details.supporters} болельщиков <span>+87 за сутки</span></p>
-      <div className="map-participant__position"><span className="map-place">{position.place} место</span>{freshness.map((badge, index) => <TimeBadge key={index} {...badge} />)}</div>
+      <div className="map-participant__position"><span className="map-place">{position.place} место</span>{badges}</div>
       <div className="map-participant__stats"><ParticipantGap gap={position.gap} /><div><strong>{details.speed}</strong><span>средняя скорость</span></div><div><strong>{details.distance}</strong><span>пройдено</span></div></div>
       <h3>Прохождение контрольных пунктов (КП)</h3>
-      <div className="map-participant__route">{route.map(({ id, ...point }) => <RoutePoint key={id} {...point} />)}</div>
+      <div className="map-participant__route">{routePoints}</div>
       <div className="map-participant__actions"><SupportButton selected={participant.supported} onToggle={participant.onSupportToggle} />
         <Button size="l" mode="outline" aria-label="Поделиться" onClick={onShare}><Icon24ShareOutline /></Button></div>
       <Button stretched mode="tertiary" onClick={onClose}>Свернуть</Button>
     </div> : <Div><Flex direction="column" gap="l">
       <ParticipantCard {...participant} />
       <ParticipantPosition {...position} />
-      <Flex direction="column" align="start" gap="s">{freshness.map((badge, index) => <TimeBadge key={index} {...badge} />)}</Flex>
-      <div>{route.map(({ id, ...point }) => <RoutePoint key={id} {...point} />)}</div>
+      <Flex direction="column" align="start" gap="s">{badges}</Flex>
+      <div>{routePoints}</div>
       <Flex wrap="wrap" gap="s">
         <Button mode="outline" before={<Icon24ShareOutline />} onClick={onShare}>Поделиться</Button>
         {photoAction && <Button mode="tertiary" before={<Icon24Add />} onClick={photoAction.onOpen}>{photoAction.label}</Button>}

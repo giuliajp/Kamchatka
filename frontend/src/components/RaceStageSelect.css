@@ -5,7 +5,6 @@
   --vkui--size_border--regular: 0.5px;
 }
 
-.race-stage-select .vkuiCustomSelectInput__title,
 .race-stage-select .race-stage-select__input {
   --vkui--font_weight_base3: 500;
   font-size: 0.8125rem;
