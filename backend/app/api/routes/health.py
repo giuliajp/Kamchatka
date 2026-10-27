@@ -4,7 +4,6 @@
 """
 
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.api.deps import SessionDep

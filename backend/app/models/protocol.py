@@ -67,10 +67,6 @@ class Protocol(TimestampMixin, Base):
         lazy="raise_on_sql", back_populates="protocol", cascade="all, delete-orphan"
     )
 
-    @property
-    def is_final(self) -> bool:
-        return self.status == ProtocolStatus.FINAL
-
     def __repr__(self) -> str:
         return f"<Protocol stage={self.stage_id} discipline={self.discipline_id} {self.status.value}>"
 

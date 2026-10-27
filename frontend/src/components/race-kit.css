@@ -1,0 +1,65 @@
+/* VKUI foundations plus measured authored components from Figma. Font files pending. */
+.race-tabbar { position: relative; }
+.race-secondary { color: var(--vkui--color_text_secondary); }
+
+/* VKUI Tappable preserves native button borders/font when Component="button".
+ * Reset only browser chrome; keep VKUI layout, focus, colors and interaction. */
+.race-native-action { border: 0; font: inherit; text-align: start; width: 100%; box-sizing: border-box; }
+.race-list-action { background: transparent; padding-block: 0; }
+
+/* Figma 122:9315. Existing VKUI font stays visible until Gotham Pro is supplied. */
+.race-time-badge {
+  display: inline-flex; align-items: center; box-sizing: border-box;
+  max-width: 100%; min-height: 32px; padding: 4px 12px; border-radius: 8px;
+  background: var(--vkui--color_background_content); color: var(--vkui--color_text_primary);
+  box-shadow: 0 0 2px #00000014, 0 4px 16px #00000014;
+}
+.race-time-badge__content { display: flex; align-items: center; gap: 4px; font-size: 0.875rem; line-height: 1.125rem; font-weight: 500; letter-spacing: .2px; }
+.race-time-badge__content img { flex: none; }
+.race-time-badge[data-state='offline'] { width: 328px; min-height: 60px; padding-block: 8px; gap: 16px; }
+.race-time-badge[data-state='offline'] .race-time-badge__content { flex: 1; align-items: start; gap: 8px; }
+/* Figma 276:5012. Ring exports preserve authored color, shape, and dash pattern. */
+.race-map-marker { position: relative; display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: white; overflow: visible; }
+.race-map-marker[data-supported='true'] { width: 44px; height: 44px; }
+.race-map-marker__ring { position: absolute; inset: 0; }
+.race-map-marker__inset { position: absolute; top: 2px; left: 2px; }
+.race-map-marker__number { position: relative; font-size: 0.875rem; line-height: 1.125rem; letter-spacing: .2px; font-weight: 500; }
+.race-map-marker[data-supported='true'] .race-map-marker__number { font-weight: 700; }
+.race-map-marker__badge { position: absolute; top: -9px; left: 21px; }
+.race-map-marker[data-supported='true'] .race-map-marker__badge { top: -6px; left: 26px; }
+/* Figma 280:5610 and 167:2831. */
+.race-checkpoint { display: inline-flex; justify-content: center; align-items: center; box-sizing: border-box; padding: 4px; min-height: 24px; border: 1px solid var(--vkui--color_text_primary); border-radius: 12px; background: var(--vkui--color_background_content); color: var(--vkui--color_text_primary); font: inherit; font-size: 0.75rem; line-height: 0.875rem; letter-spacing: .2px; }
+.race-participant-gap { display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; width: 104px; padding: 12px 0; gap: 2px; border-radius: 8px; background: var(--vkui--color_background_secondary); }
+.race-participant-gap > * { font-size: 0.875rem; line-height: 1.125rem; letter-spacing: .2px; }
+.race-participant-cluster { position: relative; display: inline-grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 50%; padding: 0; background: transparent; color: #000; font-size: 0.875rem; line-height: 1.125rem; letter-spacing: .2px; }
+.race-participant-cluster > img { position: absolute; inset: 0; }
+.race-participant-cluster > span { position: relative; }
+/* Figma 352:8418. Geometry from source, responsive wrapping for longer content. */
+.race-event {
+  display: flex; align-items: start; justify-content: space-between; box-sizing: border-box;
+  width: 328px; max-width: 100%; padding: 0 0 0 12px; text-align: start; font: inherit;
+  border: 0; border-radius: 8px;
+  background: var(--vkui--color_background_tertiary); color: var(--vkui--color_text_primary);
+  box-shadow: inset 0 0 0 .33px #0000001f, 0 0 4px #0000000f, 0 4px 8px #0000000a;
+}
+.race-event__time { display: flex; align-items: center; min-height: 60px; white-space: pre-line; font-size: 0.75rem; line-height: 0.875rem; letter-spacing: .2px; font-weight: 500; }
+.race-event__content { display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; width: 256px; min-width: 0; padding: 8px 12px 12px; }
+.race-event__tags { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; min-height: 28px; font-size: 0.75rem; line-height: 0.875rem; letter-spacing: .2px; font-weight: 500; }
+.race-event__category { display: flex; align-items: center; gap: 6px; color: #0c4388; }
+.race-event__live { color: var(--vkui--color_text_accent); }
+.race-event__text { margin-top: -4px; }
+.race-event__text > * { font-size: 0.875rem; line-height: 1.125rem; letter-spacing: .2px; overflow-wrap: anywhere; }
+.race-event__location { color: var(--vkui--color_text_subhead); margin-top: 2px; }
+.race-event__crop { position: relative; height: 88px; overflow: hidden; border-radius: 8px; background: #2d2d2e; }
+.race-event__image { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) translate(.33px, 4.17px); display: block; width: 232px; height: 155px; max-width: none; object-fit: cover; border-radius: 0; }
+
+/* Figma 173:2856. */
+.race-route-point { display: flex; align-items: start; gap: 12px; width: 328px; max-width: 100%; padding: 0; border: 0; text-align: start; font: inherit; background: transparent; }
+.race-route-point__index { min-width: 24px; min-height: 24px; box-sizing: border-box; background: #818c99; color: #fff; }
+.race-route-point__content { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.race-route-point__title { font-size: 0.875rem; line-height: 1.125rem; font-weight: 500; color: var(--vkui--color_text_primary); }
+.race-route-point__time, .race-route-point__status { font-size: 0.8125rem; line-height: 1rem; letter-spacing: .2px; }
+.race-route-point__time { color: var(--vkui--color_text_subhead); }
+.race-route-point__status { color: var(--vkui--color_text_accent); }
+
+.race-time-badge .race-time-badge__retry { flex: none; width: 44px; height: 44px; min-width: 44px; min-height: 44px; }

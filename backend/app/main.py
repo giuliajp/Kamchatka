@@ -18,7 +18,6 @@ from app.middleware.errors import register_error_handlers
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Здесь позже запустим фоновый опрос Iridium360 (задача 2.7).
     yield
     # При остановке сервера аккуратно закрываем соединения с базой.
     await engine.dispose()
@@ -46,10 +45,6 @@ def create_app() -> FastAPI:
 
     # ── Маршруты ─────────────────────────────────────────────────────────
     app.include_router(health.router)  # /health — без префикса, для мониторинга
-
-    # Новые разделы подключаем здесь, например:
-    # from app.api.routes import participants
-    # app.include_router(participants.router, prefix="/api/participants")
 
     return app
 

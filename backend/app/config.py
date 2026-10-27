@@ -26,7 +26,6 @@ class Settings(BaseSettings):
     )
 
     environment: str = "development"
-    secret_key: str = "dev-secret-change-me"
 
     # PostgreSQL: общие настройки с Docker Compose из backend/.env.
     postgres_db: str
@@ -48,20 +47,6 @@ class Settings(BaseSettings):
 
     # С каких адресов фронтенду можно обращаться к API (через запятую)
     cors_origins: str = "http://localhost:5173"
-
-    # VK
-    vk_app_id: str = ""
-    vk_app_secret: str = ""
-
-    # Iridium360 (трекинг участников) — см. app/services/iridium360/
-    iridium360_api_url: str = "https://www.iridium360.ru"
-    iridium360_api_key: str = ""
-
-    # Как часто наш бэкенд опрашивает Iridium360, секунды.
-    # Это НЕ интервал передачи точек трекером (20 мин по брифу) — тот хранится в БД
-    # в Season.tracking_interval_minutes и может переопределяться на этапе (Stage).
-    # Подходящее значение уточним при разборе API Iridium360 (задача 1.4).
-    tracker_poll_interval_seconds: int = 1200
 
     @property
     def cors_origins_list(self) -> list[str]:

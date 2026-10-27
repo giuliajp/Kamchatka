@@ -22,11 +22,23 @@ kamchatka-avacha/
 
 ## С чего начать
 
+Актуальный срез реализации, оставшиеся задачи и план VKUI/Storybook/UI-kit —
+в [карте проекта](docs/PROJECT_MAP.md) (проверено 15.10.2026).
+
 1. Прочитайте `docs/brief-summary.md` — сжатая выжимка брифа заказчика.
 2. Прочитайте `docs/screens.md` — список экранов приложения и админ-панели.
 3. Загляните в `docs/brand/` и `design/brandbook/kamchatka-brandbook.pdf` — официальный брендбук
-   проекта, цвета и шрифты из него уже переложены в код (`frontend/src/styles/theme.ts`).
+   проекта; исходные приблизительные токены сохранены в `docs/brand/theme.reference.ts`.
+   Текущий UI-kit использует стандартную тему VKUI.
 4. Каждая папка (`frontend/`, `backend/`, `admin-panel/`) — со своим README и инструкцией по запуску.
+
+## UI-kit и Storybook
+
+В `frontend` доступны рабочая витрина компонентов и Storybook. После `npm ci`:
+`npm run dev` запускает демонстрационный экран карты, `npm run storybook` — каталог,
+`npm run check` — проверки с обязательным покрытием 100% и обе сборки.
+Инструкции и состав компонентов: [frontend README](frontend/README.md).
+Результаты проверки: [UI_KIT_VALIDATION.md](docs/UI_KIT_VALIDATION.md).
 
 ## Документация бэкенда
 

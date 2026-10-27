@@ -1,0 +1,22 @@
+body { margin: 0; }
+
+.ui-root {
+  color: var(--vkui--color_text_primary);
+  background: var(--vkui--color_background_content);
+  font-family: var(--vkui--font_family_base);
+}
+
+/* Small labels use the standard primary token: VKUI's secondary gray does not
+   meet 4.5:1 on the light background. No custom palette is introduced. */
+.supporting-text { color: var(--vkui--color_text_primary); }
+
+.freshness { display: grid; gap: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-root *, .ui-root *::before, .ui-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
