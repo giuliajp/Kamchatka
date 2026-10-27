@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button, ModalCard, Title } from '@vkontakte/vkui';
-import { asset, demoNow, photos, raceTime, report, type DemoStage } from './demo';
+import { asset, demoNow, liveStage, photos, raceTime, report, type DemoStage } from './demo';
 
 export function Countdown({ startAt, now = demoNow }: { startAt: string; now?: number }) {
   const [elapsed, setElapsed] = useState(0);
@@ -38,7 +38,7 @@ export function StageContent({ stage, now, galleryExpanded = false, onLive, onUn
           <div><dt>Финиш</dt><dd>{raceTime(stage.finish_at!)}</dd></div>
         </dl>}
       </div>
-      <Button size="l" className="stage-hero__action" onClick={planned ? onLive : onUnavailable}>{planned ? 'Смотреть 3 этап live' : 'Результаты'}</Button>
+      <Button size="l" className="stage-hero__action" onClick={planned ? onLive : onUnavailable}>{planned ? `Смотреть ${liveStage.number} этап live` : 'Результаты'}</Button>
     </section>
     {!planned && <div className="stage-report">
       <p>{stage.number === 2 ? report : 'Этап завершён. Подробный отчёт будет опубликован организаторами.'}</p>

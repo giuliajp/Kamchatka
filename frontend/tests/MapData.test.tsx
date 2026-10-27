@@ -1,12 +1,16 @@
 import { act, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { readPreferences, storageKey, writePreferences, demoNow } from '../src/screens/Map/demo';
+import { readPreferences, storageKey, writePreferences, demoNow, raceTime } from '../src/screens/Map/demo';
 import { Countdown } from '../src/screens/Map/StageContent';
 import { App } from '../src/App';
 import { TopParticipantsCard } from '../src/components/TopParticipantsCard';
 import { AppProviders } from '../src/app/AppProviders';
 
 afterEach(() => { localStorage.clear(); vi.restoreAllMocks(); vi.useRealTimers(); });
+it('formats different position timestamps in Kamchatka time', () => {
+  expect(raceTime('2027-02-09T02:36:00Z')).toBe('14:36');
+  expect(raceTime('2027-02-08T12:05:00Z')).toBe('00:05');
+});
 it('validates stored data and survives unavailable browser storage', () => {
   for (const bad of ['invalid json', '3', '{}', '{"supported":[999],"prompted":[],"notifications":[]}', '{"supported":[],"prompted":null,"notifications":[]}']) {
     localStorage.setItem(storageKey, bad);

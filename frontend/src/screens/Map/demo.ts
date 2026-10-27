@@ -5,10 +5,11 @@ export const race = { name: 'Гонка Авача 2027' } as const;
 export const disciplines = [
   { id: 1, name: 'Нарта, 8 собак' }, { id: 2, name: 'Нарта, более 8 собак' }, { id: 3, name: 'Лыжи, 2 собаки' },
 ];
+export const liveStage = { id: 3, number: 3, status: 'live', start_at: '2027-02-08T21:00:00Z', finish_at: null, details: '09.02 09:00 — продолжается' } as const;
 export const stages = [
   { id: 1, number: 1, status: 'finished', start_at: '2027-02-06T21:00:00Z', finish_at: '2027-02-07T06:00:00Z', details: '07.02 09:00 — 18:00, завершён' },
   { id: 2, number: 2, status: 'finished', start_at: '2027-02-07T21:00:00Z', finish_at: '2027-02-08T06:00:00Z', details: '08.02 09:00 — 18:00, завершён' },
-  { id: 3, number: 3, status: 'live', start_at: '2027-02-08T21:00:00Z', finish_at: null, details: '09.02 09:00 — продолжается' },
+  liveStage,
   { id: 4, number: 4, status: 'planned', start_at: '2027-02-09T21:00:00Z', finish_at: null, details: 'начнётся 10.02 09:00' },
 ] as const;
 export type DemoStage = typeof stages[number];
@@ -64,6 +65,7 @@ export function writePreferences(value: Preferences) {
   try { localStorage.setItem(storageKey, JSON.stringify(value)); return true; }
   catch { return false; }
 }
+const timeFormatter = new Intl.DateTimeFormat('ru-RU', { timeZone: 'Asia/Kamchatka', hour: '2-digit', minute: '2-digit' });
 export function raceTime(iso: string) {
-  return new Intl.DateTimeFormat('ru-RU', { timeZone: 'Asia/Kamchatka', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
+  return timeFormatter.format(new Date(iso));
 }
