@@ -197,7 +197,7 @@ python -m pip install -r backend/requirements.txt
 
 В `backend/.env` задайте `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`,
 `POSTGRES_HOST=127.0.0.1` и `POSTGRES_PORT=5432` (либо другой свободный порт).
-Замените шаблонный `POSTGRES_PASSWORD` своим значением. Настройки авторизации, VK и Iridium360 добавляются вместе с реализацией интеграций.
+Замените шаблонные `POSTGRES_PASSWORD` и `SECRET_KEY` своими значениями.
 Backend собирает подключение из `POSTGRES_*` и автоматически читает `backend/.env`.
 
 ### 3. Запустить PostgreSQL
@@ -323,10 +323,13 @@ backend/
     ├── api/
     │   ├── deps.py           # зависимости: SessionDep — сессия базы для эндпоинта
     │   └── routes/
-    │       └── health.py     # /health — проверка сервиса
+    │       ├── health.py     # /health — проверка сервиса
+    │       └── _template.py  # шаблон нового раздела API
     ├── models/               # таблицы базы (см. docs/database.md)
     ├── schemas/              # Pydantic-схемы: что API принимает и отдаёт
     │   └── common.py         # ApiResponse и ok() — единый формат ответов
+    ├── services/
+    │   └── iridium360/       # интеграция с платформой трекеров, см. client.py
     └── middleware/
         └── errors.py         # ошибки в едином JSON-формате
 ```
@@ -344,22 +347,7 @@ backend/
 
 ## Как добавить новый раздел API
 
-1. Создайте `backend/app/api/routes/faq.py`. Минимальный пример маршрута:
-   ```python
-   from fastapi import APIRouter
-   from pydantic import BaseModel
-
-   from app.schemas.common import ApiResponse, ok
-
-   router = APIRouter(tags=["FAQ"])
-
-   class PingData(BaseModel):
-       message: str
-
-   @router.get("/ping", response_model=ApiResponse[PingData])
-   async def ping():
-       return ok({"message": "pong"})
-   ```
+1. Скопируйте `backend/app/api/routes/_template.py` → например, `backend/app/api/routes/faq.py`.
 2. Опишите схемы ответа в `backend/app/schemas/faq.py`.
 3. Подключите в `backend/app/main.py`:
    ```python
@@ -418,14 +406,14 @@ python -m alembic -c backend/alembic.ini upgrade head
 
 ## Ключевая логика — трекинг
 
-Полный список правил — в [требованиях к интеграции Iridium360](../docs/iridium360.md).
+Полный список правил — в docstring `backend/app/services/iridium360/client.py`.
 Ниже описано планируемое поведение: клиент и фоновый опрос пока не реализованы.
 
 - Backend сам обращается к API Iridium360 фоновой задачей по расписанию, нормализует данные и сохраняет у себя.
 - **Frontend никогда не обращается к Iridium360 напрямую** — только к нашему backend.
 - Соответствие «устройство (IMEI) → участник → этап» хранится в нашей БД (`TrackerDevice`, `TrackerAssignment`).
-- Интервал передачи точек трекером (20 минут) хранится в БД в настройках гонки и этапа.
-  Настройку частоты опроса backend добавить вместе с фоновым опросом; это отдельный интервал.
+- Интервал передачи точек трекером (20 минут) хранится в БД в настройках сезона и этапа.
+  `TRACKER_POLL_INTERVAL_SECONDS` в `.env` — как часто наш бэкенд опрашивает Iridium360.
 - SOS-сигнал — отдельная таблица `TrackerAlert`, **никогда не отдаётся** в публичный API, только admin-panel.
 - Официальные результаты — только из судейских протоколов (`Protocol`, `StageResult`), не из трекера и не из отметок на КП.
 - Штрафы относятся к участию в гонке (`Penalty.race_participant_id` → `RaceParticipant.id`).
