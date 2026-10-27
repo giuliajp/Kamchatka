@@ -4,7 +4,7 @@
 - Protocol         — протокол этапа по одной дисциплине. Публикуется после каждого этапа.
                      Статус: предварительный → окончательный.
 - StageResult      — строка протокола: результат участника на этапе.
-- Penalty          — штраф к результату этапа (с причиной и пунктом правил).
+- Penalty          — штраф участника за гонку (с причиной и пунктом правил).
 - ResultChangeLog  — журнал правок. Каждое изменение результатов и штрафов пишется сюда.
 
 Правила (от заказчика):
@@ -12,9 +12,9 @@
 - Предварительный протокол можно править, но каждая правка — в журнал.
 - Окончательный протокол правится только особой процедурой: с основанием, указанием,
   кто утвердил, и видимой пометкой (StageResult.is_corrected_after_final).
-- Время этапа в протоколе уже включает штраф. Храним отдельно:
-  чистое время + штраф = итоговое время (проверяется ограничением в базе).
-- Итог гонки = сумма итоговых времён этапов. Места — внутри дисциплины.
+- Штрафы относятся к участию в гонке и не распределяются по этапам.
+  Общая сумма штрафов вычисляется из записей Penalty.
+- Места — внутри дисциплины.
 - Участник со статусом DNF/DNS НИКОГДА не удаляется из протокола.
 """
 from datetime import datetime
@@ -78,12 +78,6 @@ class StageResult(TimestampMixin, Base):
         UniqueConstraint("protocol_id", "race_participant_id",
                          name="uq_stage_results_protocol_participant"),
         CheckConstraint("net_time_seconds IS NULL OR net_time_seconds >= 0", name="net_non_negative"),
-        CheckConstraint("penalty_seconds >= 0", name="penalty_non_negative"),
-        # Итоговое = чистое + штраф. Защищает от рассинхрона при ручных правках.
-        CheckConstraint(
-            "final_time_seconds IS NULL OR final_time_seconds = net_time_seconds + penalty_seconds",
-            name="final_equals_net_plus_penalty",
-        ),
         # Время есть только у финишировавших.
         CheckConstraint(
             "(status = 'finished') = (final_time_seconds IS NOT NULL)", name="time_only_if_finished"
@@ -105,7 +99,6 @@ class StageResult(TimestampMixin, Base):
         str_enum(StageResultStatus), default=StageResultStatus.FINISHED, nullable=False
     )
     net_time_seconds: Mapped[Optional[int]] = mapped_column(Integer)          # без штрафа
-    penalty_seconds: Mapped[int] = mapped_column(Integer, default=0, nullable=False)  # сумма штрафов
     final_time_seconds: Mapped[Optional[int]] = mapped_column(Integer)        # как в протоколе
 
     # Число собак может уменьшаться от этапа к этапу (правила допускают).
@@ -122,9 +115,6 @@ class StageResult(TimestampMixin, Base):
 
     protocol: Mapped["Protocol"] = relationship(lazy="raise_on_sql", back_populates="results")
     race_participant: Mapped["RaceParticipant"] = relationship(lazy="raise_on_sql")
-    penalties: Mapped[list["Penalty"]] = relationship(
-        lazy="raise_on_sql", back_populates="stage_result", cascade="all, delete-orphan"
-    )
 
     def __repr__(self) -> str:
         return f"<StageResult protocol={self.protocol_id} rp={self.race_participant_id} {self.status.value}>"
@@ -132,22 +122,25 @@ class StageResult(TimestampMixin, Base):
 
 class Penalty(TimestampMixin, Base):
     """
-    Штраф к результату этапа. Пример из протокола 2026: «штр. вр. 2 мин. п. П.14.11.14».
-    StageResult.penalty_seconds = сумма seconds всех штрафов результата
-    (поддерживается сервисом результатов при каждом изменении).
+    Штраф участника за гонку без привязки к этапу.
+
+    Общая сумма вычисляется по записям Penalty для одного RaceParticipant.
+    Пример из протокола 2026: «штр. вр. 2 мин. п. П.14.11.14».
     """
     __tablename__ = "penalties"
     __table_args__ = (CheckConstraint("seconds > 0", name="seconds_positive"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    stage_result_id: Mapped[int] = mapped_column(
-        ForeignKey("stage_results.id", ondelete="CASCADE"), nullable=False, index=True
+    race_participant_id: Mapped[int] = mapped_column(
+        ForeignKey("race_participants.id", ondelete="CASCADE"), nullable=False, index=True
     )
     seconds: Mapped[int] = mapped_column(Integer, nullable=False)
     reason: Mapped[Optional[str]] = mapped_column(Text)
     rule_reference: Mapped[Optional[str]] = mapped_column(String(50))   # «П.14.11.14»
 
-    stage_result: Mapped["StageResult"] = relationship(lazy="raise_on_sql", back_populates="penalties")
+    race_participant: Mapped["RaceParticipant"] = relationship(
+        lazy="raise_on_sql", back_populates="penalties"
+    )
 
 
 class ResultChangeLog(Base):

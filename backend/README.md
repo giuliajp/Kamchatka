@@ -268,7 +268,7 @@ python backend/run.py
 python -m pytest -c backend/pytest.ini backend/tests -v
 ```
 
-Ожидается `21 passed`. Сервер API для тестов запускать не нужно.
+Все тесты должны пройти. Сервер API для тестов запускать не нужно.
 Тесты используют отдельные временные схемы PostgreSQL и удаляют их после завершения.
 
 Для запуска кнопкой создайте конфигурацию **Python tests → pytest** с целью
@@ -276,6 +276,20 @@ python -m pytest -c backend/pytest.ini backend/tests -v
 В **Additional Arguments** укажите `-c backend/pytest.ini`.
 
 ---
+
+## Импорт итогового протокола
+
+После настройки PostgreSQL и применения миграций можно загрузить JSON,
+подготовленный [PDF-парсером](../docs/protocol-parser.md). Команда выполняется из корня проекта:
+
+```bash
+python backend/scripts/import_protocol.py --json .cache/protocols/avacha-2026.json
+```
+
+Настройки БД берутся из `backend/.env` и переменных окружения. Команда выводит
+число созданных записей и пропущенных пустых результатов после DNF/DNS;
+при ошибке импорт откатывается. Подготовка JSON, отчёт и правила повторного
+импорта описаны в [документации импорта](../docs/protocol-import.md).
 
 ## Частые проблемы
 
@@ -301,6 +315,7 @@ backend/
 ├── run.py                    # точка входа для локального запуска
 ├── alembic.ini, migrations/  # миграции — история изменений структуры базы
 ├── pytest.ini, tests/        # тесты (conftest.py — общие заготовки)
+├── scripts/                 # parse_protocol.py: PDF → JSON; import_protocol.py: JSON → БД
 └── app/
     ├── main.py               # сборка приложения: CORS, ошибки, маршруты
     ├── config.py             # настройки из .env
@@ -413,6 +428,8 @@ python -m alembic -c backend/alembic.ini upgrade head
   Настройку частоты опроса backend добавить вместе с фоновым опросом; это отдельный интервал.
 - SOS-сигнал — отдельная таблица `TrackerAlert`, **никогда не отдаётся** в публичный API, только admin-panel.
 - Официальные результаты — только из судейских протоколов (`Protocol`, `StageResult`), не из трекера и не из отметок на КП.
+- Штрафы относятся к участию в гонке (`Penalty.race_participant_id` → `RaceParticipant.id`).
+  Их общая сумма вычисляется за гонку и показывается отдельно; к времени из протокола штрафы повторно не прибавляются.
 
 ## Запуск на сервере (позже)
 
