@@ -1,0 +1,64 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { expect, it, vi } from 'vitest';
+import { MapCanvas } from '../src/screens/Map/MapCanvas';
+import { participants } from '../src/screens/Map/demo';
+import { AppProviders } from '../src/app/AppProviders';
+
+it('shows only filtered cluster members and restores a marker for a single remaining participant', async () => {
+  const user = userEvent.setup();
+  const onCluster = vi.fn(); const onSelect = vi.fn();
+  const show = (ids: number[]) => <AppProviders><MapCanvas participants={participants.filter(p => ids.includes(p.id))}
+    supported={[]} stale={false} onSelect={onSelect} onCluster={onCluster} onCheckpoint={vi.fn()} onRefresh={vi.fn()} /></AppProviders>;
+  const { rerender } = render(show([11, 12, 15, 18]));
+  expect(screen.queryByRole('button', { name: /Участник 11,/ })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: '+4 — ещё участники на маршруте' }));
+  expect(onCluster).toHaveBeenLastCalledWith([11, 12, 15, 18]);
+  rerender(show([11, 18]));
+  await user.click(screen.getByRole('button', { name: '+2 — ещё участники на маршруте' }));
+  expect(onCluster).toHaveBeenLastCalledWith([11, 18]);
+  rerender(show([11]));
+  expect(screen.queryByRole('button', { name: /ещё участники на маршруте/ })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: /Участник 11,/ }));
+  expect(onSelect).toHaveBeenCalledExactlyOnceWith(11);
+  rerender(show([]));
+  expect(screen.queryByRole('button', { name: /Участник 11,|ещё участники на маршруте/ })).not.toBeInTheDocument();
+});
+
+it('bounds zoom and pan, ignores marker gestures and supports keyboard panning', async () => {
+  const user = userEvent.setup(); const onSelect = vi.fn();
+  const { container } = render(<AppProviders><MapCanvas participants={participants} supported={[21]} stale={false} onSelect={onSelect} onCluster={vi.fn()} onCheckpoint={vi.fn()} onRefresh={vi.fn()} /></AppProviders>);
+  const map = screen.getByRole('region');
+  const scene = container.querySelector('.map-scene')!;
+  expect(screen.getByRole('button', { name: 'Уменьшить масштаб' })).toBeDisabled();
+  for (let i = 0; i < 4; i++) await user.click(screen.getByRole('button', { name: 'Увеличить масштаб' }));
+  expect(screen.getByRole('button', { name: 'Увеличить масштаб' })).toBeDisabled();
+  expect(scene.getAttribute('style')).toContain('scale(2)');
+  for (let i = 0; i < 4; i++) await user.click(screen.getByRole('button', { name: 'Уменьшить масштаб' }));
+  for (const key of ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter']) fireEvent.keyDown(map, { key });
+  const marker = screen.getByRole('button', { name: /Участник 21,/ });
+  fireEvent.keyDown(marker, { key: 'ArrowRight' });
+  expect(scene.getAttribute('style')).toContain('+ 0px');
+  Object.defineProperty(map, 'clientWidth', { value: 480 });
+  Object.defineProperty(map, 'clientHeight', { value: 650 });
+  Object.defineProperty(map, 'setPointerCapture', { value: vi.fn() });
+  const pointer = (target: Element, name: string, x: number, y: number) => fireEvent(target, new MouseEvent(name, { bubbles: true, clientX: x, clientY: y }));
+  pointer(marker, 'pointerdown', 0, 0);
+  pointer(map, 'pointermove', 50, 50);
+  expect(scene.getAttribute('style')).toContain('+ 0px');
+  pointer(map, 'pointerdown', 0, 0);
+  pointer(map, 'pointermove', 999, 999);
+  expect(scene.getAttribute('style')).toContain('+ 81px');
+  pointer(map, 'pointerup', 999, 999);
+  pointer(map, 'pointermove', -999, -999);
+  expect(scene.getAttribute('style')).toContain('+ 81px');
+  pointer(map, 'pointerdown', 0, 0);
+  pointer(map, 'pointermove', -999, -999);
+  expect(scene.getAttribute('style')).toContain('+ -193px');
+  pointer(map, 'pointercancel', 0, 0);
+  await user.click(marker); expect(onSelect).toHaveBeenCalledWith(21);
+  await user.click(screen.getByRole('button', { name: 'Увеличить масштаб' }));
+  pointer(map, 'pointerdown', 0, 0); pointer(map, 'pointermove', 999, 999); pointer(map, 'pointerup', 999, 999);
+  await user.click(screen.getByRole('button', { name: 'Уменьшить масштаб' }));
+  expect(scene.getAttribute('style')).toContain('+ 81px');
+});

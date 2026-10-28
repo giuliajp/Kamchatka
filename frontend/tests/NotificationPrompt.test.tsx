@@ -1,0 +1,31 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { expect, it, vi } from 'vitest';
+import { AppProviders } from '../src/app/AppProviders';
+import { NotificationPrompt } from '../src/components/NotificationPrompt';
+it('shows the participant and independently reports confirm, later and close', async () => {
+  const user = userEvent.setup();
+  const onConfirm = vi.fn(); const onLater = vi.fn(); const onClose = vi.fn();
+  render(<AppProviders><NotificationPrompt open number="14" onConfirm={onConfirm} onLater={onLater} onClose={onClose} /></AppProviders>);
+  expect(await screen.findByRole('dialog', { name: 'Получать уведомления об участнике №14?' })).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Да, уведомлять' }));
+  expect(onConfirm).toHaveBeenCalledTimes(1);
+  expect(onLater).not.toHaveBeenCalled();
+  await user.click(screen.getByRole('button', { name: 'Позже' }));
+  expect(onLater).toHaveBeenCalledTimes(1);
+  await user.click(screen.getByRole('button', { name: 'Закрыть' }));
+  expect(onClose).toHaveBeenCalledTimes(1);
+});
+it('blocks confirmation while loading, supports a photo and hides when closed', async () => {
+  const user = userEvent.setup();
+  const onConfirm = vi.fn();
+  const props = { number: '14', photoUrl: '/participant-placeholder.svg', loading: true, onConfirm, onLater: vi.fn(), onClose: vi.fn() };
+  const { rerender } = render(<AppProviders><NotificationPrompt {...props} open /></AppProviders>);
+  expect(screen.getByRole('img', { name: 'Участник №14' })).toBeVisible();
+  const confirm = screen.getByRole('button', { name: 'Да, уведомлять' });
+  expect(confirm).toBeDisabled();
+  await user.click(confirm);
+  expect(onConfirm).not.toHaveBeenCalled();
+  rerender(<AppProviders><NotificationPrompt {...props} open={false} /></AppProviders>);
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+});

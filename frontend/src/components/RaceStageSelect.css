@@ -1,0 +1,14 @@
+/* Figma 339:7875: field border 0.5 px; Select Text: R Caption 1 Medium 13/16.
+ * Font family remains inherited until the family behind the Figma style is confirmed.
+ */
+.race-stage-select {
+  --vkui--size_border--regular: 0.5px;
+}
+
+.race-stage-select .race-stage-select__input {
+  --vkui--font_weight_base3: 500;
+  font-size: 0.8125rem;
+  line-height: 1rem;
+  font-weight: 500;
+  color: var(--vkui--color_text_primary);
+}

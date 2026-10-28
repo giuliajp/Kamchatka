@@ -1,0 +1,13 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { fn } from 'storybook/test';
+import { Flex } from '@vkontakte/vkui';
+import { TimeBadge } from '../components/TimeBadge';
+const meta = { parameters: { figma: {"nodeId": "122:9315", "status": "Расхождение"}, docs: { description: { component: "Расхождение. Figma 122:9315. 5 вариантов. Восстановлены исходные иконки, отступы, тени и повтор при offline. Gotham Pro Medium 14/18 отсутствует, поэтому ширина текста не совпадает. Полный аудит: docs/UI_KIT_FIGMA_AUDIT.md." } } }, tags: ['figma-mismatch'], title: 'Компоненты созданные в этом документе/Time badge', component: TimeBadge, args: { state: 'fresh', children: 'Обновлено 2 минуты назад' } } satisfies Meta<typeof TimeBadge>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+export const Fresh: Story = { name: 'Свежие данные' };
+export const Stale: Story = { name: 'Устаревшие данные', args: { state: 'stale', children: 'Обновлено 48 минут назад' } };
+export const Position: Story = { name: 'Время координаты', args: { state: 'position', children: 'Положение на 14:36' } };
+export const Unavailable: Story = { name: 'Положение недоступно', args: { state: 'unavailable', children: 'Положение недоступно.' } };
+export const Offline: Story = { name: 'Нет соединения', args: { state: 'offline', children: <>Нет соединения.<br />Данные на 14:36</>, onRetry: fn() } };
+export const OfflineAndStale: Story = { name: 'Дополнительно — Offline и устаревшие данные независимо', render: () => <Flex direction="column" align="start"><TimeBadge state="offline">Нет соединения. Данные на 14:36</TimeBadge><TimeBadge state="stale">Обновлено 48 минут назад</TimeBadge></Flex> };

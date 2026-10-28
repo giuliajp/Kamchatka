@@ -1,0 +1,30 @@
+.participant {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--vkui--spacing_size_l);
+  padding: var(--vkui--spacing_size_l);
+}
+
+.participant__identity {
+  display: flex;
+  gap: var(--vkui--spacing_size_m);
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.participant__copy {
+  display: grid;
+  gap: var(--vkui--spacing_size_xs);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+
+@media (min-width: 768px) {
+  .participant[data-variant='row'] {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
