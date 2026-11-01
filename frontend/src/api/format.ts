@@ -1,7 +1,9 @@
 import type { Position, Stage } from '../types/api';
 
-export const raceTime = (iso: string) => new Intl.DateTimeFormat('ru-RU', { timeZone: 'Asia/Kamchatka', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
-export const raceDate = (iso: string) => new Intl.DateTimeFormat('ru-RU', { timeZone: 'Asia/Kamchatka', day: '2-digit', month: '2-digit' }).format(new Date(iso));
+const timeFormat = new Intl.DateTimeFormat('ru-RU', { timeZone: 'Asia/Kamchatka', hour: '2-digit', minute: '2-digit' });
+const dateFormat = new Intl.DateTimeFormat('ru-RU', { timeZone: 'Asia/Kamchatka', day: '2-digit', month: '2-digit' });
+export const raceTime = (iso: string) => timeFormat.format(new Date(iso));
+export const raceDate = (iso: string) => dateFormat.format(new Date(iso));
 export function metric(value: number | null, unit: string) { return value === null ? '—' : `${value.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ${unit}`; }
 export function stale(position: Position, threshold: number, now = Date.now()) {
   return position.is_stale || (position.position !== null && now - Date.parse(position.position.position_at) > threshold * 60000);

@@ -6,12 +6,12 @@ export const preferencesKey = 'avacha-extras-v1';
 export interface Preferences { supported: string[]; subscriptions: string[]; prompted: string[] }
 export const participationKey = (raceId: number, entryId: number) => `${raceId}:${entryId}`;
 const empty = (): Preferences => ({ supported: [], subscriptions: [], prompted: [] });
-export function readPreferences(): Preferences {
+export function readPreferences(fallback: Preferences = empty()): Preferences {
   try {
     const value = JSON.parse(localStorage.getItem(preferencesKey) || 'null');
     if (value && ['supported', 'subscriptions', 'prompted'].every(key => Array.isArray(value[key]) && value[key].every((id: unknown) => typeof id === 'string' && /^\d+:\d+$/.test(id)))) return value;
   } catch { /* Private browsing and damaged storage do not stop the application. */ }
-  return empty();
+  return fallback;
 }
 interface PreferencesContext { value: Preferences; change: (key: keyof Preferences, id: string, selected: boolean) => void }
 const Context = createContext<PreferencesContext | null>(null);
@@ -24,6 +24,7 @@ export function ExtrasProvider({ children }: { children: ReactNode }) {
   }, []);
   const change: PreferencesContext['change'] = (key, id, selected) => {
     setValue(previous => {
+      previous = readPreferences(previous);
       const next = { ...previous, [key]: [...previous[key].filter(item => item !== id), ...(selected ? [id] : [])] };
       try { localStorage.setItem(preferencesKey, JSON.stringify(next)); } catch { /* Retain this session in memory. */ }
       return next;

@@ -71,3 +71,9 @@ it('derives demo finish only from completed participation with valid start and o
   vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'false'); expect(mockFeaturesEnabled()).toBe(false);
   expect(mockFinish(finished, 'finished', 60)).toBeNull(); expect(mockVisits(stage, 1)).toEqual([]);
 });
+it('preserves another tab’s just-saved preferences before the storage event arrives', async () => {
+  render(actions);
+  localStorage.setItem(preferencesKey, JSON.stringify({ supported: ['10:9002'], subscriptions: ['10:9002'], prompted: [] }));
+  await userEvent.click(screen.getByRole('button', { name: 'Включить уведомления' }));
+  expect(readPreferences()).toEqual({ supported: ['10:9002'], subscriptions: ['10:9002', '10:9001'], prompted: [] });
+});

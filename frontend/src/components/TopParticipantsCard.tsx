@@ -1,3 +1,4 @@
+import './TopParticipantsCard.css';
 import './race-kit.css';
 import { useId } from 'react';
 import { Card, Div, Footnote, Header, SimpleCell } from '@vkontakte/vkui';

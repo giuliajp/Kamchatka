@@ -109,3 +109,24 @@ it('uses the original OSM tiles and copyright without the optional Leaflet prefi
   expect(tiles.options.attribution).toContain('https://www.openstreetmap.org/copyright');
   expect((mock.instances.at(-1) as { attributionControl: { setPrefix: ReturnType<typeof vi.fn> } }).attributionControl.setPrefix).toHaveBeenCalledWith(false);
 });
+it('fits the first GPS response once without recentering on every subsequent poll', () => {
+  const props = { viewKey: 'initial-gps', threshold: 45, onSelect: vi.fn(), onCluster: vi.fn(), onRefresh: vi.fn(), refreshing: false };
+  const { rerender } = render(<AppProviders><MapCanvas {...props} data={prepared([])} /></AppProviders>);
+  const instance = mock.instances.at(-1) as { fitBounds: ReturnType<typeof vi.fn> };
+  const initial = instance.fitBounds.mock.calls.length;
+  const loaded = prepared();
+  rerender(<AppProviders><MapCanvas {...props} data={loaded} /></AppProviders>);
+  expect(instance.fitBounds.mock.calls.length).toBe(initial + 1);
+  expect(instance.fitBounds).toHaveBeenLastCalledWith(loaded.bounds, expect.anything());
+  rerender(<AppProviders><MapCanvas {...props} data={prepared()} /></AppProviders>);
+  expect(instance.fitBounds.mock.calls.length).toBe(initial + 1);
+});
+it('omits invalid track coordinates and does not create an empty track layer', () => {
+  const props = { data: prepared(), viewKey: 'track-validation', threshold: 45, onSelect: vi.fn(), onCluster: vi.fn(), onRefresh: vi.fn(), refreshing: false };
+  const invalid = { ...track.points[0], latitude: 200 };
+  const { rerender } = render(<AppProviders><MapCanvas {...props} track={{ ...track, points: [invalid, track.points[0]] }} /></AppProviders>);
+  expect((mock.lines.at(-1) as { points: number[][] }).points).toEqual([[53.2, 158.5]]);
+  const before = mock.lines.length;
+  rerender(<AppProviders><MapCanvas {...props} track={{ ...track, points: [invalid] }} /></AppProviders>);
+  expect(mock.lines).toHaveLength(before);
+});

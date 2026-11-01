@@ -1,0 +1,6 @@
+.map-leaders { padding: 8px 12px; border-radius: 8px; background: var(--vkui--color_background_content); box-shadow: 0 2px 12px #0002; max-width: 320px; }
+.map-leaders h2 { margin: 0 0 8px; font-size: .875rem; line-height: 1.125rem; font-weight: 500; color: color-mix(in srgb, var(--vkui--color_text_subhead) 95%, var(--vkui--color_text_primary)); }
+.map-leaders__row { display: flex; overflow-wrap: anywhere; gap: 8px; width: 100%; border: 0; background: transparent; color: inherit; padding: 2px 0; text-align: left; font: inherit; font-size: .8125rem; line-height: 1rem; cursor: pointer; }
+.map-leaders__row span:nth-child(2) { color: var(--race-leader-text, #d52d22); white-space: nowrap; }
+.map-leaders, .map-leaders * { box-sizing: border-box; }
+.map-leaders button:focus-visible { outline: 3px solid var(--vkui--color_stroke_accent); outline-offset: 3px; }

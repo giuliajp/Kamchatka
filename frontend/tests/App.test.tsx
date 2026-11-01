@@ -18,3 +18,19 @@ it('uses the OS dark theme', async () => {
   render(<App />);
   expect((await screen.findByRole('heading', { name: race.name })).closest('.vkui--vkBase--dark')).not.toBeNull();
 });
+it('follows OS theme changes and removes the media listener when unmounted', async () => {
+  mockApi(() => ({ ...race, stages: [] }));
+  const listeners: ((event: MediaQueryListEvent) => void)[] = [];
+  const media = { ...window.matchMedia('(prefers-color-scheme: dark)'), matches: false,
+    addEventListener: vi.fn((_type, listener) => listeners.push(listener)), removeEventListener: vi.fn() };
+  vi.mocked(window.matchMedia).mockReturnValue(media);
+  const { unmount } = render(<App />);
+  const heading = await screen.findByRole('heading', { name: race.name });
+  expect(listeners).toHaveLength(1);
+  const { act } = await import('@testing-library/react');
+  act(() => listeners[0]({ matches: true } as MediaQueryListEvent));
+  expect(heading.closest('.vkui--vkBase--dark')).not.toBeNull();
+  act(() => listeners[0]({ matches: false } as MediaQueryListEvent));
+  expect(heading.closest('.vkui--vkBase--dark')).toBeNull();
+  unmount(); expect(media.removeEventListener).toHaveBeenCalledWith('change', listeners[0]);
+});

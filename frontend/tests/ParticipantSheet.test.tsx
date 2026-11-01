@@ -97,3 +97,12 @@ it('requests the selected live protocol before detailed checkpoint metadata arri
   expect(api).toHaveBeenCalledWith('/api/races/10/results?stage=3&discipline=sled_8', expect.anything());
   expect(screen.getByText('История прохождения КП пока отсутствует.')).toBeVisible();
 });
+
+it('does not use an entry from another race when a shared URL mixes identities', async () => {
+  mockApi();
+  render(<AppProviders><ParticipantSheet raceId={99} participantId={501} entryId={9001} threshold={45} onClose={vi.fn()} /></AppProviders>);
+  await screen.findByText('Алиса Иванова');
+  expect(screen.queryByRole('button', { name: 'Болею за' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Поделиться участником' })).not.toBeInTheDocument();
+  expect(screen.getByText('Участник не заявлен на выбранную гонку.')).toBeVisible();
+});

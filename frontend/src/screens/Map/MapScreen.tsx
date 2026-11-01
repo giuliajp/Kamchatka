@@ -44,7 +44,7 @@ function RaceView({ race, link, warning }: { race: RaceDetail; link: RaceLink; w
   const [allStages, setAllStages] = useState(false);
   const [discipline, setDiscipline] = useState('');
   const [selected, setSelected] = useState<{ participantId: number; entryId: number } | undefined>(link.participantId && link.entryId ? { participantId: link.participantId, entryId: link.entryId } : undefined);
-  useEffect(() => { setStageId(link.stageId); setSelected(link.participantId && link.entryId ? { participantId: link.participantId, entryId: link.entryId } : undefined); }, [link]);
+  useEffect(() => { setSection('map'); setAllStages(false); setTab('all'); setDiscipline(''); setCluster([]); setLegend(false); setFeedback(''); setStageId(link.stageId); setSelected(link.participantId && link.entryId ? { participantId: link.participantId, entryId: link.entryId } : undefined); }, [link]);
   const [cluster, setCluster] = useState<Position[]>([]);
   useEffect(() => {
     const close = (event: KeyboardEvent) => {
@@ -61,7 +61,7 @@ function RaceView({ race, link, warning }: { race: RaceDetail; link: RaceLink; w
   const visible = useMemo(() => positions.data?.participants.filter(p => !positions.data!.official_protocol_disciplines.includes(p.discipline.code) && (tab === 'all' || value.supported.includes(participationKey(race.id, p.race_participant_id)))) ?? [], [positions.data, tab, value.supported, race.id]);
   const mapData = useMemo(() => detail.data ? prepareMapData(detail.data, visible) : undefined, [detail.data, visible]);
   const mapped = mapData?.participants ?? [];
-  const selectedPosition = visible.find(p => p.race_participant_id === selected?.entryId);
+  const selectedPosition = visible.find(p => p.race_participant_id === selected?.entryId && p.participant_id === selected.participantId);
   const track = useApi<Track>(section === 'map' && selectedPosition && stage ? query(`/race-participants/${selectedPosition.race_participant_id}/track`, { stage: stage.number }) : null, 120000, false);
   const selectPerson = useCallback((participantId: number, entryId: number) => setSelected({ participantId, entryId }), []);
   const selectMapPerson = useCallback((p: Position) => selectPerson(p.participant_id, p.race_participant_id), [selectPerson]);
@@ -98,7 +98,7 @@ function RaceView({ race, link, warning }: { race: RaceDetail; link: RaceLink; w
             <Button onClick={() => { setAllStages(false); setSection('results'); }}>Открыть протокол</Button>
           </div>}
           {stage.status === 'live' && mapData.bounds.isValid() ? <section className="race-screen__map" aria-label="Маршрут и позиции участников">
-            <MapCanvas data={mapData} viewKey={`${stage.id}:${detail.data.route_updated_at}:${mapData.hasRoute}:${mapData.checkpoints.length}`} threshold={threshold} track={track.data} onSelect={selectMapPerson} onCluster={setCluster} onRefresh={refresh} onLegend={() => setLegend(true)} supported={supported} refreshing={positions.loading || detail.loading} />
+            <MapCanvas data={mapData} viewKey={`${stage.id}:${discipline}:${tab}:${detail.data.route_updated_at}:${mapData.hasRoute}:${mapData.checkpoints.length}`} threshold={threshold} track={track.data} onSelect={selectMapPerson} onCluster={setCluster} onRefresh={refresh} onLegend={() => setLegend(true)} supported={supported} refreshing={positions.loading || detail.loading} />
             {leaders.length > 0 && <div className="map-leaders-slot"><TopParticipantsCard compact title={discipline === '' ? 'Лидеры по GPS в дисциплинах' : 'Топ-3 по GPS в дисциплине'} entries={leaders}
               onSelect={id => selectMapPerson(visible.find(p => p.race_participant_id === Number(id))!)} /></div>}
             {stage.status === 'live' && positions.data && tab === 'all' && !latest && (positions.data.official_protocol_disciplines.length === 0 || visible.length > 0) && <div className="map-empty"><h2>Положения отсутствуют</h2><p>Координаты появятся после получения данных трекеров.</p></div>}
@@ -126,7 +126,7 @@ function RaceView({ race, link, warning }: { race: RaceDetail; link: RaceLink; w
       {section === 'results' && <ResultsScreen raceId={race.id} discipline={discipline} mine={tab === 'mine'} stageId={allStages ? undefined : stage?.id} stageNumber={allStages ? undefined : stage?.number} onSelect={selectPerson} />}
     </div>
     <footer className="race-screen__footer"><RaceTabbar value={section} onChange={navigate} /></footer>
-    {selected && <ParticipantSheet key={selected.entryId} {...selected} position={selectedPosition} threshold={threshold} stage={section === 'results' && allStages ? undefined : detail.data ?? stage} showOfficial={section === 'results'} onClose={() => setSelected(undefined)} />}
+    {selected && <ParticipantSheet raceId={race.id} key={selected.entryId} {...selected} position={selectedPosition} threshold={threshold} stage={section === 'results' && allStages ? undefined : detail.data ?? stage} showOfficial={section === 'results'} onClose={() => setSelected(undefined)} />}
     <MapLegend open={legend} onClose={() => setLegend(false)} />
     <ModalCard dismissButtonMode="inside" open={Boolean(feedback)} onClose={() => setFeedback('')} title="Информация" aria-label="Информация" dismissLabel="Закрыть сообщение"><p>{feedback}</p></ModalCard>
     <ModalCard dismissButtonMode="inside" open={cluster.length > 0} onClose={() => setCluster([])} title="Участники рядом" aria-label="Участники рядом" dismissLabel="Закрыть список">

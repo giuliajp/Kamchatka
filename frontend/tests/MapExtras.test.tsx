@@ -73,3 +73,23 @@ it('distinguishes supported participants without GPS from an empty support list'
   show(); await userEvent.click(await screen.findByRole('tab', { name: /Мои/ }));
   expect(await screen.findByText('У ваших участников пока нет координат')).toBeVisible();
 });
+it('restores a shared stage from overall results instead of keeping the previous section', async () => {
+  history.replaceState(null, '', '/?race=10');
+  const user = userEvent.setup(); mockApi(); show();
+  await user.click(await screen.findByRole('button', { name: 'Результаты' }));
+  await user.click(screen.getByRole('combobox', { name: 'Этап гонки' }));
+  await user.click(screen.getByRole('option', { name: /Общий зачёт/ }));
+  await screen.findByRole('heading', { name: 'Общий зачёт' });
+  history.replaceState(null, '', '/?race=10&stage=104');
+  act(() => window.dispatchEvent(new PopStateEvent('popstate')));
+  expect(await screen.findByRole('heading', { name: 'Этап 4 начнётся' })).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'Общий зачёт' })).not.toBeInTheDocument();
+});
+it('does not attach another person’s GPS or track to a mixed share URL', async () => {
+  history.replaceState(null, '', '/?race=10&stage=103&person=501&entry=9002');
+  const api = mockApi(); show();
+  await screen.findByText('Алиса Иванова');
+  expect(screen.getByText('Участник не заявлен на выбранную гонку.')).toBeVisible();
+  expect(screen.queryByLabelText(/Позиция по GPS-трекеру/)).not.toBeInTheDocument();
+  expect(api.mock.calls.some(([input]) => String(input).includes('/race-participants/9002/track'))).toBe(false);
+});

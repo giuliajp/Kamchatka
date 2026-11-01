@@ -8,7 +8,7 @@ import { RaceMapMarker } from '../../components/RaceMapMarker';
 import { MapControls } from '../../components/MapControls';
 import { stale } from '../../api/format';
 import type { Position, Track } from '../../types/api';
-import type { MapData } from './mapData';
+import { validCoordinates, type MapData } from './mapData';
 
 export interface MapCanvasProps {
   data: MapData; viewKey: string; threshold: number; track?: Track;
@@ -20,6 +20,7 @@ export function MapCanvas({ data, viewKey, threshold, track, refreshing, onSelec
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const fitted = useRef('');
+  const fitKey = `${viewKey}:${data.participants.length > 0}`;
   const [zoom, setZoom] = useState(9);
   const [tileError, setTileError] = useState(false);
   const markers = useMemo(() => data.participants.map(p => ({ p, element: document.createElement('div') })), [data.participants]);
@@ -28,7 +29,7 @@ export function MapCanvas({ data, viewKey, threshold, track, refreshing, onSelec
     instance.attributionControl.setPrefix(false);
     instance.fitBounds(data.bounds, { padding: [48, 64], maxZoom: 12 });
     setZoom(instance.getZoom());
-    fitted.current = viewKey;
+    fitted.current = fitKey;
     map.current = instance;
     const tiles = L.tileLayer(import.meta.env.VITE_MAP_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: import.meta.env.VITE_MAP_ATTRIBUTION || '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 18,
@@ -54,11 +55,11 @@ export function MapCanvas({ data, viewKey, threshold, track, refreshing, onSelec
       const label = document.createElement('div'); label.textContent = cp.name;
       L.marker([cp.latitude, cp.longitude], { icon: L.divIcon({ html: node, className: 'map-checkpoint', iconSize: [cp.role === 'checkpoint' ? 44 : cp.role === 'start' ? 64 : 74, 28] }), title: cp.name }).bindPopup(label).addTo(checkpoints);
     }
-    if (fitted.current !== viewKey) {
-      instance.fitBounds(data.bounds, { padding: [48, 64], maxZoom: 12 }); fitted.current = viewKey;
+    if (fitted.current !== fitKey) {
+      instance.fitBounds(data.bounds, { padding: [48, 64], maxZoom: 12 }); fitted.current = fitKey;
     }
     return () => { instance.removeLayer(route); instance.removeLayer(checkpoints); };
-  }, [data, viewKey]);
+  }, [data, fitKey]);
   useEffect(() => {
     const instance = map.current!;
     const entries = new Map<L.Marker, Position>();
@@ -91,7 +92,9 @@ export function MapCanvas({ data, viewKey, threshold, track, refreshing, onSelec
   useEffect(() => {
     if (!track) return;
     const instance = map.current!;
-    const line = L.polyline(track.points.map(p => [p.latitude, p.longitude]), { color: '#ff4c3e', weight: 3 }).addTo(instance);
+    const points = track.points.filter(p => validCoordinates(p.latitude, p.longitude));
+    if (points.length === 0) return;
+    const line = L.polyline(points.map(p => [p.latitude, p.longitude]), { color: '#ff4c3e', weight: 3 }).addTo(instance);
     return () => { instance.removeLayer(line); };
   }, [track]);
   return <>

@@ -14,14 +14,14 @@ import type { ParticipantDetail, Position, Results, Stage, StageDetail } from '.
 import './ParticipantSheet.css';
 
 export interface ParticipantSheetProps {
-  participantId: number; entryId: number; position?: Position; threshold: number; onClose: () => void; stage?: Stage | StageDetail; showOfficial?: boolean;
+  raceId?: number; participantId: number; entryId: number; position?: Position; threshold: number; onClose: () => void; stage?: Stage | StageDetail; showOfficial?: boolean;
 }
-export function ParticipantSheet({ participantId, entryId, position, threshold, onClose, stage, showOfficial = false }: ParticipantSheetProps) {
+export function ParticipantSheet({ raceId, participantId, entryId, position, threshold, onClose, stage, showOfficial = false }: ParticipantSheetProps) {
   const person = useApi<ParticipantDetail>(`/participants/${participantId}`);
   const [expanded, setExpanded] = useState(false);
   const [feedback, setFeedback] = useState('');
   const { value } = useExtras();
-  const entry = person.data?.races.find(race => race.race_participant_id === entryId);
+  const entry = person.data?.races.find(entry => entry.race_participant_id === entryId && (raceId === undefined || entry.race.id === raceId));
   const official = useApi<Results>(entry && (stage?.status === 'finished' || showOfficial) ? query(`/races/${entry.race.id}/results`, { stage: stage?.number, discipline: entry.discipline.code }) : null);
   const result = official.data?.disciplines.flatMap(d => d.rows).find(row => row.race_participant_id === entryId);
   const cell = result?.stages.find(item => item.stage_number === stage?.number);
@@ -40,6 +40,7 @@ export function ParticipantSheet({ participantId, entryId, position, threshold, 
       <button className="sheet-dismiss" aria-label="Свернуть" onClick={onClose}>×</button>
       <RequestState resource={person} /><RequestState resource={official} />
       {person.data && <>
+        {!entry && <p role="status">Участник не заявлен на выбранную гонку.</p>}
         {entry && <div className="map-participant__tags"><span>№{entry.start_number}</span><span>{entry.discipline.name}</span></div>}
         <div className="map-participant__bio"><ParticipantBanner name={person.data.full_name} region={entry?.region ?? 'Регион не указан'}
           discipline={entry ? `${entry.discipline.name}${entry.dogs_count === null ? '' : ` | ${entry.dogs_count} собак`}` : ''} photoUrl={person.data.photo_url ?? undefined} expanded={expanded} onOpen={() => setExpanded(!expanded)} />
