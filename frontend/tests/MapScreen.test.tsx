@@ -1,180 +1,122 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { AppProviders } from '../src/app/AppProviders';
-import { MapScreen } from '../src/screens/Map/MapScreen';
-import { readPreferences } from '../src/screens/Map/demo';
-
-beforeEach(() => localStorage.clear());
-afterEach(() => vi.restoreAllMocks());
-const show = (props: React.ComponentProps<typeof MapScreen> = {}) => render(<AppProviders><MapScreen {...props} /></AppProviders>);
-it('closes successive prompts with Escape using current support and notification preferences', async () => {
-  const user = userEvent.setup(); show();
-  for (const id of [14, 21]) {
-    await user.click(screen.getByRole('button', { name: new RegExp('Участник ' + id + ',') }));
-    await user.click(screen.getByRole('button', { name: 'Болею за' }));
-    await screen.findByRole('button', { name: 'Позже' });
-    await user.keyboard('{Escape}');
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-  }
-  expect(readPreferences()).toEqual({ supported: [14, 21], prompted: [14, 21], notifications: [] });
-  await user.click(screen.getByRole('button', { name: 'Меню' }));
-  expect(screen.getByText(/Демонстрационные данные\. Карта/)).toBeVisible();
+import { currentStage, MapScreen } from '../src/screens/Map/MapScreen';
+import { fixtureResponse, mockApi, positions, race, stage } from './fixtures';
+import type { MapCanvasProps } from '../src/screens/Map/MapCanvas';
+vi.mock('../src/screens/Map/MapCanvas', () => ({ MapCanvas: (props: MapCanvasProps) => <div role="region" aria-label="Карта маршрута">
+  {props.data.participants.map(p => <button key={p.race_participant_id} onClick={() => props.onSelect(p)}>Точка {p.start_number}</button>)}
+  <button onClick={() => props.onCluster(props.data.participants)}>Кластер</button><button onClick={props.onRefresh}>Обновить карту</button>
+  {props.track && <span>Трек участника {props.track.start_number}</span>}
+</div> }));
+afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); localStorage.clear(); });
+const show = () => render(<AppProviders><MapScreen /></AppProviders>);
+it('uses backend stage IDs, numbers and discipline codes; connects map, track and person', async () => {
+  const api = mockApi(); const user = userEvent.setup(); show();
+  await screen.findByRole('button', { name: 'Точка 14' });
+  await user.keyboard('{ArrowLeft}');
+  expect(api).toHaveBeenCalledWith('/api/stages/103', expect.anything());
+  expect(api).toHaveBeenCalledWith('/api/races/10/positions?stage=3', expect.anything());
+  await user.click(screen.getByRole('button', { name: 'Точка 14' }));
+  expect(await screen.findByRole('dialog', { name: 'Карточка участника' })).toBeVisible();
+  await screen.findByText('Трек участника 14');
+  expect(api).toHaveBeenCalledWith('/api/race-participants/9001/track?stage=3', expect.anything());
+  await user.click(screen.getByRole('button', { name: 'Свернуть' }));
+  await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Карточка участника' })).not.toBeInTheDocument());
+  await user.click(screen.getByRole('button', { name: 'Кластер' }));
   await user.keyboard('{Escape}');
-  expect(screen.queryByText(/Демонстрационные данные\. Карта/)).not.toBeInTheDocument();
-  expect(readPreferences()).toEqual({ supported: [14, 21], prompted: [14, 21], notifications: [] });
-});
-it('opens the map and supports a participant across reloads', async () => {
-  const user = userEvent.setup();
-  const first = show();
-  expect(screen.getByRole('heading', { name: 'Гонка Авача 2027' })).toBeVisible();
-  expect(screen.getByText('Демонстрационные данные')).toBeVisible();
-  await user.click(screen.getByRole('button', { name: /Участник 14,/ }));
-  const sheet = await screen.findByRole('dialog', { name: 'Участник №14' });
-  await user.click(within(sheet).getByRole('button', { name: /Алиса Иванова/ }));
-  expect(screen.getByText('Биография участника')).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'Болею за' }));
-  await user.click(await screen.findByRole('button', { name: 'Позже' }));
-  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-  await user.click(screen.getByRole('tab', { name: /Мои/ }));
-  expect(screen.getByRole('button', { name: /Участник 14,.*мой участник/ })).toBeVisible();
-  first.unmount();
-  show();
-  expect(screen.getByRole('button', { name: /Участник 14,.*мой участник/ })).toBeVisible();
-});
-
-it('switches future and finished stages, opens gallery and returns to live', async () => {
-  const user = userEvent.setup();
-  show();
-  await user.click(screen.getByRole('combobox', { name: 'Этап гонки' }));
-  await user.click(screen.getByRole('option', { name: /Этап 4/ }));
-  expect(screen.getByRole('heading', { name: 'Этап 4 начнётся' })).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'Смотреть 3 этап live' }));
-  expect(screen.getByRole('region', { name: /Карта маршрута/ })).toBeVisible();
-  await user.click(screen.getByRole('combobox', { name: 'Этап гонки' }));
-  await user.click(screen.getByRole('option', { name: /Этап 2/ }));
-  expect(screen.getByRole('heading', { name: 'Этап 2 завершён' })).toBeVisible();
-  await user.click(screen.getByRole('button', { name: /Все.*фото/ }));
-  await user.click(screen.getByRole('button', { name: 'Открыть фото 11' }));
-  expect(await screen.findByRole('dialog', { name: 'Фото этапа' })).toBeVisible();
-  await user.keyboard('{Escape}');
-});
-
-it('retains positions when connectivity is lost', async () => {
-  show();
-  act(() => window.dispatchEvent(new Event('offline')));
-  expect(screen.getByText(/Нет соединения/)).toBeVisible();
-  expect(screen.getByRole('button', { name: /Участник 14,/ })).toBeVisible();
-  act(() => window.dispatchEvent(new Event('online')));
-  expect(screen.queryByText(/Нет соединения/)).not.toBeInTheDocument();
-  fireEvent.keyDown(screen.getByRole('region', { name: /Карта маршрута/ }), { key: 'ArrowRight' });
-});
-
-it('filters disciplines and supports an empty personal list', async () => {
-  const user = userEvent.setup(); show({ persist: false });
-  await user.click(screen.getByRole('tab', { name: /Мои/ }));
-  expect(screen.getByText('Вы пока ни за кого не болеете')).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'Все участники' }));
+  await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Участники рядом' })).not.toBeInTheDocument());
+  await user.click(screen.getByRole('button', { name: 'Кластер' }));
+  await user.click(await screen.findByRole('button', { name: 'Иван Петров · №22' }));
+  await user.click(await screen.findByRole('button', { name: 'Свернуть' }));
+  await user.click(screen.getByRole('button', { name: /Нарта, 8 собак.*№14/ }));
+  await user.click(await screen.findByRole('button', { name: 'Свернуть' }));
+  await user.click(screen.getByRole('button', { name: 'Обновить карту' }));
   await user.click(screen.getByRole('tab', { name: 'Дисциплина: все' }));
   await user.click(screen.getByRole('radio', { name: 'Нарта, 8 собак' }));
-  expect(screen.getByText('Топ-3 по дисциплине')).toBeVisible();
-  expect(screen.queryByRole('button', { name: /Участник 14,/ })).not.toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: /1. Алексей Вершинин/ }));
-  expect(await screen.findByRole('dialog', { name: 'Участник №21' })).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'Свернуть' }));
-  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  expect(await screen.findByText('Топ-3 по GPS в дисциплине')).toBeVisible();
+  expect(api).toHaveBeenCalledWith('/api/races/10/positions?stage=3&discipline=sled_8', expect.anything());
+  await user.click(screen.getByRole('button', { name: /1. Алиса Иванова/ }));
+  await user.click(await screen.findByRole('button', { name: 'Свернуть' }));
+  await user.click(screen.getByRole('button', { name: 'Участники' }));
+  expect(await screen.findByText('Алиса Иванова')).toBeVisible();
+  expect(screen.getByRole('tab', { name: 'Дисциплина: Нарта, 8 собак' })).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Назад' }));
+  expect(await screen.findByRole('button', { name: 'Точка 14' })).toBeVisible();
 });
-
-it('opens clusters, follows checkpoints and reports unavailable navigation', async () => {
+it('hides GPS independently for every published discipline and opens official results', async () => {
+  mockApi(url => url.includes('/positions') ? { ...positions, official_protocol_disciplines: ['sled_8'] } : fixtureResponse(url));
   const user = userEvent.setup(); show();
-  await user.click(screen.getByRole('button', { name: '+4 — ещё участники на маршруте' }));
-  expect(await screen.findByRole('dialog', { name: 'Участники рядом' })).toBeVisible();
-  await user.click(screen.getByRole('button', { name: /Дмитрий Лесной/ }));
-  expect(await screen.findByRole('dialog', { name: 'Участник №11' })).toBeVisible();
-  await user.click(screen.getByRole('button', { name: /Старт — КП-1/ }));
-  expect(screen.getByText(/Демонстрационные отметки/)).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'Поделиться' }));
-  expect(screen.getByText(/Это действие недоступно/)).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'Закрыть сообщение' }));
-  await user.keyboard('{Escape}');
-  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-  await user.click(screen.getByRole('button', { name: '+2 — ещё участники на маршруте' }));
-  await user.keyboard('{Escape}');
-  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-  for (const name of ['Назад', 'Меню', 'Закрыть', 'Участники', 'Результаты', 'Программа', 'Ещё', 'Карта', 'КП-1', 'КП-2', 'Старт маршрута', 'Финиш маршрута', 'Обновить']) {
-    await user.click(screen.getByRole('button', { name }));
-  }
-  expect(screen.getByText(/Новые координаты с сервера не запрашивались/)).toBeVisible();
+  await screen.findByRole('button', { name: 'Точка 22' });
+  expect(screen.queryByRole('button', { name: 'Точка 14' })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Открыть протокол' }));
+  expect(await screen.findByText('Зачёт после этапа 3')).toBeVisible();
+  await user.click(await screen.findByRole('button', { name: '№14 · Алиса Иванова' }));
+  expect(await screen.findByRole('dialog', { name: 'Карточка участника' })).toBeVisible();
+  expect(screen.queryByText('Позиция по GPS-трекеру: 1')).not.toBeInTheDocument();
 });
-
-it('confirms demo notifications once and removes support without repeating the prompt', async () => {
-  const user = userEvent.setup(); show({ initialParticipant: 14 });
-  await user.click(screen.getByRole('button', { name: 'Болею за' }));
-  await user.click(await screen.findByRole('button', { name: 'Да, уведомлять' }));
-  expect(screen.getByText(/Выбор сохранён только для демонстрации/)).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'Закрыть сообщение' }));
-  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-  await user.click(screen.getByRole('button', { name: /Участник 14,/ }));
-  await user.click(screen.getByRole('button', { name: 'Вы болеете' }));
-  expect(screen.getByText(/1240 болельщиков/)).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'Болею за' }));
-  expect(screen.getByRole('button', { name: 'Вы болеете' })).toBeVisible();
-  expect(screen.queryByRole('button', { name: 'Да, уведомлять' })).not.toBeInTheDocument();
+it('supports cancelled, planned and finished stages and the overall standings selector', async () => {
+  const api = mockApi(); const user = userEvent.setup(); show();
+  await screen.findByRole('button', { name: 'Точка 14' });
+  const choose = async (number: number) => {
+    await user.click(screen.getByRole('combobox', { name: 'Этап гонки' }));
+    await user.click(screen.getByRole('option', { name: new RegExp('Этап ' + number) }));
+  };
+  await choose(5); expect(await screen.findByRole('heading', { name: 'Этап 5 отменён' })).toBeVisible();
+  expect(screen.queryByRole('region', { name: 'Карта маршрута' })).not.toBeInTheDocument();
+  await choose(4); await user.click(screen.getByRole('button', { name: 'Смотреть 3 этап live' }));
+  expect(await screen.findByRole('button', { name: 'Точка 14' })).toBeVisible();
+  await choose(2); await user.click(screen.getByRole('button', { name: 'Результаты этапа' }));
+  expect(await screen.findByText('Зачёт после этапа 2')).toBeVisible();
+  expect(api).toHaveBeenCalledWith('/api/races/10/results?stage=2', expect.anything());
+  await user.click(screen.getByRole('combobox', { name: 'Этап гонки' }));
+  await user.click(screen.getByRole('option', { name: /Общий зачёт/ }));
+  expect(await screen.findByRole('heading', { name: 'Общий зачёт' })).toBeVisible();
+  expect(api).toHaveBeenCalledWith('/api/races/10/results', expect.anything());
+  await user.click(screen.getByRole('button', { name: '№14 · Алиса Иванова' }));
+  expect(await screen.findByText(/Официальное место в дисциплине за гонку: 2/)).toBeVisible();
+  expect(api).toHaveBeenCalledWith('/api/races/10/results?discipline=sled_8', expect.anything());
+  await user.click(screen.getByRole('button', { name: 'Свернуть' }));
+  await user.click(screen.getByRole('button', { name: 'Карта' }));
+  expect(await screen.findByRole('heading', { name: 'Этап 2 завершён' })).toBeVisible();
 });
-
-it('closes notification prompt with Escape and reports unavailable storage', async () => {
-  const user = userEvent.setup();
-  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Blocked'); });
-  show({ initialPrompt: 14, initialSupported: [14] });
-  await screen.findByRole('button', { name: 'Позже' });
-  await user.keyboard('{Escape}');
-  expect(await screen.findByText(/Не удалось сохранить выбор/)).toBeVisible();
+it('renders no stages, no route, no coordinates and zero/null GPS ranks without substitutions', async () => {
+  const api = mockApi(url => url.includes('/positions') ? { ...positions, participants: positions.participants.map(p => ({ ...p, position: null, gps_rank: null })) }
+    : /\/stages\//.test(url) ? { ...stage, route_geojson: null } : fixtureResponse(url));
+  show(); await screen.findByText('Положения отсутствуют'); expect(screen.getByText('Маршрут пока не опубликован.')).toBeVisible();
+  expect(screen.queryByText(/Лидеры по GPS/)).not.toBeInTheDocument();
+  api.mockImplementation(async () => new Response(JSON.stringify({ data: { ...race, stages: [] } })));
+  await act(async () => { window.dispatchEvent(new Event('online')); });
+  expect(await screen.findByText('Этапы пока не объявлены')).toBeVisible();
 });
-
-it.each(['loading', 'error', 'empty', 'stale', 'offline'] as const)('renders and recovers the %s scenario', async scenario => {
-  const user = userEvent.setup(); show({ scenario, persist: false });
-  if (scenario === 'loading' || scenario === 'error') {
-    await user.click(screen.getByRole('button', { name: scenario === 'loading' ? 'Показать демоданные' : 'Повторить' }));
-    expect(screen.getByRole('region', { name: /Карта маршрута/ })).toBeVisible();
-  } else if (scenario === 'empty') {
-    expect(screen.getAllByText('Положения отсутствуют').length).toBe(2);
-    expect(screen.queryByRole('button', { name: /Участник 14,/ })).not.toBeInTheDocument();
-  } else if (scenario === 'offline') {
-    await user.click(screen.getByRole('button', { name: 'Обновить данные' }));
-    expect(screen.getByText(/Нет соединения/)).toBeVisible();
-  } else {
-    expect(screen.getByText('Обновлено 48 минут назад')).toBeVisible();
-    await user.click(screen.getByRole('button', { name: /Участник 21,/ }));
-    expect(await screen.findByRole('dialog')).toBeVisible();
-  }
+it('shows genuine empty-race errors and retry instead of fixture data', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: null, error: { message: 'Гонок пока нет' } }), { status: 404 })));
+  show(); expect(await screen.findByText('Гонок пока нет')).toBeVisible();
+  expect(screen.queryByText(/Гонка Авача 2026/)).not.toBeInTheDocument();
+  const api = mockApi(() => ({ ...race, stages: [] }));
+  await userEvent.click(screen.getByRole('button', { name: 'Повторить' }));
+  expect(await screen.findByRole('heading', { name: race.name })).toBeVisible(); expect(api).toHaveBeenCalled();
 });
-
-it('supports a fresh participant locally and handles an unknown initial stage', async () => {
-  const user = userEvent.setup(); show({ initialStage: 999, initialParticipant: 21, persist: false, initialExpanded: true });
-  expect(screen.getByText('Биография участника')).toBeVisible();
-  await user.click(screen.getByRole('button', { name: /Алексей Вершинин.*Камчатский/ }));
-  expect(screen.queryByText('Биография участника')).not.toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Болею за' }));
-  await user.click(await screen.findByRole('button', { name: 'Позже' }));
+it('shows stale GPS time and suppresses positions once all disciplines publish', async () => {
+  mockApi(url => url.includes('/positions') ? { ...positions, participants: positions.participants.map(p => ({ ...p, is_stale: true })) } : fixtureResponse(url));
+  const { unmount } = show();
+  expect(await screen.findByText(/Последняя подтверждённая точка на/)).toBeVisible(); unmount(); localStorage.clear();
+  mockApi(url => url.includes('/positions') ? { ...positions, official_protocol_disciplines: ['sled_8', 'ski_2'] } : fixtureResponse(url));
+  show(); await screen.findByRole('button', { name: 'Открыть протокол' });
+  expect(screen.queryByText('Положения отсутствуют')).not.toBeInTheDocument();
 });
-
-it('renders finished stage one and handles preview-only media actions', async () => {
-  const user = userEvent.setup(); show({ initialStage: 1, initialGalleryExpanded: true });
-  expect(screen.getByText('Этап завершён. Подробный отчёт будет опубликован организаторами.')).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'Смотреть видео: Старт' }));
-  expect(screen.getByText(/Это действие недоступно/)).toBeVisible();
-  await user.click(screen.getByRole('button', { name: 'Закрыть сообщение' }));
-  await user.click(screen.getAllByRole('button', { name: 'Результаты' })[0]);
-  await user.click(screen.getByRole('button', { name: 'Открыть главное фото' }));
-  await user.keyboard('{Escape}');
-  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-  await user.click(screen.getByRole('button', { name: 'Свернуть фото' }));
-  expect(screen.queryByRole('button', { name: 'Открыть фото 11' })).not.toBeInTheDocument();
+it('orders the top three only within the selected discipline', async () => {
+  mockApi(url => url.includes('/positions') ? { ...positions, participants: [positions.participants[0], { ...positions.participants[1], discipline: positions.participants[0].discipline, gps_rank: 2 }] } : fixtureResponse(url));
+  const user = userEvent.setup(); show();
+  await screen.findByRole('button', { name: 'Точка 14' });
+  await user.click(screen.getByRole('tab', { name: 'Дисциплина: все' }));
+  await user.click(screen.getByRole('radio', { name: 'Нарта, 8 собак' }));
+  expect(await screen.findByRole('button', { name: /2. Иван Петров/ })).toBeVisible();
 });
-
-it('dismisses the notification card using its close button', async () => {
-  const user = userEvent.setup(); show({ initialPrompt: 14, initialSupported: [14] });
-  const dialog = await screen.findByRole('dialog');
-  await user.click(within(dialog).getByRole('button', { name: 'Закрыть' }));
-  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+it('chooses the same current-stage fallback as the backend', () => {
+  expect(currentStage([])).toBeUndefined(); expect(currentStage([stage])?.id).toBe(103);
+  expect(currentStage([{ ...stage, status: 'planned', start_at: null }])?.id).toBe(103);
+  expect(currentStage([{ ...stage, id: 1, status: 'finished' }, { ...stage, id: 2, status: 'finished' }], Date.parse('2026-10-28'))?.id).toBe(2);
+  expect(currentStage([{ ...stage, status: 'planned', start_at: '2027-01-01T00:00:00Z' }], Date.parse('2026-10-28'))?.id).toBe(103);
 });

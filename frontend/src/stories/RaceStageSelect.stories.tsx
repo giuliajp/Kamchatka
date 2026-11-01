@@ -56,3 +56,4 @@ export const DisabledSelect: StageStory = {
   name: 'Выбор недоступен',
   args: { ...Select.args, disabled: true },
 };
+

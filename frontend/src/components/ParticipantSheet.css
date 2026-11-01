@@ -1,22 +1,53 @@
-.map-participant { padding: 8px 16px 16px; }
-.map-participant, .map-participant * { box-sizing: border-box; }
-.map-participant button:focus-visible { outline: 3px solid var(--vkui--color_stroke_accent); outline-offset: 3px; }
-.map-participant h3 { font-size: .875rem; line-height: 1.125rem; margin: 16px 0; }
-.map-participant__tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-.map-participant__tags span { padding: 8px; border-radius: 6px; background: var(--vkui--color_background_accent); color: var(--vkui--color_text_contrast); font-size: .8125rem; }
+.participant-sheet .vkuiModalPage__document, .participant-sheet .vkuiModalPageContent__host,
+.participant-sheet .vkuiModalPage__children { background: transparent; }
+.map-participant { position: relative; margin-top: 16px; min-height: calc(100% - 16px); padding: 40px 16px 20px; border-radius: 16px 16px 0 0; background: var(--vkui--color_background_content); font-size: .8125rem; line-height: 1rem; }
+.map-participant *, .map-participant *::before, .map-participant *::after { box-sizing: border-box; }
+.map-participant p { line-height: 1.4; overflow-wrap: anywhere; }
+.sheet-dismiss { position: absolute; top: 4px; right: 4px; width: 44px; height: 36px; border: 0; background: transparent; color: var(--vkui--color_icon_secondary); font: inherit; font-size: 1.5rem; cursor: pointer; }
+/* The tags overlap the top of the updated 462:10977 sheet, and grow with text. */
+.map-participant__tags { display: flex; flex-wrap: wrap; gap: 8px; position: relative; z-index: 1; margin: -56px 28px 24px 0; }
+.map-participant__tags span { padding: 8px; border-radius: 6px; background: var(--vkui--color_background_accent); color: var(--vkui--color_text_contrast); font-size: .8125rem; line-height: 1rem; }
 .map-participant__tags span + span { background: #7c85c4; color: #fff; }
-.map-participant__bio { border-radius: 8px; box-shadow: 0 2px 8px #0002; overflow: hidden; }
-.map-participant__bio button { margin: 0; }
-.map-participant__biography { padding: 0 12px 12px; font-size: .8125rem; line-height: 1.3; }
-.map-participant__biography h3 { margin: 0 0 16px; font-size: .8125rem; }
-.map-participant__biography p { margin: 0 0 8px; }
-.map-participant__fans { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; font-size: .8125rem; }
-.map-participant__fans span { color: var(--vkui--color_text_accent); }
-.map-participant__position { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.map-place { background: #ff4c3e; color: #fff; padding: 7px 12px; border-radius: 8px; font-size: .875rem; }
-.map-participant__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 16px 0 24px; }
-.map-participant__stats > div { width: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 12px 2px; border-radius: 8px; background: var(--vkui--color_background_secondary); text-align: center; font-size: .875rem; overflow-wrap: anywhere; }
-.map-participant__stats span { font-size: .75rem; color: var(--vkui--color_text_primary); }
-.map-participant__route { display: grid; gap: 12px; }
-.map-participant__actions { display: flex; gap: 12px; margin-top: 24px; }
-.map-participant__actions > :first-child { flex: 1; }
+.map-participant__bio { border-radius: 8px; box-shadow: 0 0 2px #0000000f, 0 4px 8px #0000000a; overflow: hidden; }
+.map-participant__bio .vkuiBanner__host { background: var(--vkui--color_background_content); margin: 0; }
+.map-participant__bio .vkuiBanner__content > :first-child { font-size: 1.25rem; line-height: 1.5rem; font-weight: 500; }
+.map-participant__bio .vkuiBanner__subtitle, .map-participant__bio .vkuiBanner__extraSubtitle { font-size: .8125rem; line-height: 1rem; }
+.map-participant__biography { padding: 0 12px 12px; white-space: pre-line; }
+.map-participant__biography h3 { margin: 0 0 12px; font-size: .8125rem; }
+.map-participant__biography p { margin: 0; line-height: 1rem; }
+.map-participant__fans { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 12px 0 16px; font-size: .75rem; line-height: .875rem; color: var(--vkui--color_text_subhead); }
+.map-participant__fans svg, .map-participant__fans strong { color: var(--vkui--color_text_accent); }
+.map-participant__fans strong { font-weight: 500; }
+.map-participant__position { display: flex; align-items: start; flex-wrap: wrap; gap: 8px; }
+.map-place { display: inline-flex; align-items: center; min-height: 32px; padding: 4px 12px; border-radius: 8px; background: #ff4c3e; color: white; font-size: .875rem; line-height: 1.125rem; }
+.map-participant__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 16px 0; }
+.map-participant__stats > div { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 62px; padding: 12px 2px; gap: 2px; border-radius: 8px; background: var(--vkui--color_background_secondary); text-align: center; overflow-wrap: anywhere; }
+.map-participant__stats strong { font-size: .875rem; line-height: 1.125rem; }
+.map-participant__stats span { font-size: .75rem; line-height: .875rem; color: var(--vkui--color_text_subhead); }
+.participant-official { font-size: .6875rem; color: var(--vkui--color_text_subhead); margin: 8px 0; }
+.map-participant__route { display: grid; gap: 12px; margin-top: 16px; }
+.map-participant__route h3 { margin: 0 0 4px; font-size: .875rem; line-height: 1.125rem; }
+.map-participant__route p { margin: 0; }
+.map-participant__route .race-route-point__index { border-radius: 50%; min-width: 24px; width: 24px; min-height: 24px; display: grid; place-items: center; }
+.map-participant__route .race-route-point__status { font-size: .6875rem; }
+.race-route-point__status[data-passing='true'] { color: #e64646; }
+.map-participant__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.map-participant__actions .support-action { flex: 1; min-width: min(100%, 160px); }
+.support-action > button { width: 100%; min-height: 44px; }
+.map-participant__actions > button { flex: none; border: 1px solid var(--vkui--color_stroke_accent); border-radius: 8px; width: 44px; height: 44px; color: var(--vkui--color_icon_accent); }
+.mock-note { display: block; color: var(--vkui--color_text_subhead); font-size: .625rem; line-height: .875rem; }
+.share-feedback { overflow-wrap: anywhere; }
+.participant-history { padding: 8px 0; margin-top: 20px; border-bottom: 1px solid var(--vkui--color_separator_primary); font-size: .75rem; }
+.participant-history h4 { margin: 8px 0; font-size: .875rem; }
+.participant-history summary { cursor: pointer; }
+.map-legend { position: relative; padding: 24px 16px; overflow-wrap: anywhere; }
+.map-legend h2 { font-size: 1rem; margin: 0 0 16px; }
+.map-legend h3 { font-size: .75rem; font-weight: 500; margin: 16px 0; }
+.map-legend__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 4.5rem), 1fr)); gap: 8px; }
+.map-legend__grid > div { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.map-legend__grid span, .map-legend__others span { font-size: .6875rem; line-height: .875rem; }
+.map-legend__others { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: 16px; }
+.map-legend__others > div { display: flex; align-items: center; gap: 8px; }
+.map-legend p { font-size: .625rem; line-height: .875rem; margin: 20px 0 0; color: var(--vkui--color_text_subhead); }
+
+.map-participant__bio .vkuiBanner__content { min-width: 0; overflow-wrap: anywhere; }

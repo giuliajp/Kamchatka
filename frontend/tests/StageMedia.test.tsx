@@ -1,0 +1,22 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { expect, it } from 'vitest';
+import { AppProviders } from '../src/app/AppProviders';
+import { StageMedia } from '../src/screens/Map/StageMedia';
+it('expands and collapses the gallery and opens original photos and labelled demo video previews', async () => {
+  const user = userEvent.setup(); render(<AppProviders><StageMedia number={2} /></AppProviders>);
+  expect(screen.getByText(/Демонстрационные материалы/)).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Открыть фото 6' })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: '+6 фото' }));
+  expect(screen.getByRole('button', { name: 'Открыть фото 11' })).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Открыть фото 6' }));
+  expect(await screen.findByRole('dialog', { name: 'Фото 6' })).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Закрыть материал' }));
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  await user.click(screen.getByRole('button', { name: 'Свернуть фото' }));
+  await user.click(screen.getByRole('button', { name: 'Открыть главное фото' }));
+  await user.click(await screen.findByRole('button', { name: 'Закрыть материал' }));
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  await user.click(screen.getByRole('button', { name: 'Смотреть видео: Старт' }));
+  expect(await screen.findByText(/Демонстрационное видеопревью/)).toBeVisible();
+});

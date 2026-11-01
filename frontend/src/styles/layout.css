@@ -6,11 +6,38 @@ body { margin: 0; }
   font-family: var(--vkui--font_family_base);
 }
 
+#root .ui-root { min-height: 100dvh; }
+
 /* Small labels use the standard primary token: VKUI's secondary gray does not
    meet 4.5:1 on the light background. No custom palette is introduced. */
 .supporting-text { color: var(--vkui--color_text_primary); }
 
+.catalog {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.catalog__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 40px; }
+.catalog__header h1 { margin: 12px 0; }
+.catalog__settings { display: grid; grid-template-columns: 1fr 1fr; min-width: 300px; }
+.catalog__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.catalog__grid section { min-width: 0; }
+.catalog__grid h2 { margin-bottom: 16px; }
+.catalog__stack { display: grid; gap: 16px; }
+.catalog__footer { margin-top: 40px; }
+.action-list { flex-wrap: wrap; }
+.action-feedback { margin-top: 16px; min-height: 48px; overflow-wrap: anywhere; }
 .freshness { display: grid; gap: 8px; }
+
+@media (max-width: 767px) {
+  .catalog { padding: 24px 16px; }
+  .catalog__header { flex-direction: column; gap: 16px; margin-bottom: 24px; }
+  .catalog__settings { width: 100%; min-width: 0; }
+  .catalog__grid { grid-template-columns: 1fr; gap: 24px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .ui-root *, .ui-root *::before, .ui-root *::after {
@@ -19,3 +46,4 @@ body { margin: 0; }
     transition-duration: 0.01ms !important;
   }
 }
+

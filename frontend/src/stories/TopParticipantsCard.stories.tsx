@@ -16,4 +16,3 @@ export const Leaders: Story = { name: 'Лидеры по дисциплинам'
 ] } };
 export const Position: Story = { name: 'Позиция участника', args: { title: 'Нарта, 8+ собак', entries: [{ id: 'alice', place: 1, number: '14', label: 'Алиса Филимонова', time: '3:12:45' }] } };
 export const Empty: Story = { name: 'Дополнительно — Нет результатов', args: { entries: [] } };
-export const Compact: Story = { name: 'Компактные лидеры — отдельно от экрана карты', args: { compact: true } };

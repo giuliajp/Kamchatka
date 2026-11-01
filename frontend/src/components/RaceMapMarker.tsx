@@ -11,12 +11,12 @@ export interface RaceMapMarkerProps {
   supported: boolean;
   leader: boolean;
   staleVariant?: keyof typeof clocks;
-  onSelect: () => void;
+  onSelect?: () => void;
 }
 export function RaceMapMarker({ number, position, supported, leader, staleVariant = 'clock', onSelect }: RaceMapMarkerProps) {
   const variant = Number(supported);
   const size = supported ? 44 : 36;
-  return <Tappable Component="button" className="race-map-marker" data-supported={supported} data-position={position}
+  return <Tappable Component={onSelect ? 'button' : 'span'} role={onSelect ? undefined : 'img'} className="race-map-marker" data-supported={supported} data-position={position}
     aria-label={`Участник ${number}, ${positionLabels[position]}${supported ? ', мой участник' : ''}${leader ? ', лидер' : ''}`}
     onClick={onSelect}>
     <img className="race-map-marker__ring" src={`/figma/276-5012/${rings[position][variant]}`} width={size} height={size} alt="" />

@@ -1,13 +1,17 @@
-/* VKUI foundations plus measured authored components from Figma. Font files pending. */
+/* VKUI foundations plus measured authored components from Figma. Local Gotham Pro web fonts. */
 .race-tabbar { position: relative; }
 .race-secondary { color: var(--vkui--color_text_secondary); }
+.race-event { width: 100%; text-align: start; color: inherit; }
+.race-event__image { display: block; max-width: 100%; height: auto; border-radius: var(--vkui--size_border_radius--regular); }
+.race-accent { color: var(--vkui--color_text_accent); }
 
 /* VKUI Tappable preserves native button borders/font when Component="button".
  * Reset only browser chrome; keep VKUI layout, focus, colors and interaction. */
 .race-native-action { border: 0; font: inherit; text-align: start; width: 100%; box-sizing: border-box; }
-.race-list-action { background: transparent; padding-block: 0; }
+.race-list-action, .race-event { background: transparent; padding-block: 0; }
+.race-event { padding-inline: 0; }
 
-/* Figma 122:9315. Existing VKUI font stays visible until Gotham Pro is supplied. */
+/* Figma 122:9315. Local font metrics follow the design. */
 .race-time-badge {
   display: inline-flex; align-items: center; box-sizing: border-box;
   max-width: 100%; min-height: 32px; padding: 4px 12px; border-radius: 8px;
