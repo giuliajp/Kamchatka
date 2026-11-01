@@ -32,6 +32,8 @@ kamchatka-avacha/
 подписки и медиа дополнены локальными моками, отключаемыми через `VITE_MOCK_MISSING_FEATURES`.
 Запуск — [frontend/README.md](frontend/README.md), результаты проверки —
 [docs/frontend-integration.md](docs/frontend-integration.md).
+Глубокое ревью, исправления и ограничения поставки —
+[docs/frontend-review.md](docs/frontend-review.md).
 
 ## Документация бэкенда
 

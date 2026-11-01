@@ -100,3 +100,11 @@ npm run storybook
 TS/TSX-файла, production и Storybook. Исходные 134 теста сохранены; новые проверки
 дополняют их. Storybook — http://127.0.0.1:6006; только тесты и Storybook импортируют
 HTTP-фикстуры. Production не содержит подмены основных API.
+
+## Ревью и CI
+
+Итоговое [ревью от 1 ноября 2026](../docs/frontend-review.md): 184 теста,
+100% каждого рабочего файла, обе сборки и полный npm audit без уязвимостей.
+GitHub Actions повторяет npm ci, check и аудит для frontend PR.
+Overrides glob/minimatch закрывают уязвимости инструментов разработки; новые
+production-зависимости для ревью не добавлялись.
