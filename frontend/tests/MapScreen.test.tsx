@@ -29,6 +29,7 @@ it('uses backend stage IDs, numbers and discipline codes; connects map, track an
   await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Участники рядом' })).not.toBeInTheDocument());
   await user.click(screen.getByRole('button', { name: 'Кластер' }));
   await user.click(await screen.findByRole('button', { name: 'Иван Петров · №22' }));
+  expect(await screen.findByRole('button', { name: /Иван Петров/ })).toBeVisible();
   await user.click(await screen.findByRole('button', { name: 'Свернуть' }));
   await user.click(screen.getByRole('button', { name: /Нарта, 8 собак.*№14/ }));
   await user.click(await screen.findByRole('button', { name: 'Свернуть' }));

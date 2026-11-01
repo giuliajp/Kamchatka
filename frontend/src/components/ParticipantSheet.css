@@ -3,7 +3,6 @@
 .map-participant { position: relative; margin-top: 16px; min-height: calc(100% - 16px); padding: 40px 16px 20px; border-radius: 16px 16px 0 0; background: var(--vkui--color_background_content); font-size: .8125rem; line-height: 1rem; }
 .map-participant *, .map-participant *::before, .map-participant *::after { box-sizing: border-box; }
 .map-participant p { line-height: 1.4; overflow-wrap: anywhere; }
-.sheet-dismiss { position: absolute; top: 4px; right: 4px; width: 44px; height: 36px; border: 0; background: transparent; color: var(--vkui--color_icon_secondary); font: inherit; font-size: 1.5rem; cursor: pointer; }
 /* The tags overlap the top of the updated 462:10977 sheet, and grow with text. */
 .map-participant__tags { display: flex; flex-wrap: wrap; gap: 8px; position: relative; z-index: 1; margin: -56px 28px 24px 0; }
 .map-participant__tags span { padding: 8px; border-radius: 6px; background: color-mix(in srgb, var(--vkui--color_background_accent) 80%, #000); color: #fff; font-size: .8125rem; line-height: 1rem; }
@@ -40,14 +39,5 @@
 .participant-history { padding: 8px 0; margin-top: 20px; border-bottom: 1px solid var(--vkui--color_separator_primary); font-size: .75rem; }
 .participant-history h4 { margin: 8px 0; font-size: .875rem; }
 .participant-history summary { cursor: pointer; }
-.map-legend { position: relative; padding: 24px 16px; overflow-wrap: anywhere; }
-.map-legend h2 { font-size: 1rem; margin: 0 0 16px; }
-.map-legend h3 { font-size: .75rem; font-weight: 500; margin: 16px 0; }
-.map-legend__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 4.5rem), 1fr)); gap: 8px; }
-.map-legend__grid > div { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
-.map-legend__grid span, .map-legend__others span { font-size: .6875rem; line-height: .875rem; }
-.map-legend__others { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: 16px; }
-.map-legend__others > div { display: flex; align-items: center; gap: 8px; }
-.map-legend p { font-size: .625rem; line-height: .875rem; margin: 20px 0 0; color: color-mix(in srgb, var(--vkui--color_text_subhead) 95%, var(--vkui--color_text_primary)); }
 
 .map-participant__bio .vkuiBanner__content { min-width: 0; overflow-wrap: anywhere; }

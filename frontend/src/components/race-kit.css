@@ -67,3 +67,5 @@
 .race-route-point__status { color: var(--vkui--color_text_accent); }
 
 .race-time-badge .race-time-badge__retry { flex: none; width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
+.sheet-dismiss { position: absolute; top: 4px; right: 4px; width: 44px; height: 36px; border: 0; background: transparent; color: var(--vkui--color_icon_secondary); font: inherit; font-size: 1.5rem; cursor: pointer; }
+.sheet-dismiss:focus-visible { outline: 3px solid var(--vkui--color_stroke_accent); outline-offset: 3px; }

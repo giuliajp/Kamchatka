@@ -19,14 +19,27 @@ export const standing: Standing = { race_participant_id: 9001, participant_id: 5
 export const results: Results = { race, up_to_stage: 3, penalty_included_in_stage_times: true, disciplines: [{ discipline, stages: [{ id: 103, number: 3, name: null, distance_km: 40, protocol_status: 'final', is_final: true }], rows: [standing] }] };
 export const protocols: Protocols = { race_id: 10, stage, protocols: [{ discipline, status: 'final', is_final: true, published_at: stage.start_at, finalized_at: stage.start_at, weather: 'Ясно', chief_judge: 'Иванов', chief_secretary: 'Петрова', rows: [standing] }] };
 export const track: Track = { race_participant_id: 9001, start_number: 14, full_name: participant.full_name, points: [{ ...positions.participants[0].position!, stage_number: 3 }] };
+const standingAt = (number: number): Standing => ({ ...standing, stages: standing.stages.map(cell => ({ ...cell, stage_number: number })) });
 export function fixtureResponse(url: string): unknown {
   const parsed = new URL(url, 'http://localhost'); const path = parsed.pathname;
   if (path.endsWith('/current') || /\/races\/\d+$/.test(path)) return race;
   if (path.endsWith('/positions')) return { ...positions, participants: positions.participants.filter(p => !parsed.searchParams.get('discipline') || p.discipline.code === parsed.searchParams.get('discipline')) };
-  if (path.endsWith('/participants')) return [participant].filter(p => p.full_name.includes(parsed.searchParams.get('q') || '') || String(p.start_number) === parsed.searchParams.get('q'));
-  if (/\/participants\/\d+$/.test(path)) return person;
-  if (path.endsWith('/protocols')) return protocols;
-  if (path.endsWith('/results')) return results;
+  if (path.endsWith('/participants')) return [participant].filter(p => (!parsed.searchParams.get('discipline') || p.discipline.code === parsed.searchParams.get('discipline')) && (p.full_name.toLocaleLowerCase('ru-RU').includes((parsed.searchParams.get('q') || '').toLocaleLowerCase('ru-RU')) || String(p.start_number) === parsed.searchParams.get('q')));
+  if (path.endsWith('/participants/501')) return person;
+  if (path.endsWith('/participants/502')) return { ...person, id: 502, full_name: 'Иван Петров', first_name: 'Иван', last_name: 'Петров',
+    races: [{ ...person.races[0], race_participant_id: 9002, start_number: 22, dogs_count: 2, discipline: race.disciplines[1] }] };
+  if (path.endsWith('/protocols')) {
+    const selected = race.stages.find(s => path.endsWith(`/stages/${s.id}/protocols`)) ?? stage;
+    return { ...protocols, stage: selected, protocols: ['live', 'finished'].includes(selected.status)
+      ? [{ ...protocols.protocols[0], rows: [standingAt(selected.number)] }] : [] };
+  }
+  if (path.endsWith('/results')) {
+    const limit = parsed.searchParams.has('stage') ? Number(parsed.searchParams.get('stage')) : null;
+    const selected = race.stages.filter(s => (limit === null || s.number <= limit) && ['live', 'finished'].includes(s.status)).at(-1);
+    return { ...results, up_to_stage: limit, disciplines: selected ? [{ ...results.disciplines[0],
+      stages: [{ ...results.disciplines[0].stages[0], id: selected.id, number: selected.number, name: selected.name, distance_km: selected.distance_km }],
+      rows: [standingAt(selected.number)] }].filter(group => !parsed.searchParams.get('discipline') || group.discipline.code === parsed.searchParams.get('discipline')) : [] };
+  }
   if (path.endsWith('/track')) return track;
   if (/\/stages\/\d+$/.test(path)) return { ...stage, ...race.stages.find(s => path.endsWith('/' + s.id)) };
   throw new Error('Unexpected fixture URL: ' + url);

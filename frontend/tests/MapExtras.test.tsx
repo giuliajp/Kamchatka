@@ -93,3 +93,12 @@ it('does not attach another person’s GPS or track to a mixed share URL', async
   expect(screen.queryByLabelText(/Позиция по GPS-трекеру/)).not.toBeInTheDocument();
   expect(api.mock.calls.some(([input]) => String(input).includes('/race-participants/9002/track'))).toBe(false);
 });
+it('closes only the notification prompt when Escape bubbles through a participant sheet', async () => {
+  const user = userEvent.setup(); mockApi(); show();
+  await user.click(await screen.findByRole('button', { name: 'Точка 14' }));
+  await user.click(await screen.findByRole('button', { name: 'Болею за' }));
+  const later = await screen.findByRole('button', { name: 'Позже' });
+  later.focus(); await user.keyboard('{Escape}');
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Позже' })).not.toBeInTheDocument());
+  expect(screen.getByRole('dialog', { name: 'Карточка участника' })).toBeVisible();
+});

@@ -14,6 +14,9 @@ export function NotificationPrompt({ open, number, photoUrl, loading, onConfirm,
   const titleId = useId();
   return (
     <ModalCard open={open} onClose={onClose} titleId={titleId} aria-labelledby={titleId} dismissLabel="Закрыть" dismissButtonMode="inside"
+      onKeyDown={event => {
+        if (event.key === 'Escape') { event.stopPropagation(); onClose(); }
+      }}
       icon={<Avatar src={photoUrl} alt={`Участник №${number}`} fallbackIcon={<Icon28UserOutline />} />}
       title={`Получать уведомления об участнике №${number}?`}
       description="Демонстрационная подписка на прохождение КП, смену позиции и финиш. Настоящие push пока не отправляются."

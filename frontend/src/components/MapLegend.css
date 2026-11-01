@@ -1,0 +1,9 @@
+.map-legend { position: relative; padding: 24px 16px; overflow-wrap: anywhere; }
+.map-legend h2 { font-size: 1rem; margin: 0 0 16px; }
+.map-legend h3 { font-size: .75rem; font-weight: 500; margin: 16px 0; }
+.map-legend__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 4.5rem), 1fr)); gap: 8px; }
+.map-legend__grid > div { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.map-legend__grid span, .map-legend__others span { font-size: .6875rem; line-height: .875rem; }
+.map-legend__others { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: 16px; }
+.map-legend__others > div { display: flex; align-items: center; gap: 8px; }
+.map-legend p { font-size: .625rem; line-height: .875rem; margin: 20px 0 0; color: color-mix(in srgb, var(--vkui--color_text_subhead) 95%, var(--vkui--color_text_primary)); }

@@ -8,6 +8,9 @@ it('shows the participant and independently reports confirm, later and close', a
   const onConfirm = vi.fn(); const onLater = vi.fn(); const onClose = vi.fn();
   render(<AppProviders><NotificationPrompt open number="14" onConfirm={onConfirm} onLater={onLater} onClose={onClose} /></AppProviders>);
   expect(await screen.findByRole('dialog', { name: 'Получать уведомления об участнике №14?' })).toBeVisible();
+  screen.getByRole('button', { name: 'Позже' }).focus();
+  await user.keyboard('{ArrowRight}');
+  expect(onClose).not.toHaveBeenCalled();
   await user.click(screen.getByRole('button', { name: 'Да, уведомлять' }));
   expect(onConfirm).toHaveBeenCalledTimes(1);
   expect(onLater).not.toHaveBeenCalled();

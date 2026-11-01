@@ -1,3 +1,4 @@
+import './MapLegend.css';
 import { ModalPage } from '@vkontakte/vkui';
 import { RaceMapMarker } from './RaceMapMarker';
 import { ParticipantCluster } from './ParticipantCluster';

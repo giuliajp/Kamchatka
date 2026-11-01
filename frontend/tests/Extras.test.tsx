@@ -77,3 +77,12 @@ it('preserves another tab’s just-saved preferences before the storage event ar
   await userEvent.click(screen.getByRole('button', { name: 'Включить уведомления' }));
   expect(readPreferences()).toEqual({ supported: ['10:9002'], subscriptions: ['10:9002', '10:9001'], prompted: [] });
 });
+it('keeps all session actions when existing storage is readable but writes fail', async () => {
+  localStorage.setItem(preferencesKey, JSON.stringify({ supported: [], subscriptions: [], prompted: [] }));
+  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+  render(actions);
+  await userEvent.click(screen.getByRole('button', { name: 'Болею за' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Да, уведомлять' }));
+  expect(screen.getByRole('button', { name: 'Вы болеете' })).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Отключить уведомления' })).toBeVisible();
+});

@@ -21,7 +21,6 @@
 .map-time { position: absolute; z-index: 500; bottom: 30px; left: 16px; right: 16px; pointer-events: none; }
 .map-time button { pointer-events: auto; }
 .map-leaders-slot { position: absolute; z-index: 500; top: 12px; left: 16px; max-width: calc(100% - 32px); }
-:where(.vkui--vkBase--dark, .vkui--vkIOS--dark, .vkui--vkCom--dark) { --race-leader-text: #ff8e86; }
 .map-empty, .map-tile-error { position: relative; z-index: 500; margin: 16px; padding: 16px; border-radius: 12px; background: var(--vkui--color_background_content); }
 .map-tile-error { position: absolute; bottom: 154px; left: 16px; right: 76px; margin: 0; z-index: 501; }
 .map-empty h2 { font-size: 1.125rem; margin-top: 0; }

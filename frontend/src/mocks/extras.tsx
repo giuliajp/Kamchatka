@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Stage, StageDetail } from '../types/api';
 
 export const mockFeaturesEnabled = () => import.meta.env.VITE_MOCK_MISSING_FEATURES !== 'false';
@@ -17,6 +17,7 @@ interface PreferencesContext { value: Preferences; change: (key: keyof Preferenc
 const Context = createContext<PreferencesContext | null>(null);
 export function ExtrasProvider({ children }: { children: ReactNode }) {
   const [value, setValue] = useState(readPreferences);
+  const storageWritable = useRef(true);
   useEffect(() => {
     const sync = (event: StorageEvent) => { if (event.key === preferencesKey || event.key === null) setValue(readPreferences()); };
     window.addEventListener('storage', sync);
@@ -24,9 +25,10 @@ export function ExtrasProvider({ children }: { children: ReactNode }) {
   }, []);
   const change: PreferencesContext['change'] = (key, id, selected) => {
     setValue(previous => {
-      previous = readPreferences(previous);
+      if (storageWritable.current) previous = readPreferences(previous);
       const next = { ...previous, [key]: [...previous[key].filter(item => item !== id), ...(selected ? [id] : [])] };
-      try { localStorage.setItem(preferencesKey, JSON.stringify(next)); } catch { /* Retain this session in memory. */ }
+      try { localStorage.setItem(preferencesKey, JSON.stringify(next)); storageWritable.current = true; }
+      catch { storageWritable.current = false; /* Retain this session in memory. */ }
       return next;
     });
   };

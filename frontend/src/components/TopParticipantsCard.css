@@ -4,3 +4,4 @@
 .map-leaders__row span:nth-child(2) { color: var(--race-leader-text, #d52d22); white-space: nowrap; }
 .map-leaders, .map-leaders * { box-sizing: border-box; }
 .map-leaders button:focus-visible { outline: 3px solid var(--vkui--color_stroke_accent); outline-offset: 3px; }
+:where(.vkui--vkBase--dark, .vkui--vkIOS--dark, .vkui--vkCom--dark) { --race-leader-text: #ff8e86; }
