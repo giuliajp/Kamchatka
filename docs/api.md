@@ -241,6 +241,50 @@
 
 ---
 
+### «Болею за» и отметки КП (готово)
+
+Пользователь определяется по подписанным параметрам запуска VK: фронтенд передаёт
+`window.location.search` как есть в заголовке `X-VK-Launch-Params`. Без верной подписи
+адреса «моих» данных отвечают `401`. Счётчики и рейтинг доступны всем.
+
+| Метод и адрес | Что делает |
+|---|---|
+| `GET /api/race-participants/{id}/support` | Число болельщиков, изменение за 24 часа, болею ли я (`null`, если пользователь не определён) |
+| `PUT /api/race-participants/{id}/support` | «Болею за». Повторное нажатие ничего не меняет |
+| `DELETE /api/race-participants/{id}/support` | Отписаться |
+| `GET /api/me/supports?race_id=` | За кого я болею (профиль) |
+| `PATCH /api/me/supports/{id}` | `{"notifications_enabled": false}` — выключить push по участнику, не отписываясь |
+| `DELETE /api/me/supports?race_id=` | Отписаться от всех |
+| `GET /api/races/{id}/support-rating?discipline=` | Рейтинг народной поддержки; равное число болельщиков — одно место |
+| `GET /api/race-participants/{id}/checkpoint-passes?stage_id=` | Отметки судей на КП для карточки участника |
+
+В списке участников (`GET /api/races/{id}/participants`) добавлены поля
+`supporters_count`, `supporters_change_24h` и сортировка `sort=supporters`.
+
+### Административная панель (готово: задачи 3.2, 3.6)
+
+Вход: `POST /api/admin/login` с `{"login": "...", "password": "..."}` возвращает `token`.
+Дальше каждый запрос — с заголовком `Authorization: Bearer <token>`. Токен действует
+`ADMIN_TOKEN_TTL_HOURS` (12 ч); выключенный организатор теряет доступ сразу.
+Организаторов создаёт `backend/scripts/create_admin.py` (см. README backend).
+
+| Метод и адрес | Что делает |
+|---|---|
+| `GET /api/admin/me` | Кто вошёл |
+| `GET /api/admin/stages/{id}/monitoring` | Трекеры этапа: последняя точка, минут назад, батарея, просрочка, активные SOS, отметки КП. Сначала SOS, потом просрочка |
+| `POST /api/admin/checkpoint-passes` | Внести отметку судьи: `race_participant_id`, `stage_checkpoint_id`, `arrived_at`, `departed_at`, `note`. Время — с часовым поясом (`...+12:00` или `...Z`). Повтор на тот же КП — `409` |
+| `PATCH /api/admin/checkpoint-passes/{id}` | Исправить отметку |
+| `DELETE /api/admin/checkpoint-passes/{id}` | Удалить ошибочную отметку |
+| `GET /api/admin/stages/{id}/checkpoint-passes/log` | Журнал правок: кто, когда, было → стало |
+| `GET /api/admin/races/{id}/alerts?active=true` | SOS гонки (`active=false` — вместе с закрытыми) |
+| `POST /api/admin/alerts/{id}/acknowledge` | Закрыть SOS, `{"note": "причина"}` обязательно |
+| `GET /api/admin/races/{id}/support-stats.csv?days=14` | Болельщики по участникам и дням, CSV для Excel |
+
+Просрочка — нет точек дольше `stale_after_minutes` этапа (по умолчанию 45 мин) и только
+на идущем этапе. Это состояние устройства: статус каюра не меняется.
+SOS из Iridium360 пока не приходит (в API платформы его нет, вопрос в поддержке);
+таблица и адреса готовы.
+
 ## Запланированные адреса (черновик)
 
 Номера задач — из `docs/backend-plan.md`. Когда адрес готов, переносим его
@@ -250,7 +294,6 @@
 
 | Метод и адрес | Что делает | Задача |
 |---|---|---|
-| `POST /api/admin/login` | Вход организатора | 3.2 |
 | `POST /api/admin/protocols/import` | Загрузка протокола файлом | 3.4 |
 | `PATCH /api/admin/stage-results/{id}` | Правка результата (с причиной → журнал) | 3.3 |
 | `POST /api/admin/protocols/{id}/publish` | Опубликовать протокол | 3.3 |

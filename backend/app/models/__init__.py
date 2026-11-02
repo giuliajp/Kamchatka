@@ -7,6 +7,7 @@
 Использование:
     from app.models import Race, RaceParticipant, Protocol
 """
+from app.models.admin import AdminUser
 from app.models.content import (
     FaqItem,
     OrganizerContact,
@@ -29,7 +30,14 @@ from app.models.enums import (
 )
 from app.models.protocol import Penalty, Protocol, ResultChangeLog, StageResult
 from app.models.race import Discipline, Participant, Race, RaceParticipant
-from app.models.stage import Checkpoint, CheckpointPass, Stage, StageCheckpoint
+from app.models.stage import (
+    Checkpoint,
+    CheckpointPass,
+    CheckpointPassLog,
+    Stage,
+    StageCheckpoint,
+)
+from app.models.support import SupportSubscription
 from app.models.tracking import (
     TrackerAlert,
     TrackerAssignment,
@@ -44,7 +52,7 @@ __all__ = [
     # гонка и участники
     "Race", "Discipline", "Participant", "RaceParticipant",
     # маршрут
-    "Stage", "Checkpoint", "StageCheckpoint", "CheckpointPass",
+    "Stage", "Checkpoint", "StageCheckpoint", "CheckpointPass", "CheckpointPassLog",
     # официальные результаты
     "Protocol", "StageResult", "Penalty", "ResultChangeLog",
     # трекинг
@@ -52,4 +60,6 @@ __all__ = [
     # программа фестиваля и контент для зрителей
     "ProgramEvent", "FaqItem", "SpectatorLocation", "OrganizerContact",
     "ProgramEventType", "LocationType",
+    # админка и болельщики
+    "AdminUser", "SupportSubscription",
 ]

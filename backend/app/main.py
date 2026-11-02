@@ -11,7 +11,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import content, health, participants, races, stages, tracking
+from app.api.routes import (
+    admin_auth, admin_race, content, health, participants, races, stages, support, tracking,
+)
 from app.config import get_settings
 from app.db import engine
 from app.middleware.errors import register_error_handlers
@@ -59,6 +61,9 @@ def create_app() -> FastAPI:
     app.include_router(participants.router, prefix="/api")  # карточка спортсмена
     app.include_router(tracking.router, prefix="/api")      # карта: позиции и треки
     app.include_router(content.router, prefix="/api")       # программа, FAQ, локации
+    app.include_router(support.router, prefix="/api")       # «Болею за», рейтинг, отметки КП
+    app.include_router(admin_auth.router, prefix="/api")    # админка: вход
+    app.include_router(admin_race.router, prefix="/api")    # админка: мониторинг, КП, SOS
 
     # Новые разделы подключаем здесь, например:
     # from app.api.routes import participants

@@ -297,6 +297,25 @@ python backend/scripts/import_protocol.py --json .cache/protocols/avacha-2026.js
 при ошибке импорт откатывается. Подготовка JSON, отчёт и правила повторного
 импорта описаны в [документации импорта](../docs/protocol-import.md).
 
+## Организаторы админки
+
+Создать организатора (пароль спросит скрипт, не короче 10 символов):
+
+```bash
+python backend/scripts/create_admin.py --login ivanov --name "Иван Иванов"
+```
+
+Тот же запуск для существующего логина меняет пароль. Выключить доступ:
+`python backend/scripts/create_admin.py --login ivanov --disable`.
+Вход проверяется в Swagger (`/docs`): `POST /api/admin/login`, затем кнопка
+**Authorize** → вставить `token`.
+
+## «Болею за» без VK (локально)
+
+Вне VK подписи параметров запуска нет. Для локальной проверки добавьте в `backend/.env`
+строку `VK_DEV_USER_ID=1` — запросы без параметров запуска будут от пользователя 1.
+В production (`ENVIRONMENT=production`) эта настройка не действует.
+
 ## Примеры контента
 
 Для нового seed нужна схема сезонного контента: будущая миграция `0006` после
