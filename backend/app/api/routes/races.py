@@ -20,6 +20,7 @@ from app.schemas.races import (
 from app.services.standings import (
     PENALTY_INCLUDED_IN_STAGE_TIMES, build_standings, format_duration,
 )
+from app.services.support import counts_with_change
 
 router = APIRouter(tags=["Гонки"])
 
@@ -28,6 +29,7 @@ class ParticipantSort(str, Enum):
     start_number = "start_number"
     place = "place"
     name = "name"
+    supporters = "supporters"   # больше болельщиков — выше
 
 
 async def get_race_or_404(session, race_id: int) -> Race:
@@ -107,6 +109,7 @@ async def list_race_participants(
 ):
     await get_race_or_404(session, race_id)
     standings = await build_standings(session, race_id, discipline_code=discipline)
+    supporters = await counts_with_change(session, race_id=race_id)
 
     items = []
     for standing in standings:
@@ -127,6 +130,8 @@ async def list_race_participants(
                 "place": row.place,
                 "total_time_seconds": row.total_seconds,
                 "total_time": format_duration(row.total_seconds),
+                "supporters_count": supporters.get(entry.id, (0, 0))[0],
+                "supporters_change_24h": supporters.get(entry.id, (0, 0))[1],
                 "_order": (standing.discipline.sort_order, standing.discipline.id),
             })
 
@@ -141,6 +146,8 @@ async def list_race_participants(
         # Места — только внутри дисциплины: сначала дисциплина, потом место.
         items.sort(key=lambda i: (i["_order"], i["place"] is None, i["place"] or 0,
                                   i["start_number"]))
+    elif sort == ParticipantSort.supporters:
+        items.sort(key=lambda i: (-i["supporters_count"], i["start_number"]))
     elif sort == ParticipantSort.name:
         items.sort(key=lambda i: (i["full_name"].casefold(), i["start_number"]))
     else:

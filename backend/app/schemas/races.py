@@ -97,6 +97,8 @@ class ParticipantListItem(BaseModel):
     place: int | None                  # место в дисциплине по опубликованным протоколам
     total_time_seconds: int | None
     total_time: str | None
+    supporters_count: int              # «Болею за»
+    supporters_change_24h: int
 
 
 class ParticipantRaceEntry(BaseModel):

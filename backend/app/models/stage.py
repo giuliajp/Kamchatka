@@ -7,6 +7,7 @@
                     Старт и финиш этапа — первая и последняя запись.
 - CheckpointPass  — отметка прохождения КП для ЖИВОЙ трансляции.
                     НЕ официальное время: официальные результаты — только из протокола.
+- CheckpointPassLog — журнал правок отметок: кто, когда, что было и что стало.
 """
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Optional
@@ -17,8 +18,8 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
-from app.models.base import TimestampMixin, str_enum
-from app.models.enums import CheckpointRole, StageStatus
+from app.models.base import TimestampMixin, str_enum, utcnow
+from app.models.enums import ChangeAction, CheckpointRole, StageStatus
 
 if TYPE_CHECKING:
     from app.models.race import Race, RaceParticipant
@@ -150,3 +151,27 @@ class CheckpointPass(TimestampMixin, Base):
 
     race_participant: Mapped["RaceParticipant"] = relationship(lazy="raise_on_sql")
     stage_checkpoint: Mapped["StageCheckpoint"] = relationship(lazy="raise_on_sql")
+
+
+class CheckpointPassLog(Base):
+    """
+    Журнал правок отметок КП (вносятся вручную в админке).
+    Запись не удаляется, даже если удалена сама отметка: before/after хранят снимок полей.
+    """
+    __tablename__ = "checkpoint_pass_log"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    checkpoint_pass_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("checkpoint_passes.id", ondelete="SET NULL"), index=True
+    )
+    race_participant_id: Mapped[int] = mapped_column(
+        ForeignKey("race_participants.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    stage_checkpoint_id: Mapped[int] = mapped_column(
+        ForeignKey("stage_checkpoints.id", ondelete="CASCADE"), nullable=False
+    )
+    action: Mapped[ChangeAction] = mapped_column(str_enum(ChangeAction), nullable=False)
+    before: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    after: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
+    changed_by: Mapped[str] = mapped_column(String(200), nullable=False)
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)

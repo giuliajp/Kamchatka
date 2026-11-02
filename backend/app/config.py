@@ -22,7 +22,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[1] / ".env",
         env_file_encoding="utf-8",
-        extra="ignore"
+        extra="ignore",
+        env_ignore_empty=True,   # пустая строка в .env = значение по умолчанию
     )
 
     environment: str = "development"
@@ -49,9 +50,16 @@ class Settings(BaseSettings):
     # С каких адресов фронтенду можно обращаться к API (через запятую)
     cors_origins: str = "http://localhost:5173"
 
-    # VK
+    # VK. vk_app_secret — «Защищённый ключ» из настроек мини-приложения:
+    # им проверяем подпись параметров запуска (кто открыл приложение).
     vk_app_id: str = ""
     vk_app_secret: str = ""
+    # Только для локальной разработки без VK: этот id считается пользователем,
+    # если запрос пришёл без параметров запуска. В production не действует.
+    vk_dev_user_id: int | None = None
+
+    # Админка: сколько часов действует вход организатора.
+    admin_token_ttl_hours: int = 12
 
     # Iridium360 (трекинг участников) — см. app/services/iridium360/
     iridium360_api_url: str = "https://api.iridium360.ru"
@@ -65,6 +73,10 @@ class Settings(BaseSettings):
     tracker_poll_interval_seconds: int = 120
     # Выключатель фонового опроса (например, для второго экземпляра сервера).
     tracker_polling_enabled: bool = True
+
+    @property
+    def is_production(self) -> bool:
+        return self.environment.lower() == "production"
 
     @property
     def cors_origins_list(self) -> list[str]:
