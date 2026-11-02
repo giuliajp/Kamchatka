@@ -9,7 +9,9 @@
   - `0001` — структура (16 таблиц);
   - `0002` — справочник дисциплин 2026 года;
   - `0003` — перенос штрафов с результата этапа на участие в гонке;
-  - `0004` — программа, FAQ и зрительские локации (`down_revision = "0003"`).
+  - `0004` — программа, FAQ и зрительские локации (`down_revision = "0003"`);
+  - `0005` — админка, журнал отметок КП и поддержка участников;
+  - `0006` — сезонный контент, типы событий и контакты (`down_revision = "0005"`).
 - Время — `TIMESTAMP WITH TIME ZONE` в UTC. Длительности — целые секунды.
 - Перечисления хранятся строкой со **значением** элемента (`"preliminary"`, `"dnf"`).
 - Связи загружаются явно через `selectinload` — ленивая загрузка запрещена (`lazy="raise_on_sql"`).
@@ -35,9 +37,13 @@
 | `spectator_locations` | SpectatorLocation | `content.py` |
 | `program_events` | ProgramEvent | `content.py` |
 | `faq_items` | FaqItem | `content.py` |
-| `organizer_contacts` (ожидает миграцию) | OrganizerContact | `content.py` |
+| `organizer_contacts` | OrganizerContact | `content.py` |
+| `admin_users` | AdminUser | `admin.py` |
+| `support_subscriptions` | SupportSubscription | `support.py` |
+| `checkpoint_pass_log` | CheckpointPassLog | `stage.py` |
 
-После миграции `0004` — **19 таблиц приложения** и служебная `alembic_version`.
+После миграции `0006` — **23 таблицы приложения** и служебная `alembic_version`.
+В `0005` добавлены `admin_users`, `support_subscriptions` и `checkpoint_pass_log`.
 
 В текущей схеме `penalties.race_participant_id` ссылается на `race_participants.id`.
 Штрафы относятся к участнику за гонку; общая сумма вычисляется по его записям `Penalty`.
@@ -68,10 +74,11 @@
 Проверки целостности (CHECK) — в `__table_args__` моделей; список с объяснениями — в `domain.md`.
 
 
-## Сезонный контент — модели для будущей `0006`
+## Сезонный контент — миграция `0006`
 
-Миграция в этой ветке намеренно не создаётся. Изменения моделей не применяются
-к существующей БД автоматически; `alembic check` до миграции покажет различия.
+Миграция `0006` продолжает `0005`. Перед добавлением обязательных колонок
+очищает демонстрационные `program_events` и `spectator_locations`; FAQ и остальные
+данные сохраняются. Откат возвращает структуру `0005`, но не удалённые примеры.
 
 `program_events` и `spectator_locations` получают обязательный `race_id` с FK на
 `races.id` (`ON DELETE CASCADE`) и индексом. `stage_id` необязателен и индексирован.
@@ -91,4 +98,4 @@ API скрывает вложенную локацию другого сезон
 `url VARCHAR(2000)`. Общие поля: `sort_order >= 0` (ORM default 0), `is_published`
 (ORM default false), `created_at`, `updated_at`. Контакты и FAQ не зависят от сезона.
 
-Порядок будущей миграции и отката: [памятка для автора миграции](season-content-migration.md).
+Порядок миграции и отката: [описание и проверки](season-content-migration.md).

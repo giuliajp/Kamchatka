@@ -19,7 +19,7 @@ from app.main import app as fastapi_app
 
 
 @pytest.fixture
-async def engine():
+async def empty_engine():
     schema = "test_" + uuid4().hex
     url = get_settings().database_url
     admin_engine = create_async_engine(url)
@@ -30,8 +30,6 @@ async def engine():
     try:
         async with admin_engine.begin() as conn:
             await conn.execute(text(f'CREATE SCHEMA "{schema}"'))
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
         yield engine
     finally:
         await engine.dispose()
@@ -40,6 +38,13 @@ async def engine():
                 await conn.execute(text(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'))
         finally:
             await admin_engine.dispose()
+
+
+@pytest.fixture
+async def engine(empty_engine):
+    async with empty_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    return empty_engine
 
 
 @pytest.fixture

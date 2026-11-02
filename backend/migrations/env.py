@@ -62,7 +62,12 @@ async def run_async_migrations() -> None:
 
 
 def run_migrations_online() -> None:
-    asyncio.run(run_async_migrations())
+    # Tests and callers may supply a connection to an isolated schema/transaction.
+    connection = config.attributes.get("connection")
+    if connection is not None:
+        do_run_migrations(connection)
+    else:
+        asyncio.run(run_async_migrations())
 
 
 if context.is_offline_mode():
