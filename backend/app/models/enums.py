@@ -70,3 +70,16 @@ class PositionSource(str, enum.Enum):
 
 class AlertType(str, enum.Enum):
     SOS = "sos"
+
+
+class ProgramEventType(str, enum.Enum):
+    STAGE_START = "stage_start"
+    STAGE_FINISH = "stage_finish"
+    FESTIVAL = "festival"
+
+
+class LocationType(str, enum.Enum):
+    START = "start"
+    FINISH = "finish"
+    FESTIVAL = "festival"
+    VIEWPOINT = "viewpoint"

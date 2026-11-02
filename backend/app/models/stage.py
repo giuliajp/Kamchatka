@@ -13,7 +13,15 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Optional
 
 from sqlalchemy import (
-    JSON, CheckConstraint, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint,
+    JSON,
+    CheckConstraint,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -29,6 +37,7 @@ class Stage(TimestampMixin, Base):
     __tablename__ = "stages"
     __table_args__ = (
         UniqueConstraint("race_id", "number", name="uq_stages_race_number"),
+        UniqueConstraint("id", "race_id", name="uq_stages_id_race"),
         CheckConstraint("distance_km IS NULL OR distance_km > 0", name="distance_positive"),
     )
 
