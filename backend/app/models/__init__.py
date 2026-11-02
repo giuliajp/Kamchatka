@@ -15,6 +15,7 @@ from app.models.race import Discipline, Participant, Race, RaceParticipant
 from app.models.stage import Checkpoint, CheckpointPass, Stage, StageCheckpoint
 from app.models.protocol import Penalty, Protocol, ResultChangeLog, StageResult
 from app.models.tracking import TrackerAlert, TrackerAssignment, TrackerDevice, TrackerPosition
+from app.models.content import FaqItem, ProgramEvent, SpectatorLocation
 
 __all__ = [
     # перечисления
@@ -28,4 +29,6 @@ __all__ = [
     "Protocol", "StageResult", "Penalty", "ResultChangeLog",
     # трекинг
     "TrackerDevice", "TrackerAssignment", "TrackerPosition", "TrackerAlert",
+    # программа фестиваля и контент для зрителей
+    "ProgramEvent", "FaqItem", "SpectatorLocation",
 ]

@@ -53,12 +53,14 @@ kamchatka-avacha/
 
 ## Технологии (по ТЗ заказчика)
 
-| Слой | Технологии |
-| Frontend | React + TypeScript, VKUI, VK Bridge, VK ID |
-| Backend | Python, FastAPI (async), SQLAlchemy 2.0, PostgreSQL, Alembic, хостинг на территории РФ (152-ФЗ) |
-| Трекинг | Iridium360 API (спутниковые трекеры) |
-| Карты | VK Карты / Яндекс.Карты / OpenStreetMap, формат GPX |
-| Дизайн | Figma, светлая и тёмная темы |
+| Слой | Технологии и требования |
+| --- | --- |
+| **Frontend** | React + TypeScript, VKUI, VK Bridge, VK ID |
+| **Backend** | Python, FastAPI (async), SQLAlchemy 2.0, PostgreSQL, Alembic |
+| **Трекинг** | Iridium360 API (спутниковые трекеры) |
+| **Карты** | VK Карты / Яндекс.Карты / OpenStreetMap; формат GPX |
+| **Дизайн** | Figma; светлая и тёмная темы |
+| **Размещение** | Хостинг на территории РФ (152-ФЗ) |
 
 ## Полезные ссылки заказчика
 
