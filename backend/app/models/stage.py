@@ -12,7 +12,15 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Optional
 
 from sqlalchemy import (
-    JSON, CheckConstraint, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint,
+    JSON,
+    CheckConstraint,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

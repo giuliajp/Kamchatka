@@ -7,16 +7,35 @@
 Использование:
     from app.models import Race, RaceParticipant, Protocol
 """
-from app.models.enums import (
-    AlertType, ChangeAction, CheckpointRole, Equipment, LocationType, PositionSource,
-    ProgramEventType, ProtocolStatus,
-    RaceParticipantStatus, RaceStatus, StageResultStatus, StageStatus,
+from app.models.content import (
+    FaqItem,
+    OrganizerContact,
+    ProgramEvent,
+    SpectatorLocation,
 )
+from app.models.enums import (
+    AlertType,
+    ChangeAction,
+    CheckpointRole,
+    Equipment,
+    LocationType,
+    PositionSource,
+    ProgramEventType,
+    ProtocolStatus,
+    RaceParticipantStatus,
+    RaceStatus,
+    StageResultStatus,
+    StageStatus,
+)
+from app.models.protocol import Penalty, Protocol, ResultChangeLog, StageResult
 from app.models.race import Discipline, Participant, Race, RaceParticipant
 from app.models.stage import Checkpoint, CheckpointPass, Stage, StageCheckpoint
-from app.models.protocol import Penalty, Protocol, ResultChangeLog, StageResult
-from app.models.tracking import TrackerAlert, TrackerAssignment, TrackerDevice, TrackerPosition
-from app.models.content import FaqItem, OrganizerContact, ProgramEvent, SpectatorLocation
+from app.models.tracking import (
+    TrackerAlert,
+    TrackerAssignment,
+    TrackerDevice,
+    TrackerPosition,
+)
 
 __all__ = [
     # перечисления
