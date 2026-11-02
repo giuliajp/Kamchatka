@@ -8,20 +8,32 @@ from pathlib import Path
 
 import app.db
 import pytest
+from app.models import (
+    FaqItem,
+    OrganizerContact,
+    ProgramEvent,
+    Race,
+    SpectatorLocation,
+    Stage,
+)
 from asyncpg import PostgresError
+from scripts import seed_content as cli
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from app.models import FaqItem, ProgramEvent, SpectatorLocation
-from scripts import seed_content as cli
-
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "seed_content.py"
-MODELS = (SpectatorLocation, ProgramEvent, FaqItem)
+MODELS = (SpectatorLocation, ProgramEvent, FaqItem, OrganizerContact)
 
 
 @pytest.fixture
-def cli_database(engine, monkeypatch):
+async def content_season(session):
+    session.add(Race(id=1, name="Авача 2027", year=2027, is_current=True))
+    await session.commit()
+
+
+@pytest.fixture
+def cli_database(engine, monkeypatch, content_season):
     monkeypatch.setattr(app.db, "engine", engine)
     monkeypatch.setattr(
         app.db, "SessionLocal", async_sessionmaker(engine, expire_on_commit=False)
@@ -45,7 +57,11 @@ def test_script_from_outside_repository_with_invalid_settings(tmp_path, help_req
     environment["POSTGRES_PASSWORD"] = "do-not-print-this-password"
     result = subprocess.run(
         [sys.executable, str(SCRIPT), *(["--help"] if help_requested else [])],
-        cwd=tmp_path, env=environment, capture_output=True, text=True, timeout=20,
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=20,
     )
     assert result.returncode == (0 if help_requested else 1)
     output = result.stdout + result.stderr
@@ -57,7 +73,9 @@ def test_script_from_outside_repository_with_invalid_settings(tmp_path, help_req
 
 
 @pytest.mark.parametrize("error_class", [SQLAlchemyError, PostgresError, OSError])
-def test_database_error_returns_failure_without_secrets(monkeypatch, capsys, error_class):
+def test_database_error_returns_failure_without_secrets(
+    monkeypatch, capsys, error_class
+):
     async def failing_seed():
         raise error_class("do-not-print-this-password")
 
@@ -71,13 +89,23 @@ def test_database_error_returns_failure_without_secrets(monkeypatch, capsys, err
 
 
 async def test_repeat_preserves_rows_and_populates_api(cli_database, session, client):
-    assert await cli.run_seed() == {"locations": 2, "program": 3, "faq": 3}
+    assert await cli.run_seed() == {
+        "locations": 2,
+        "program": 3,
+        "faq": 3,
+        "contacts": 2,
+    }
     before = await content_snapshot(session)
-    assert await cli.run_seed() == {"locations": 0, "program": 0, "faq": 0}
+    assert await cli.run_seed() == {
+        "locations": 0,
+        "program": 0,
+        "faq": 0,
+        "contacts": 0,
+    }
     assert await content_snapshot(session) == before
 
     bodies = {}
-    for path, count in [("locations", 2), ("program", 3), ("faq", 3)]:
+    for path, count in [("locations", 2), ("program", 3), ("faq", 3), ("contacts", 2)]:
         response = await client.get(f"/api/{path}")
         assert response.status_code == 200
         assert response.json()["error"] is None
@@ -92,18 +120,29 @@ async def test_repeat_preserves_rows_and_populates_api(cli_database, session, cl
 
 
 async def test_partial_seed_reuses_existing_records(cli_database, session):
-    location = SpectatorLocation(**{
-        **cli.LOCATION_SAMPLES[0], "description": "Правка организатора",
-    })
+    location = SpectatorLocation(
+        race_id=1,
+        **{
+            **cli.LOCATION_SAMPLES[0],
+            "description": "Правка организатора",
+        },
+    )
     fields = cli.PROGRAM_SAMPLES[0].copy()
     fields.pop("location_name")
-    event = ProgramEvent(**fields, location=location)
+    event = ProgramEvent(**fields, race_id=1, location=location)
     faq = FaqItem(**{**cli.FAQ_SAMPLES[0], "answer": "Правка ответа"})
-    session.add_all([location, event, faq])
+    session.add_all([location, faq])
+    await session.flush()
+    session.add(event)
     await session.commit()
     location_id, event_id, faq_id = location.id, event.id, faq.id
 
-    assert await cli.run_seed() == {"locations": 1, "program": 2, "faq": 2}
+    assert await cli.run_seed() == {
+        "locations": 1,
+        "program": 2,
+        "faq": 2,
+        "contacts": 2,
+    }
     session.expunge_all()
     existing_location = await session.get(SpectatorLocation, location_id)
     existing_event = await session.get(ProgramEvent, event_id)
@@ -114,12 +153,14 @@ async def test_partial_seed_reuses_existing_records(cli_database, session):
     assert existing_faq.answer == "Правка ответа"
     assert existing_faq.is_published is False
     snapshot = await content_snapshot(session)
-    assert [len(snapshot[model.__tablename__]) for model in MODELS] == [2, 3, 3]
+    assert [len(snapshot[model.__tablename__]) for model in MODELS] == [2, 3, 3, 2]
 
 
 async def test_existing_edits_and_publication_are_preserved(cli_database, session):
     await cli.run_seed()
-    location = await session.scalar(select(SpectatorLocation).order_by(SpectatorLocation.id))
+    location = await session.scalar(
+        select(SpectatorLocation).order_by(SpectatorLocation.id)
+    )
     event = await session.scalar(select(ProgramEvent).order_by(ProgramEvent.id))
     faq = await session.scalar(select(FaqItem).order_by(FaqItem.id))
     location.description = "Изменённое описание"
@@ -131,7 +172,12 @@ async def test_existing_edits_and_publication_are_preserved(cli_database, sessio
     await session.commit()
     before = await content_snapshot(session)
 
-    assert await cli.run_seed() == {"locations": 0, "program": 0, "faq": 0}
+    assert await cli.run_seed() == {
+        "locations": 0,
+        "program": 0,
+        "faq": 0,
+        "contacts": 0,
+    }
     assert await content_snapshot(session) == before
 
 
@@ -141,14 +187,15 @@ async def test_failed_seed_rolls_back_every_new_record(cli_database, session, fa
     await session.commit()
     before = await content_snapshot(session)
     constraint = (
-        "CHECK (sort_order <> 2)" if failure == "flush"
+        "CHECK (sort_order <> 2)"
+        if failure == "flush"
         else "UNIQUE (is_published) DEFERRABLE INITIALLY DEFERRED"
     )
     # Искусственная ошибка только во временной схеме. Отложенное ограничение
     # проверяет откат при ошибке commit, когда все INSERT уже прошли.
-    await session.execute(text(
-        "ALTER TABLE faq_items ADD CONSTRAINT test_reject_seed " + constraint
-    ))
+    await session.execute(
+        text("ALTER TABLE faq_items ADD CONSTRAINT test_reject_seed " + constraint)
+    )
     await session.commit()
 
     with pytest.raises(IntegrityError):
@@ -156,7 +203,9 @@ async def test_failed_seed_rolls_back_every_new_record(cli_database, session, fa
     assert await content_snapshot(session) == before
 
 
-async def test_concurrent_runs_do_not_duplicate_samples(engine, session):
+async def test_concurrent_runs_do_not_duplicate_samples(
+    engine, session, content_season
+):
     factory = async_sessionmaker(engine, expire_on_commit=False)
     start = asyncio.Event()
     ready = 0
@@ -172,10 +221,87 @@ async def test_concurrent_runs_do_not_duplicate_samples(engine, session):
             await start.wait()
             return await cli.seed_content(transaction)
 
-    reports = await asyncio.wait_for(asyncio.gather(seed_once(), seed_once()), timeout=10)
+    reports = await asyncio.wait_for(
+        asyncio.gather(seed_once(), seed_once()), timeout=10
+    )
     assert sorted(reports, key=lambda report: report["locations"]) == [
-        {"locations": 0, "program": 0, "faq": 0},
-        {"locations": 2, "program": 3, "faq": 3},
+        {"locations": 0, "program": 0, "faq": 0, "contacts": 0},
+        {"locations": 2, "program": 3, "faq": 3, "contacts": 2},
     ]
-    for model, expected in zip(MODELS, [2, 3, 3]):
+    for model, expected in zip(MODELS, [2, 3, 3, 2], strict=True):
         assert await session.scalar(select(func.count()).select_from(model)) == expected
+
+
+async def test_seed_archive_is_separate_and_global_content_is_reused(
+    cli_database, session
+):
+    await cli.run_seed()
+    session.add(Race(id=2, name="Архив 2026", year=2026))
+    await session.flush()
+    session.add_all([Stage(race_id=2, number=1), Stage(race_id=2, number=2)])
+    await session.commit()
+    report = await cli.run_seed(2)
+    assert report == {"locations": 2, "program": 3, "faq": 0, "contacts": 0}
+    assert not any((await cli.run_seed(2)).values())
+    events = (
+        await session.scalars(select(ProgramEvent).where(ProgramEvent.race_id == 2))
+    ).all()
+    assert len(events) == 3
+    assert all(event.start_at.year == 2026 for event in events)
+    stage_ids = set(await session.scalars(select(Stage.id).where(Stage.race_id == 2)))
+    assert {
+        event.stage_id for event in events if event.event_type != "festival"
+    } == stage_ids
+    assert (
+        next(event for event in events if event.event_type == "festival").stage_id
+        is None
+    )
+    assert await session.scalar(select(func.count()).select_from(ProgramEvent)) == 6
+    assert await session.scalar(select(func.count()).select_from(OrganizerContact)) == 2
+
+
+async def test_contacts_edits_survive_repeated_seed(cli_database, session):
+    await cli.run_seed()
+    contact = await session.scalar(
+        select(OrganizerContact).order_by(OrganizerContact.id)
+    )
+    contact.name = "Правка организатора"
+    contact.is_published = False
+    await session.commit()
+    before = await content_snapshot(session)
+    assert not any((await cli.run_seed()).values())
+    assert await content_snapshot(session) == before
+
+
+async def test_seed_without_race_or_with_unknown_id_does_not_insert(session):
+    with pytest.raises(ValueError, match="Гонка не найдена"):
+        await cli.seed_content(session)
+    with pytest.raises(ValueError, match="Гонка не найдена"):
+        await cli.seed_content(session, 999)
+    assert all(not rows for rows in (await content_snapshot(session)).values())
+
+
+def test_cli_reports_missing_season(monkeypatch, capsys):
+    async def missing_season():
+        raise ValueError("Гонка не найдена")
+
+    monkeypatch.setattr(cli, "run_seed", missing_season)
+    assert cli.main([]) == 1
+    assert "Гонка не найдена" in capsys.readouterr().err
+
+
+def test_cli_passes_explicit_season(monkeypatch, capsys):
+    async def seed(race_id):
+        assert race_id == 42
+        return {"locations": 0, "program": 0, "faq": 0, "contacts": 0}
+
+    monkeypatch.setattr(cli, "run_seed", seed)
+    assert cli.main(["--race-id", "42"]) == 0
+    assert "Все примеры уже существуют" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("value", ["0", "-1", "bad"])
+def test_cli_rejects_invalid_season(value):
+    with pytest.raises(SystemExit) as error:
+        cli.main(["--race-id", value])
+    assert error.value.code == 2
