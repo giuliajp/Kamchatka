@@ -35,6 +35,7 @@
 | `spectator_locations` | SpectatorLocation | `content.py` |
 | `program_events` | ProgramEvent | `content.py` |
 | `faq_items` | FaqItem | `content.py` |
+| `organizer_contacts` (ожидает миграцию) | OrganizerContact | `content.py` |
 
 После миграции `0004` — **19 таблиц приложения** и служебная `alembic_version`.
 
@@ -49,7 +50,7 @@
 `spectator_locations` хранит название, широту и долготу; описание, адрес и описание
 проезда необязательны. `program_events` — название события и обязательное время
 начала; описание, время окончания и `location_id` необязательны.
-`faq_items` — вопрос и ответ. Контент общий для приложения, без ссылки на гонку.
+`faq_items` — вопрос и ответ. В исходной миграции `0004` контент общий для приложения, без ссылки на гонку.
 
 У всех трёх моделей есть `sort_order` (по умолчанию 0), `is_published`
 (по умолчанию `false`), `created_at` и `updated_at`. Значения по умолчанию
@@ -65,3 +66,29 @@
 через [seed_content.py](../backend/scripts/seed_content.py).
 
 Проверки целостности (CHECK) — в `__table_args__` моделей; список с объяснениями — в `domain.md`.
+
+
+## Сезонный контент — модели для будущей `0006`
+
+Миграция в этой ветке намеренно не создаётся. Изменения моделей не применяются
+к существующей БД автоматически; `alembic check` до миграции покажет различия.
+
+`program_events` и `spectator_locations` получают обязательный `race_id` с FK на
+`races.id` (`ON DELETE CASCADE`) и индексом. `stage_id` необязателен и индексирован.
+Составной FK `(stage_id, race_id)` на `stages(id, race_id)` проверяет принадлежность
+этапа сезону. Для него в `stages` добавлено `uq_stages_id_race`.
+Прямое удаление используемого этапа запрещено: сначала нужно снять ссылки контента.
+
+`event_type` обязателен: `stage_start / stage_finish / festival`.
+`location_type` обязателен: `start / finish / festival / viewpoint`.
+Оба перечисления — `VARCHAR(32)` с проверкой допустимых значений, без значения
+по умолчанию: автор контента должен выбрать тип явно. `stage_id` допускает `null`
+при любом типе. `location_id` события сохраняет прежний `ON DELETE SET NULL`.
+API скрывает вложенную локацию другого сезона.
+
+Новая таблица `organizer_contacts`: `id`, обязательный `title VARCHAR(200)`,
+необязательные `name VARCHAR(200)`, `phone VARCHAR(100)`, `email VARCHAR(320)`,
+`url VARCHAR(2000)`. Общие поля: `sort_order >= 0` (ORM default 0), `is_published`
+(ORM default false), `created_at`, `updated_at`. Контакты и FAQ не зависят от сезона.
+
+Порядок будущей миграции и отката: [памятка для автора миграции](season-content-migration.md).
