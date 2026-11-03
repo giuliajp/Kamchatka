@@ -3,7 +3,7 @@ import { query } from '../../api/client';
 import { statusLabel } from '../../api/format';
 import type { Protocols, Results, Standing } from '../../types/api';
 import { RequestState } from '../../components/RequestState';
-import { participationKey, useExtras } from '../../mocks/extras';
+import { useUser } from '../../app/UserProvider';
 import { DataState } from '../../components/DataState';
 
 export function StandingTable({ rows, onSelect }: { rows: Standing[]; onSelect: (participantId: number, entryId: number) => void }) {
@@ -26,7 +26,7 @@ export function ResultsScreen({ raceId, stageNumber, stageId, discipline, onSele
   mine?: boolean; raceId: number; stageNumber: number | undefined; stageId: number | undefined; discipline: string;
   onSelect: (participantId: number, entryId: number) => void;
 }) {
-  const { value } = useExtras();
+  const user = useUser();
   const results = useApi<Results>(query(`/races/${raceId}/results`, { stage: stageNumber, discipline }), 120000);
   const protocols = useApi<Protocols>(stageId === undefined ? null : `/stages/${stageId}/protocols`, 120000);
   return <section className="race-content" aria-label="Результаты гонки">
@@ -43,7 +43,7 @@ export function ResultsScreen({ raceId, stageNumber, stageId, discipline, onSele
           {protocol.chief_secretary && <p>Главный секретарь: {protocol.chief_secretary}</p>}
           {protocol.weather && <p>Погода: {protocol.weather}</p>}
         </div>)}
-        {group.rows.some(row => !mine || value.supported.includes(participationKey(raceId, row.race_participant_id))) ? <StandingTable rows={group.rows.filter(row => !mine || value.supported.includes(participationKey(raceId, row.race_participant_id)))} onSelect={onSelect} /> : group.rows.length > 0 ? <p role="status">Среди опубликованных результатов нет поддерживаемых вами участников.</p> : <DataState status="empty" />}
+        {group.rows.some(row => !mine || user.supports.data?.some(item => item.race_id === raceId && item.race_participant_id === row.race_participant_id)) ? <StandingTable rows={group.rows.filter(row => !mine || user.supports.data?.some(item => item.race_id === raceId && item.race_participant_id === row.race_participant_id))} onSelect={onSelect} /> : group.rows.length > 0 ? <p role="status">Среди опубликованных результатов нет поддерживаемых вами участников.</p> : <DataState status="empty" />}
       </section>)}
     </>}
   </section>;

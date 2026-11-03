@@ -9,7 +9,7 @@ export const race: RaceDetail = { id: 10, name: 'Гонка Авача 2026', ye
   disciplines: [{ ...discipline, participants_count: 2 }, { id: 3, code: 'ski_2', name: 'Лыжи, 2 собаки', participants_count: 1 }],
   stages: [{ ...stage, id: 102, number: 2, start_at: '2026-10-26T01:00:00Z', status: 'finished', finish_at: '2026-10-26T05:00:00Z' }, stage,
     { ...stage, id: 104, number: 4, status: 'planned', start_at: '2027-03-01T00:00:00Z' }, { ...stage, id: 105, number: 5, status: 'cancelled' }] };
-export const participant: Participant = { race_participant_id: 9001, participant_id: 501, start_number: 14, full_name: 'Алиса Иванова', last_name: 'Иванова', first_name: 'Алиса', photo_url: null, region: 'Камчатский край', discipline, dogs_count: 8, status: 'active', place: 2, total_time_seconds: 1000, total_time: '00:16:40' };
+export const participant: Participant = { supporters_count: 15, supporters_change_24h: 2, race_participant_id: 9001, participant_id: 501, start_number: 14, full_name: 'Алиса Иванова', last_name: 'Иванова', first_name: 'Алиса', photo_url: null, region: 'Камчатский край', discipline, dogs_count: 8, status: 'active', place: 2, total_time_seconds: 1000, total_time: '00:16:40' };
 const positionAt = new Date().toISOString();
 export const positions: Positions = { stage, generated_at: positionAt, tracking_interval_minutes: 20, stale_after_minutes: 45, route_length_km: 40, official_protocol_disciplines: [],
   participants: [{ race_participant_id: 9001, participant_id: 501, start_number: 14, full_name: 'Алиса Иванова', photo_url: null, discipline, position: { latitude: 53.2, longitude: 158.5, altitude_m: 20, position_at: positionAt }, previous_position: null, is_stale: false, km_on_route: 12.4, avg_speed_kmh: 9.4, gps_rank: 1, gap_to_leader_km: 0 },
@@ -22,6 +22,14 @@ export const track: Track = { race_participant_id: 9001, start_number: 14, full_
 const standingAt = (number: number): Standing => ({ ...standing, stages: standing.stages.map(cell => ({ ...cell, stage_number: number })) });
 export function fixtureResponse(url: string): unknown {
   const parsed = new URL(url, 'http://localhost'); const path = parsed.pathname;
+  if (path.endsWith('/me/visit')) return { vk_user_id: 42 };
+  if (path.endsWith('/me/supports') || path.endsWith('/me/bookmarks') || path.endsWith('/checkpoint-passes')) return [];
+  if (path.endsWith('/me/notifications')) return { notifications_allowed: true };
+  if (path.endsWith('/support')) return { race_participant_id: 9001, supporters_count: 15, change_24h: 2, is_supported: false, notifications_enabled: false };
+  if (['/program','/locations','/faq','/contacts','/support-rating'].some(endpoint => path.endsWith(endpoint))) return [];
+  if (path.endsWith('/news')) return { items: [], total: 0, stale: false };
+  if (path.endsWith('/photos')) return { days: [], stale: false };
+  if (path.endsWith('/races')) return [race];
   if (path.endsWith('/current') || /\/races\/\d+$/.test(path)) return race;
   if (path.endsWith('/positions')) return { ...positions, participants: positions.participants.filter(p => !parsed.searchParams.get('discipline') || p.discipline.code === parsed.searchParams.get('discipline')) };
   if (path.endsWith('/participants')) return [participant].filter(p => (!parsed.searchParams.get('discipline') || p.discipline.code === parsed.searchParams.get('discipline')) && (p.full_name.toLocaleLowerCase('ru-RU').includes((parsed.searchParams.get('q') || '').toLocaleLowerCase('ru-RU')) || String(p.start_number) === parsed.searchParams.get('q')));
@@ -46,6 +54,18 @@ export function fixtureResponse(url: string): unknown {
 }
 export function installStoryApi() {
   const original = globalThis.fetch;
-  globalThis.fetch = async input => new Response(JSON.stringify({ data: fixtureResponse(String(input)), error: null }));
+  const response = createFixtureApi();
+  globalThis.fetch = async (input, init) => new Response(JSON.stringify({ data: response(String(input), init), error: null }));
   return () => { globalThis.fetch = original; };
+}
+
+export function createFixtureApi() {
+  let supported = false;
+  return (url: string, init?: RequestInit): unknown => {
+    const path = new URL(url, 'http://localhost').pathname;
+    if (path.endsWith('/support') && init?.method && init.method !== 'GET') supported = init?.method !== 'DELETE';
+    if (path.endsWith('/me/supports')) return supported ? [{ race_id: race.id, race_participant_id: participant.race_participant_id, full_name: participant.full_name, start_number: participant.start_number, photo_url: participant.photo_url, discipline, notifications_enabled: true, supported_since: stage.start_at }] : [];
+    if (path.endsWith('/support')) return { race_participant_id: participant.race_participant_id, supporters_count: 15 + Number(supported), change_24h: 2, is_supported: supported, notifications_enabled: supported };
+    return fixtureResponse(url);
+  };
 }

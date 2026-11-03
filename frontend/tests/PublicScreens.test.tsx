@@ -5,7 +5,7 @@ import { ParticipantsScreen } from '../src/screens/Participants/ParticipantsScre
 import { ResultsScreen, StandingTable } from '../src/screens/Results/ResultsScreen';
 import { ParticipantCard } from '../src/components/ParticipantCard';
 import { AppProviders } from '../src/app/AppProviders';
-import { fixtureResponse, mockApi, participant, protocols, results, standing } from './fixtures';
+import { fixtureResponse, mockApi, participant, protocols, results, standing, discipline, stage } from './fixtures';
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); localStorage.clear(); });
 it('searches and sorts real participants and opens a card with independent IDs', async () => {
   const api = mockApi(); const selected = vi.fn(); const user = userEvent.setup();
@@ -78,23 +78,20 @@ it('preserves null, DNF/DNS/DSQ and penalty metadata in result rows', () => {
   render(<AppProviders><StandingTable rows={rows} onSelect={vi.fn()} /></AppProviders>);
   expect(screen.getByText(/\(DNF\)/)).toBeVisible(); expect(screen.getByText(/\(DNS\)/)).toBeVisible(); expect(screen.getByText(/\(DSQ\)/)).toBeVisible();
 });
-it('sorts supporters locally with the existing API sort and honours the supplemental switch', async () => {
-  vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'true');
-  const api = mockApi(() => [participant, { ...participant, race_participant_id: 9002, participant_id: 502, full_name: 'Иван Петров' }]);
-  const { rerender } = render(<AppProviders><ParticipantsScreen raceId={10} discipline="" onSelect={vi.fn()} /></AppProviders>);
+it('uses server supporter sorting without rearranging the response locally', async () => {
+  const api = mockApi(url => url.endsWith('/me/visit') ? { vk_user_id: 42 } : url.endsWith('/me/supports') ? [] : [participant, { ...participant, race_participant_id: 9002, participant_id: 502, full_name: 'Иван Петров' }]);
+  render(<AppProviders><ParticipantsScreen raceId={10} discipline="" onSelect={vi.fn()} /></AppProviders>);
   await screen.findByText('Алиса Иванова');
   await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Сортировка участников' }), 'supporters');
-  expect(screen.getAllByRole('button', { name: /Открыть карточку/ })[0]).toHaveAccessibleName('Открыть карточку Иван Петров');
-  expect(api).toHaveBeenCalledWith('/api/races/10/participants?sort=start_number', expect.anything());
-  vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'false'); rerender(<AppProviders><ParticipantsScreen raceId={10} discipline="" onSelect={vi.fn()} /></AppProviders>);
-  expect(screen.queryByRole('option', { name: 'По количеству болельщиков' })).not.toBeInTheDocument(); vi.unstubAllEnvs();
+  expect(screen.getAllByRole('button', { name: /Открыть карточку/ })[0]).toHaveAccessibleName('Открыть карточку Алиса Иванова');
+  expect(api).toHaveBeenCalledWith('/api/races/10/participants?sort=supporters', expect.anything());
 });
 it('filters official results to supported participation IDs and shows a real empty filter result', async () => {
-  const { preferencesKey } = await import('../src/mocks/extras'); mockApi();
-  localStorage.setItem(preferencesKey, JSON.stringify({ supported: ['10:9001'], subscriptions: [], prompted: [] }));
+  let supported = true;
+  mockApi(url => url.endsWith('/me/supports') ? supported ? [{ ...participant, race_id: 10, discipline, notifications_enabled: false, supported_since: stage.start_at }] : [] : fixtureResponse(url));
   render(<AppProviders><ResultsScreen raceId={10} stageId={103} stageNumber={3} discipline="" mine onSelect={vi.fn()} /></AppProviders>);
   expect(await screen.findByRole('button', { name: '№14 · Алиса Иванова' })).toBeVisible();
-  localStorage.clear(); const { act } = await import('@testing-library/react');
-  act(() => window.dispatchEvent(new StorageEvent('storage', { key: null })));
+  supported = false; const { act } = await import('@testing-library/react');
+  act(() => window.dispatchEvent(new Event('avacha:changed')));
   expect(await screen.findByText('Среди опубликованных результатов нет поддерживаемых вами участников.')).toBeVisible(); expect(screen.queryByRole('table')).not.toBeInTheDocument();
 });

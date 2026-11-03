@@ -6,7 +6,7 @@ it('validates link IDs and round trips the race, stage, identity and participati
   expect(readRaceLink()).toEqual({ raceId: undefined, stageId: undefined, participantId: undefined, entryId: undefined });
   history.replaceState(null, '', '/?other=x#old');
   const url = raceLink(10, 103, 501, 9001); history.replaceState(null, '', url);
-  expect(readRaceLink()).toEqual({ raceId: 10, stageId: 103, participantId: 501, entryId: 9001 }); expect(location.hash).toBe('');
+  expect(readRaceLink()).toEqual({ raceId: 10, stageId: 103, participantId: 501, entryId: 9001 }); expect(location.hash).toContain('participant=9001');
   expect(raceLink(10, undefined, 501, 9001)).not.toContain('stage=');
 });
 it('shares natively, handles dismissal, copies if unavailable or failed, and leaves a manual link if copying fails', async () => {

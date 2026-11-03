@@ -11,19 +11,19 @@ it.each([undefined, 'false', 'anything'])('keeps official data without fake coun
   vi.stubEnv('VITE_MOCK_MISSING_FEATURES', flag); mockApi();
   render(<AppProviders><ParticipantSheet participantId={501} entryId={9001} stage={{ ...stage, status: 'finished' }} threshold={45} onClose={vi.fn()} /></AppProviders>);
   expect(await screen.findByText('00:16:40')).toBeVisible();
-  expect(screen.queryByText(/болельщиков/)).not.toBeInTheDocument();
+  expect(await screen.findByText(/болельщиков/)).toBeVisible();
   expect(screen.queryByText(/^Финиш /)).not.toBeInTheDocument();
-  expect(screen.queryByText('Прохождение контрольных пунктов (КП)')).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Болею за' })).not.toBeInTheDocument();
+  expect(screen.getByText('Прохождение контрольных пунктов (КП)')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Болею за' })).toBeVisible();
 });
-it('loads identity by person ID and matches participation by entry ID, with labelled demonstration extras', async () => {
+it('loads identity by person ID and matches participation by entry ID, with server support', async () => {
   const api = mockApi(); const close = vi.fn(); const user = userEvent.setup();
   render(<AppProviders><ParticipantSheet participantId={501} entryId={9001} position={positions.participants[0]} threshold={45} onClose={close} /></AppProviders>);
   expect(await screen.findByText('Алиса Иванова')).toBeVisible();
   expect(api).toHaveBeenCalledWith('/api/participants/501', expect.anything());
   expect(screen.getByLabelText('Позиция по GPS-трекеру: 1')).toBeVisible(); expect(screen.getByText('9,4 км/ч')).toBeVisible();
   expect(screen.getByText(/Официальное место.*2/)).toBeVisible();
-  expect(screen.getByText(/болельщиков/)).toBeVisible(); expect(screen.getByText('Прохождение контрольных пунктов (КП)')).toBeVisible(); expect(screen.getByRole('button', { name: 'Болею за' })).toBeVisible();
+  expect(await screen.findByText(/болельщиков/)).toBeVisible(); expect(screen.getByText('Прохождение контрольных пунктов (КП)')).toBeVisible(); expect(screen.getByRole('button', { name: 'Болею за' })).toBeVisible();
   await user.click(screen.getByRole('button', { name: /Алиса Иванова/ })); expect(screen.getByText(person.bio!)).toBeVisible();
   await user.click(screen.getByRole('button', { name: /Алиса Иванова/ })); expect(screen.queryByText(person.bio!)).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Свернуть' })); expect(close).toHaveBeenCalledOnce();
@@ -42,28 +42,29 @@ it('allows an empty history and a person without a matching participation', asyn
   await userEvent.click(await screen.findByText('История выступлений')); expect(screen.getByText('Выступления пока не опубликованы.')).toBeVisible();
   expect(screen.queryByText(/Позиция по GPS/)).not.toBeInTheDocument();
 });
-it('links real checkpoint identities to supplemental history, shares, supports and displays a derivable finish', async () => {
+it('shows real checkpoint passes, shares and supports the participant', async () => {
   const { stage, fixtureResponse } = await import('./fixtures');
-  mockApi(url => url.includes('/participants/501') ? { ...person, races: [{ ...person.races[0], dogs_count: null, place: null, status: 'finished' }] } : fixtureResponse(url));
+  mockApi(url => url.includes('/participants/501') ? { ...person, races: [{ ...person.races[0], dogs_count: null, place: null, status: 'finished' }] } : url.includes('/checkpoint-passes') ? [{ stage_id: 103, stage_number: 3, stage_checkpoint_id: 300, order_index: 1, role: 'finish', label: 'Финиш судьи', name: 'Финиш', km_from_start: 40, required_rest_minutes: 30, arrived_at: '2026-10-27T06:00:00Z', departed_at: '2026-10-27T06:30:00Z' }] : fixtureResponse(url));
   const writeText = vi.fn().mockResolvedValue(undefined); Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
   const close = vi.fn(); const detail = { ...stage, status: 'finished' as const, finish_at: '2026-10-27T06:00:00Z', checkpoints: [{ ...stage.checkpoints[0], required_rest_minutes: 30 }] };
   render(<AppProviders><ParticipantSheet participantId={501} entryId={9001} stage={detail} threshold={45} onClose={close} /></AppProviders>);
   expect(await screen.findByText(/Финиш 27.10/)).toBeVisible();
-  expect(screen.getByText('Старт · 0 км')).toBeVisible();
-  await userEvent.click(screen.getByText('Обязательные остановки')); expect(screen.getByText('Старт · 0 км: 30 мин.')).toBeVisible();
+  expect(screen.getByText('Финиш судьи')).toBeVisible();
+  await userEvent.click(screen.getByText('Обязательные остановки')); expect(screen.getByText('Финиш судьи: 30 мин.')).toBeVisible();
   await userEvent.click(screen.getByRole('button', { name: 'Поделиться участником' })); expect(await screen.findByText('Ссылка скопирована')).toBeVisible();
-  expect(writeText).toHaveBeenCalledWith(expect.stringContaining('race=10&person=501&entry=9001&stage=103'));
+  expect(writeText).toHaveBeenCalledWith(expect.stringContaining('race=10&person=501&participant=9001&stage=103'));
   await userEvent.click(screen.getByRole('button', { name: 'Болею за' })); await userEvent.click(await screen.findByRole('button', { name: 'Позже' }));
   expect(screen.getByText(/болельщиков/)).toBeVisible();
 });
-it('has official fallbacks, no invented CPs, and honours the mock switch', async () => {
+it('shows official fallbacks without inventing checkpoint passes', async () => {
   const { stage } = await import('./fixtures');
-  mockApi(() => ({ ...person, races: [{ ...person.races[0], total_time: null, place: null, dogs_count: null }] }));
+  const { fixtureResponse } = await import('./fixtures');
+  mockApi(url => url.endsWith('/participants/501') ? { ...person, races: [{ ...person.races[0], total_time: null, place: null, dogs_count: null }] } : fixtureResponse(url));
   const { rerender } = render(<AppProviders><ParticipantSheet participantId={501} entryId={9001} stage={{ ...stage, race_id: 99 }} threshold={45} onClose={vi.fn()} /></AppProviders>);
   await screen.findByText('Алиса Иванова'); expect(screen.getByText('История прохождения КП пока отсутствует.')).toBeVisible();
   vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'false');
   rerender(<AppProviders><ParticipantSheet participantId={501} entryId={9001} threshold={45} onClose={vi.fn()} /></AppProviders>);
-  expect(screen.queryByText(/болельщиков/)).not.toBeInTheDocument(); expect(screen.queryByRole('button', { name: 'Болею за' })).not.toBeInTheDocument();
+  expect(await screen.findByText(/болельщиков/)).toBeVisible(); expect(screen.getByRole('button', { name: 'Болею за' })).toBeVisible();
   vi.unstubAllEnvs();
 });
 it('closes with a downward gesture on its surface, while a long gesture on an action does not close it', async () => {

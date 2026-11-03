@@ -1,0 +1,22 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, expect, it, vi } from 'vitest';
+import { App } from '../src/App';
+import { fixtureResponse, race } from './fixtures';
+vi.mock('../src/screens/Map/MapCanvas',()=>({MapCanvas:()=> <div>Карта</div>}));
+afterEach(()=>{vi.unstubAllGlobals();localStorage.clear();history.replaceState(null,'','/');});
+it('opens program and More, switches seasons without changing launch parameters, and handles result push links',async()=>{
+ history.replaceState(null,'','/?vk_user_id=7&sign=a%2Bb');
+ vi.stubGlobal('fetch',vi.fn(async(url:string)=>new Response(JSON.stringify({data:url.endsWith('/races')?[race,{...race,id:11,year:2025}]:url.includes('/program')?[]:url.endsWith('/races/11')?{...race,id:11,year:2025}:fixtureResponse(url),error:null}))));
+ render(<App/>);
+ await screen.findByRole('heading',{name:race.name});
+ if(screen.queryByRole('button',{name:'Начать'})) await userEvent.click(screen.getByRole('button',{name:'Начать'}));
+ await userEvent.click(screen.getByRole('button',{name:'Программа'}));
+ expect(await screen.findByRole('heading',{name:'Программа'})).toBeVisible();
+ await userEvent.click(screen.getByRole('button',{name:'Ещё'}));
+ expect(await screen.findByRole('button',{name:'Профиль и сохранённое'})).toBeVisible();
+ await userEvent.selectOptions(screen.getByLabelText('Сезон'),'11');
+ expect(location.search).toBe('?vk_user_id=7&sign=a%2Bb');
+ history.replaceState(null,'','/?vk_user_id=7&sign=a%2Bb#results&race=11'); fireEvent(window,new HashChangeEvent('hashchange'));
+ expect(await screen.findByRole('heading',{name:'Общий зачёт'})).toBeVisible();
+});

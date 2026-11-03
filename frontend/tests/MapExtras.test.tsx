@@ -3,8 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { MapScreen } from '../src/screens/Map/MapScreen';
 import { AppProviders } from '../src/app/AppProviders';
-import { preferencesKey } from '../src/mocks/extras';
-import { fixtureResponse, mockApi, positions, stage } from './fixtures';
+import { fixtureResponse, mockApi, positions, stage, participant, race, discipline } from './fixtures';
 import type { MapCanvasProps } from '../src/screens/Map/MapCanvas';
 vi.mock('../src/screens/Map/MapCanvas', () => ({ MapCanvas: (props: MapCanvasProps) => <div>
   {props.data.participants.map(p => <button key={p.race_participant_id} onClick={() => props.onSelect(p)}>Точка {p.start_number}{props.supported?.includes(p.race_participant_id) ? ' — мой' : ''}</button>)}
@@ -31,19 +30,13 @@ it('synchronises support from sheet to map, list and My filter without replacing
   expect(await screen.findByText(/В вашем списке нет участников/)).toBeVisible();
   expect(api).toHaveBeenCalledWith('/api/races/10/participants?sort=start_number', expect.anything());
 });
-it('opens all navigation placeholders and legend and closes the top surface with Escape', async () => {
+it('opens the legend and closes the top surface with Escape', async () => {
   mockApi(); const user = userEvent.setup(); show();
   await user.click(await screen.findByRole('button', { name: 'Легенда' }));
   expect(await screen.findByRole('dialog', { name: 'Условные обозначения' })).toBeVisible();
   expect(screen.getByRole('img', { name: /Участник 21, позиция подтверждена, мой участник, лидер/ })).toBeVisible();
   await user.click(screen.getByRole('button', { name: 'Закрыть легенду' }));
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-  for (const name of ['Программа', 'Ещё']) {
-    await user.click(screen.getByRole('button', { name }));
-    expect(await screen.findByText(`Раздел «${name}» пока не реализован.`)).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Закрыть сообщение' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-  }
   await user.click(screen.getByRole('button', { name: 'Легенда' })); await user.keyboard('{Escape}');
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 });
@@ -57,20 +50,20 @@ it('restores IDs from a share URL and handles back navigation without losing API
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 });
 it('does not treat empty API coordinates or failed API requests as successful mock positions', async () => {
-  localStorage.setItem(preferencesKey, JSON.stringify({ supported: ['10:9001'], subscriptions: [], prompted: [] }));
-  mockApi(url => url.includes('/positions') ? { ...positions, participants: [] } : /\/stages\//.test(url) ? { ...stage, route_geojson: null, checkpoints: [] } : fixtureResponse(url));
+  
+  mockApi(url => url.endsWith('/me/supports') ? [{ ...participant, race_id: race.id, discipline, notifications_enabled: false, supported_since: stage.start_at }] : url.includes('/positions') ? { ...positions, participants: [] } : /\/stages\//.test(url) ? { ...stage, route_geojson: null, checkpoints: [] } : fixtureResponse(url));
   show(); await userEvent.click(await screen.findByRole('tab', { name: /Мои/ }));
   expect(await screen.findByText('У поддерживаемых участников пока нет подтверждённых координат.')).toBeVisible();
   expect(screen.queryByRole('button', { name: /Точка / })).not.toBeInTheDocument();
 });
-it('allows switching supplemental features off without changing API requests', async () => {
-  vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'false'); mockApi(); show();
+it('keeps public map available when personal login fails', async () => {
+  vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'false'); mockApi(url => url.endsWith('/me/visit') ? null : fixtureResponse(url)); show();
   await screen.findByRole('button', { name: 'Точка 14' });
   expect(screen.queryByRole('tab', { name: /Мои/ })).not.toBeInTheDocument();
 });
 it('distinguishes supported participants without GPS from an empty support list', async () => {
-  localStorage.setItem(preferencesKey, JSON.stringify({ supported: ['10:9001'], subscriptions: [], prompted: [] }));
-  mockApi(url => url.includes('/positions') ? { ...positions, participants: [] } : fixtureResponse(url));
+  
+  mockApi(url => url.endsWith('/me/supports') ? [{ ...participant, race_id: race.id, discipline, notifications_enabled: false, supported_since: stage.start_at }] : url.includes('/positions') ? { ...positions, participants: [] } : fixtureResponse(url));
   show(); await userEvent.click(await screen.findByRole('tab', { name: /Мои/ }));
   expect(await screen.findByText('У ваших участников пока нет координат')).toBeVisible();
 });
