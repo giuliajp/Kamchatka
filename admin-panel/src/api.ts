@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { validResponse } from './validate';
 export const tokenKey = 'avacha:admin-token';
 export class ApiError extends Error {
@@ -11,8 +11,8 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   if (response.status === 401 && path !== '/admin/login') { storeToken(null); window.dispatchEvent(new Event('admin:expired')); }
   let body;
   try { body = await response.json(); } catch { throw new ApiError('Сервер вернул некорректный ответ', response.status); }
-  if (!response.ok || body.error) throw new ApiError(body.error?.message || `Ошибка ${response.status}`, response.status, body.error?.code, body.error?.details);
-  if (body.data === undefined || body.data === null || !validResponse(path, body.data, options.method)) throw new ApiError('Ответ сервера не соответствует формату', response.status);
+  if (!response.ok || body?.error) throw new ApiError(body?.error?.message || `Ошибка ${response.status}`, response.status, body?.error?.code, body?.error?.details);
+  if (!body || body.data === undefined || body.data === null || !validResponse(path, body.data, options.method)) throw new ApiError('Ответ сервера не соответствует формату', response.status);
   return body.data;
 }
 export async function save<T>(path: string, method: string, data?: unknown): Promise<T> {
@@ -21,17 +21,19 @@ export async function save<T>(path: string, method: string, data?: unknown): Pro
   window.dispatchEvent(new Event('admin:changed')); return result;
 }
 export interface Resource<T> { data?: T; loading: boolean; error?: Error; refresh: () => void }
+export const ResourceAccess = createContext(true);
 export function useResource<T>(path: string | null, poll = 0): Resource<T> {
+  const enabled = useContext(ResourceAccess);
   const [revision, setRevision] = useState(0);
   const refresh = useCallback(() => setRevision(value => value + 1), []);
   const [state, setState] = useState<{ path: string | null; data?: T; error?: Error; loading: boolean }>({ path: null, loading: false });
   useEffect(() => {
-    if (!path) return;
+    if (!enabled || !path) return;
     const controller = new AbortController();
     setState(old => ({ path, data: old.path === path ? old.data : undefined, loading: true }));
     void api<T>(path, { signal: controller.signal }).then(data => { if (!controller.signal.aborted) setState({ path, data, loading: false }); }).catch(error => { if (!controller.signal.aborted) setState(old => ({ ...old, error: error instanceof Error ? error : new Error('Не удалось связаться с сервером'), loading: false })); });
     return () => controller.abort();
-  }, [path, revision]);
+  }, [path, revision, enabled]);
   useEffect(() => { window.addEventListener('admin:changed', refresh); const timer = poll ? setInterval(refresh, poll) : undefined; return () => { window.removeEventListener('admin:changed', refresh); clearInterval(timer); }; }, [poll, refresh]);
   return { ...(path === state.path ? state : { loading: Boolean(path) }), refresh };
 }

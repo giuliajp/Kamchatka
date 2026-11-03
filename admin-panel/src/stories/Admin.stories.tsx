@@ -1,0 +1,28 @@
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { App } from '../App';
+import { Content } from '../pages/Content';
+import { Participants } from '../pages/Participants';
+import { PushPage } from '../pages/Push';
+import { RaceSetup } from '../pages/RaceSetup';
+import { Results } from '../pages/Results';
+import { Supporters } from '../pages/Supporters';
+import { Field, SaveForm, Status, Table } from '../ui';
+import { installApi, monitoring, race } from './fixtures';
+function signedApi(override?:Parameters<typeof installApi>[0]){sessionStorage.setItem('avacha:admin-token','storybook-session');const restore=installApi(override);return()=>{restore();sessionStorage.removeItem('avacha:admin-token');};}
+const meta={title:'Админка/Экраны',beforeEach:()=>installApi(),parameters:{layout:'fullscreen',docs:{story:{inline:false}}}} satisfies Meta;
+export default meta;
+type Story=StoryObj<typeof meta>;
+export const Navigation:Story={beforeEach:()=>signedApi(),render:()=> <App/>};
+export const Login:Story={beforeEach:()=>{sessionStorage.removeItem('avacha:admin-token');return installApi();},render:()=> <App/>};
+export const MonitoringNormal:Story={beforeEach:()=>signedApi(),render:()=> <App/>};
+export const MonitoringOverdue:Story={beforeEach:()=>signedApi(path=>path.endsWith('/monitoring')?{...monitoring,summary:{total:3,ok:0,overdue:1,sos:0,no_tracker:2},rows:monitoring.rows.map((row,index)=>index===0?{...row,is_overdue:true,minutes_since_last:90,last_position:{latitude:53.2,longitude:158.5,position_at:'2026-11-03T00:00Z',battery_percent:15}}:row)}:undefined),render:()=> <App/>};
+const sosMonitoring={...monitoring,summary:{total:3,ok:0,overdue:0,sos:1,no_tracker:2},rows:monitoring.rows.map((row,index)=>index===0?{...row,last_position:{latitude:53.2,longitude:158.5,position_at:'2026-11-03T00:00Z',battery_percent:34},active_alerts:[{id:1,race_participant_id:row.race_participant_id,start_number:row.start_number,full_name:row.full_name,imei:'123456789012345',type:'sos',occurred_at:'2026-11-03T00:00Z',latitude:53.2,longitude:158.5,acknowledged_at:null,acknowledged_by:null,note:null}]}:row)};
+export const MonitoringSOS:Story={beforeEach:()=>signedApi(path=>path.endsWith('/monitoring')?sosMonitoring:path.endsWith('/alerts?active=true')?sosMonitoring.rows.flatMap(row=>row.active_alerts):undefined),render:()=> <App/>};
+export const MonitoringEmpty:Story={beforeEach:()=>signedApi(path=>path.endsWith('/monitoring')?{...monitoring,rows:[],summary:{total:0,ok:0,overdue:0,sos:0,no_tracker:0}}:undefined),render:()=> <App/>};
+export const RaceSettings:Story={render:()=> <RaceSetup race={race}/>};
+export const Entries:Story={render:()=> <Participants raceId={1}/>};
+export const Protocols:Story={render:()=> <Results raceId={1}/>};
+export const PushMessages:Story={render:()=> <PushPage raceId={1}/>};
+export const Fans:Story={render:()=> <Supporters raceId={1}/>};
+export const PublishedContent:Story={render:()=> <Content raceId={1}/>};
+export const FieldsAndStates:Story={render:()=> <section className="card"><h1>Поля и состояния</h1><SaveForm onSave={async()=>undefined}><Field label="Название" name="name" required placeholder="Название этапа"/><Field label="Время по Камчатке" name="date" type="datetime-local"/><Field label="Количество" name="count" type="number"/><Field label="Активен" name="active" type="checkbox"/><label className="field">Комментарий<textarea name="note"/></label></SaveForm><div className="tabs"><button aria-pressed>Все</button><button aria-pressed={false}>Мои</button></div><div className="actions">{['planned','live','finished','draft','preliminary','final','sos','overdue','no_tracker','dnf'].map(value=><Status key={value} value={value}/>)}</div><Table label="Пример таблицы"><thead><tr><th>Участник</th><th>Статус</th><th>Батарея</th></tr></thead><tbody><tr data-state="overdue"><th>№14 · Тестова Алиса</th><td><Status value="overdue"/></td><td>15%</td></tr></tbody></Table></section>};

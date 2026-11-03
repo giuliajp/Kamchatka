@@ -18,7 +18,7 @@ export const optional = (data: FormData, key: string) => string(data,key) || nul
 export const numeric = (data: FormData, key: string) => string(data,key) === '' ? null : Number(string(data,key));
 export const kamchatkaInput = (iso: string | null) => iso ? new Date(Date.parse(iso) + 12 * 3600000).toISOString().slice(0,16) : '';
 export const kamchatkaValue = (data: FormData, key: string) => string(data,key) ? `${string(data,key)}+12:00` : null;
-export const time = (iso: string | null) => iso ? new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Kamchatka',dateStyle:'short',timeStyle:'short'}).format(new Date(iso)) : '—';
+export const time = (iso: string | null, compact = false) => iso ? new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Kamchatka',dateStyle:compact?undefined:'short',timeStyle:'short'}).format(new Date(iso)) : '—';
 export function Table({ children, label }: { children: ReactNode; label: string }) { return <div className="table-scroll" tabIndex={0} role="region" aria-label={label}><table>{children}</table></div>; }
 export function Status({ value }: { value: string }) {
   const labels: Record<string,string> = { upcoming:'Ожидается',planned:'Запланирован',live:'Идёт',finished:'Завершён',cancelled:'Отменён',registered:'Заявлен',active:'На дистанции',dnf:'DNF',dns:'DNS',dsq:'DSQ',out_of_competition:'Вне зачёта',draft:'Черновик',preliminary:'Опубликован',final:'Окончательный',sos:'SOS',overdue:'Просрочка',ok:'На связи',no_tracker:'Без трекера' };

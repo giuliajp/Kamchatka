@@ -9,6 +9,7 @@ const personData=(data:FormData)=>({last_name:string(data,'last_name'),first_nam
 function EntryForm({raceId,entry}:{raceId:number;entry?:Entry}) {
   const disciplines=useResource<Discipline[]>('/admin/disciplines');const [search,setSearch]=useState('');const [personId,setPersonId]=useState('');
   const people=useResource<Pick<Person,'id'|'full_name'|'birth_year'>[]>(!entry&&search.trim()?`/admin/participants?q=${encodeURIComponent(search.trim())}`:null);
+  if (!disciplines.data) return <LoadState resource={disciplines}/>;
   return <><LoadState resource={disciplines}/>{!entry&&<><Field label="Спортсмены прошлых лет" type="search" value={search} onChange={e=>setSearch(e.target.value)}/><LoadState resource={people}/><label className="field">Найденный спортсмен<select value={personId} onChange={e=>setPersonId(e.target.value)}><option value="">Создать нового спортсмена</option>{people.data?.map(person=><option key={person.id} value={person.id}>{person.full_name} · {person.birth_year ?? 'год не указан'}</option>)}</select></label></>}
     <SaveForm label="Сохранить заявку" onSave={data=>save(entry?`/admin/race-participants/${entry.id}`:`/admin/races/${raceId}/participants`,entry?'PATCH':'POST',{
       start_number:numeric(data,'start_number'),discipline_id:numeric(data,'discipline_id'),region:optional(data,'region'),dogs_count:numeric(data,'dogs_count'),...(entry?{status:string(data,'status')}:personId?{participant_id:Number(personId)}:personData(data)),
