@@ -78,6 +78,7 @@ class StageDetail(StageShort):
     checkpoints: list[StageCheckpointOut]
     route_geojson: dict[str, Any] | None
     route_updated_at: datetime | None
+    protocol_pdf_url: str | None                # PDF протокола этапа
     elevation_profile: list[ElevationPoint]   # пусто, если в треке нет высот
 
 

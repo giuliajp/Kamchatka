@@ -14,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import AdminDep, SessionDep
 from app.models import (
-    FaqItem, LocationType, OrganizerContact, ProgramEvent, ProgramEventType, Race, SpectatorLocation, Stage,
+    FaqItem, GuestInfoItem, LocationType, OrganizerContact, ProgramEvent, ProgramEventType, Race, SpectatorLocation, Stage,
 )
 from app.schemas.common import ok
 
@@ -284,5 +284,25 @@ def simple_crud(path: str, model, fields: list[str], create_schema, patch_schema
         return ok(out)
 
 
+class GuestInfoIn(BaseModel):
+    section: str = Field(pattern=r"^(how_to_get_there|what_to_bring|safety)$",
+                         description="how_to_get_there — как добраться, what_to_bring — что взять, safety — безопасность")
+    title: str | None = Field(None, max_length=200, examples=["Самолётом"])
+    text: str = Field(min_length=1)
+    sort_order: int = Field(0, ge=0)
+    is_published: bool = False
+
+
+class GuestInfoPatch(BaseModel):
+    section: str | None = Field(None, pattern=r"^(how_to_get_there|what_to_bring|safety)$")
+    title: str | None = Field(None, max_length=200)
+    text: str | None = Field(None, min_length=1)
+    sort_order: int | None = Field(None, ge=0)
+    is_published: bool | None = None
+
+
+GUEST_FIELDS = ["id", "section", "title", "text", "sort_order", "is_published"]
+
 simple_crud("faq", FaqItem, FAQ_FIELDS, FaqIn, FaqPatch, "FAQ")
+simple_crud("guest-info", GuestInfoItem, GUEST_FIELDS, GuestInfoIn, GuestInfoPatch, "Гостям")
 simple_crud("contacts", OrganizerContact, CONTACT_FIELDS, ContactIn, ContactPatch, "Контакты")

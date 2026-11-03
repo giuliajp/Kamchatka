@@ -10,13 +10,14 @@
 
 from __future__ import annotations
 
+import re
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import parse_qsl
 
 from fastapi import APIRouter, Header, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 
@@ -161,6 +162,40 @@ async def set_notifications(body: NotificationsAllowed, session: SessionDep, use
     return ok({"notifications_allowed": body.allowed})
 
 
+class NotificationSettings(BaseModel):
+    checkpoints: bool | None = Field(None, description="«Прохождение КП» — отметки судей у моих участников")
+    results: bool | None = Field(None, description="«Финиш и итоги» — протоколы этапов и смена лидера")
+    news: bool | None = Field(None, description="«Новости организаторов» — старт этапа, изменения программы")
+
+
+def settings_out(user: AppUser | None) -> dict:
+    return {"notifications_allowed": bool(user and user.notifications_allowed),
+            "checkpoints": True if user is None else user.notify_checkpoints,
+            "results": True if user is None else user.notify_results,
+            "news": True if user is None else user.notify_news}
+
+
+@router.get("/me/notification-settings", summary="Переключатели push в профиле")
+async def get_notification_settings(session: SessionDep, user_id: VkUserDep):
+    return ok(settings_out(await session.get(AppUser, user_id)))
+
+
+@router.put("/me/notification-settings", summary="Изменить переключатели push (передавайте только изменённые)")
+async def set_notification_settings(body: NotificationSettings, session: SessionDep, user_id: VkUserDep):
+    columns = {f"notify_{k}": v for k, v in body.model_dump(exclude_none=True).items()}
+    stmt = insert(AppUser).values(vk_user_id=user_id, last_seen_at=utcnow(), **columns)
+    if columns:
+        stmt = stmt.on_conflict_do_update(index_elements=[AppUser.vk_user_id],
+                                          set_={k: stmt.excluded[k] for k in columns})
+    else:
+        stmt = stmt.on_conflict_do_nothing(index_elements=[AppUser.vk_user_id])
+    await session.execute(stmt)
+    await session.commit()
+    user = await session.get(AppUser, user_id)
+    await session.refresh(user)
+    return ok(settings_out(user))
+
+
 # ── Мой профиль: «Мой результат» и напоминания ─────────────────────────
 
 @router.get("/me", summary="Кто я: если я участник гонки — мои заявки (для «Мой результат»)")
@@ -205,11 +240,21 @@ async def remove_reminder(event_id: int, session: SessionDep, user_id: VkUserDep
 # ── Закладки ───────────────────────────────────────────────────────────
 
 class BookmarkIn(BaseModel):
-    kind: str = Field(pattern=r"^(news|photo)$")
-    item_id: str = Field(pattern=r"^-?\d+_\d+$", description="Как в ответе /news или /photos: «-123_456»")
+    kind: str = Field(pattern=r"^(news|photo|protocol)$")
+    item_id: str = Field(description="news, photo — как в ответе /news или /photos («-123_456»); "
+                                     "protocol — «stage:<id этапа>» или «race:<id гонки>»")
     title: str | None = Field(None, max_length=300)
-    url: str | None = Field(None, max_length=1000)
+    url: str | None = Field(None, max_length=1000, description="Для протокола — ссылка на PDF")
     image_url: str | None = Field(None, max_length=1000)
+
+    @model_validator(mode="after")
+    def check_item(self) -> "BookmarkIn":
+        pattern = r"^(stage|race):\d+$" if self.kind == "protocol" else r"^-?\d+_\d+$"
+        if not re.fullmatch(pattern, self.item_id):
+            raise ValueError("Неверный item_id для этого вида материала")
+        if self.kind == "protocol" and not self.url:
+            raise ValueError("Для протокола нужна ссылка на файл")
+        return self
 
 
 def bookmark_out(b: Bookmark) -> dict:

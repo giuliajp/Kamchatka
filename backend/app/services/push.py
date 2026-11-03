@@ -6,6 +6,9 @@ Push-уведомления (задача 3.7) через notifications.sendMess
 - "supporters:<id>" — болельщики участника гонки с включёнными уведомлениями по нему;
 - "reminder:<id>"   — нажавшие колокольчик у события программы (ещё не получившие напоминание).
 
+Переключатели пользователя (профиль): «Прохождение КП» — отметки судей; «Финиш и итоги» —
+протоколы и смена лидера; «Новости организаторов» — старт этапа и ручные рассылки.
+
 Правила текста (бриф): событие уже произошло, данные с задержкой — пишем время события
 и источник («отметка судьи», «по протоколу»), никогда «прямо сейчас».
 Ошибка VK не ломает действие организатора: она записывается в журнал PushMessage.
@@ -23,6 +26,16 @@ from app.models import AppUser, EventReminder, PushMessage, SupportSubscription
 from app.services import vk_api
 
 logger = logging.getLogger(__name__)
+
+# Какой переключатель в профиле отвечает за повод рассылки. Напоминания — всегда
+# (пользователь сам нажал колокольчик у события).
+CATEGORY = {
+    "checkpoint": AppUser.notify_checkpoints,
+    "protocol": AppUser.notify_results,
+    "leader": AppUser.notify_results,
+    "stage_start": AppUser.notify_news,
+    "manual": AppUser.notify_news,
+}
 KAMCHATKA = timezone(timedelta(hours=12))
 
 
@@ -30,22 +43,27 @@ def kamchatka_time(moment: datetime) -> str:
     return moment.astimezone(KAMCHATKA).strftime("%H:%M")
 
 
-async def recipients(session: AsyncSession, segment: str) -> list[int]:
+async def recipients(session: AsyncSession, segment: str, trigger: str | None = None) -> list[int]:
+    switch = CATEGORY.get(trigger or "")
     if segment == "all":
-        return list(await session.scalars(
-            select(AppUser.vk_user_id).where(AppUser.notifications_allowed.is_(True))
-        ))
+        stmt = select(AppUser.vk_user_id).where(AppUser.notifications_allowed.is_(True))
+        if switch is not None:
+            stmt = stmt.where(switch.is_(True))
+        return list(await session.scalars(stmt))
     if segment.startswith("supporters:"):
         entry_id = int(segment.split(":", 1)[1])
         # Кто явно запретил уведомления в приложении — пропускаем; кого не знаем — пробуем.
-        return list(await session.scalars(
+        stmt = (
             select(SupportSubscription.vk_user_id)
             .outerjoin(AppUser, AppUser.vk_user_id == SupportSubscription.vk_user_id)
             .where(SupportSubscription.race_participant_id == entry_id,
                    SupportSubscription.cancelled_at.is_(None),
                    SupportSubscription.notifications_enabled.is_(True),
                    AppUser.notifications_allowed.is_not(False))
-        ))
+        )
+        if switch is not None:
+            stmt = stmt.where(switch.is_not(False))     # кого не знаем — переключатели по умолчанию включены
+        return list(await session.scalars(stmt))
     if segment.startswith("reminder:"):
         event_id = int(segment.split(":", 1)[1])
         return list(await session.scalars(
@@ -60,7 +78,7 @@ async def recipients(session: AsyncSession, segment: str) -> list[int]:
 async def send(session: AsyncSession, *, segment: str, message: str, trigger: str,
                fragment: str | None = None, created_by: str | None = None) -> PushMessage:
     """Отправить и записать в журнал. Коммит — на вызывающем коде."""
-    users = await recipients(session, segment)
+    users = await recipients(session, segment, trigger)
     record = PushMessage(segment=segment, message=message[:vk_api.MAX_MESSAGE], fragment=fragment,
                          trigger=trigger, recipients=len(users), created_by=created_by)
     if users:

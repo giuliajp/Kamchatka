@@ -173,6 +173,7 @@ class StageIn(BaseModel):
     distance_km: float | None = Field(None, gt=0)
     start_at: AwareDatetime | None = None
     finish_at: AwareDatetime | None = None
+    protocol_pdf_url: str | None = Field(None, max_length=1000, description="Ссылка на PDF протокола этапа")
     tracking_interval_minutes: int | None = Field(None, ge=1, le=1440)
     stale_after_minutes: int | None = Field(None, ge=1, le=2880)
 
@@ -185,6 +186,7 @@ class StagePatch(BaseModel):
     start_at: AwareDatetime | None = None
     finish_at: AwareDatetime | None = None
     status: StageStatus | None = None
+    protocol_pdf_url: str | None = Field(None, max_length=1000, description="Ссылка на PDF протокола этапа")
     tracking_interval_minutes: int | None = Field(None, ge=1, le=1440)
     stale_after_minutes: int | None = Field(None, ge=1, le=2880)
 
@@ -199,6 +201,7 @@ def route_length_km(geojson) -> float | None:
 
 def stage_out(stage: Stage) -> dict:
     return {**stage_short(stage), "race_id": stage.race_id, "description": stage.description,
+            "protocol_pdf_url": stage.protocol_pdf_url,
             "tracking_interval_minutes": stage.tracking_interval_minutes,
             "stale_after_minutes": stage.stale_after_minutes,
             "route_source_filename": stage.route_source_filename,
@@ -308,6 +311,7 @@ class StageCheckpointIn(BaseModel):
     label: str | None = Field(None, max_length=50, examples=["КП-3"])
     km_from_start: float | None = Field(None, ge=0)
     required_rest_minutes: int = Field(0, ge=0)
+    segment_description: str | None = Field(None, description="Описание участка до этого КП (экран «Маршрут»)")
 
 
 class StageCheckpointPatch(BaseModel):
@@ -316,6 +320,7 @@ class StageCheckpointPatch(BaseModel):
     label: str | None = Field(None, max_length=50)
     km_from_start: float | None = Field(None, ge=0)
     required_rest_minutes: int | None = Field(None, ge=0)
+    segment_description: str | None = None
 
 
 def checkpoint_out(c: Checkpoint) -> dict:
@@ -326,7 +331,8 @@ def checkpoint_out(c: Checkpoint) -> dict:
 def stage_checkpoint_out(sc: StageCheckpoint) -> dict:
     return {"id": sc.id, "stage_id": sc.stage_id, "checkpoint_id": sc.checkpoint_id,
             "order_index": sc.order_index, "role": sc.role.value, "label": sc.label,
-            "km_from_start": sc.km_from_start, "required_rest_minutes": sc.required_rest_minutes}
+            "km_from_start": sc.km_from_start, "required_rest_minutes": sc.required_rest_minutes,
+            "segment_description": sc.segment_description}
 
 
 @router.get("/checkpoints", summary="Все места КП")

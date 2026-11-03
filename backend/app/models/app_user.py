@@ -22,6 +22,10 @@ class AppUser(Base):
 
     vk_user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
     notifications_allowed: Mapped[bool] = mapped_column(default=False, nullable=False)
+    # Переключатели в профиле («Ещё» → Push-уведомления).
+    notify_checkpoints: Mapped[bool] = mapped_column(default=True, server_default="true", nullable=False)
+    notify_results: Mapped[bool] = mapped_column(default=True, server_default="true", nullable=False)
+    notify_news: Mapped[bool] = mapped_column(default=True, server_default="true", nullable=False)
     first_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 

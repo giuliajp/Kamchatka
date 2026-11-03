@@ -46,6 +46,7 @@ async def get_stage(stage_id: int, session: SessionDep):
         ],
         "route_geojson": stage.route_geojson,
         "route_updated_at": stage.route_updated_at,
+        "protocol_pdf_url": stage.protocol_pdf_url,
         "elevation_profile": elevation_profile(stage.route_geojson),
     })
 

@@ -150,3 +150,18 @@ async def list_contacts(session: SessionDep):
         .all()
     )
     return ok(contacts)
+
+
+GUEST_SECTIONS = ("how_to_get_there", "what_to_bring", "safety")
+
+
+@router.get("/guest-info", summary="Раздел «Гостям»: как добраться, что взять с собой, техника безопасности")
+async def guest_info(session: SessionDep):
+    from app.models import GuestInfoItem
+
+    items = await session.scalars(select(GuestInfoItem).where(GuestInfoItem.is_published.is_(True))
+                                  .order_by(GuestInfoItem.sort_order, GuestInfoItem.id))
+    sections = {name: [] for name in GUEST_SECTIONS}
+    for item in items:
+        sections[item.section].append({"id": item.id, "title": item.title, "text": item.text})
+    return ok(sections)

@@ -11,6 +11,7 @@ from app.models.admin import AdminUser
 from app.models.app_user import AppUser, Bookmark, EventReminder, PushMessage
 from app.models.content import (
     FaqItem,
+    GuestInfoItem,
     OrganizerContact,
     ProgramEvent,
     SpectatorLocation,
@@ -59,7 +60,7 @@ __all__ = [
     # трекинг
     "TrackerDevice", "TrackerAssignment", "TrackerPosition", "TrackerAlert",
     # программа фестиваля и контент для зрителей
-    "ProgramEvent", "FaqItem", "SpectatorLocation", "OrganizerContact",
+    "ProgramEvent", "FaqItem", "SpectatorLocation", "OrganizerContact", "GuestInfoItem",
     "ProgramEventType", "LocationType",
     # админка и болельщики
     "AdminUser", "SupportSubscription", "AppUser", "Bookmark", "PushMessage", "EventReminder",

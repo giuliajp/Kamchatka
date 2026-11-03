@@ -60,6 +60,8 @@ class Stage(TimestampMixin, Base):
     route_geojson: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON)
     route_source_filename: Mapped[Optional[str]] = mapped_column(String(255))
     route_updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    # Ссылка на PDF протокола этапа — «Скачать протокол», «Сохранённые материалы».
+    protocol_pdf_url: Mapped[Optional[str]] = mapped_column(String(1000))
 
     # Если пусто — берём значение гонки. Так можно учащать точки на отдельных этапах.
     tracking_interval_minutes: Mapped[Optional[int]] = mapped_column(Integer)

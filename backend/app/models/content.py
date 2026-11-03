@@ -135,6 +135,26 @@ class FaqItem(TimestampMixin, Base):
         return f"<FaqItem {self.question}>"
 
 
+class GuestInfoItem(TimestampMixin, Base):
+    """Раздел «Гостям»: как добраться, что взять с собой, техника безопасности."""
+
+    __tablename__ = "guest_info_items"
+    __table_args__ = (
+        CheckConstraint(
+            "section IN ('how_to_get_there', 'what_to_bring', 'safety')", name="section_valid"
+        ),
+        CheckConstraint("sort_order >= 0", name="sort_order_non_negative"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    section: Mapped[str] = mapped_column(String(30), nullable=False)
+    # Заголовок пункта («Самолётом»); у списков «что взять» и «безопасность» обычно пусто.
+    title: Mapped[Optional[str]] = mapped_column(String(200))
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    is_published: Mapped[bool] = mapped_column(default=False, nullable=False)
+
+
 class OrganizerContact(TimestampMixin, Base):
     """Общие контакты организаторов; новые записи скрыты до публикации."""
 
