@@ -1,0 +1,63 @@
+import { useState } from 'react';
+import { save, useResource } from '../api';
+import type { Checkpoint, Discipline, Race, Stage, StageCheckpoint } from '../types';
+import { ConfirmButton, Field, LoadState, SaveForm, Status, Table, kamchatkaInput, kamchatkaValue, numeric, optional, string, time } from '../ui';
+
+function RaceForm({ race }: { race?: Race }) {
+  return <SaveForm label="Сохранить сезон" onSave={data => save(race ? `/admin/races/${race.id}` : '/admin/races', race ? 'PATCH' : 'POST', {
+    name:string(data,'name'), ...(!race ? {year:numeric(data,'year')} : {status:string(data,'status'),is_current:data.has('is_current')}), start_date:optional(data,'start_date'),end_date:optional(data,'end_date'),location:optional(data,'location'),tracking_interval_minutes:numeric(data,'tracking_interval_minutes'),stale_after_minutes:numeric(data,'stale_after_minutes'),
+  })}><Field label="Название сезона" name="name" defaultValue={race?.name} required maxLength={200}/>{!race && <Field label="Год" name="year" type="number" min={2000} max={2100} required/>}
+    <div className="grid"><Field label="Первый день" name="start_date" type="date" defaultValue={race?.start_date ?? ''}/><Field label="Последний день" name="end_date" type="date" defaultValue={race?.end_date ?? ''}/></div>
+    <Field label="Место проведения" name="location" defaultValue={race?.location ?? ''}/>
+    <div className="grid"><Field label="Интервал GPS, мин" name="tracking_interval_minutes" type="number" min={1} max={1440} required defaultValue={race?.tracking_interval_minutes ?? 20}/><Field label="Просрочка GPS, мин" name="stale_after_minutes" type="number" min={1} max={2880} required defaultValue={race?.stale_after_minutes ?? 45}/></div>
+    {race && <><label className="field">Статус сезона<select name="status" defaultValue={race.status}><option value="upcoming">Ожидается</option><option value="live">Идёт</option><option value="finished">Завершён</option></select></label><Field label="Текущий сезон в приложении" name="is_current" type="checkbox" defaultChecked={race.is_current}/></>}
+  </SaveForm>;
+}
+export function StageForm({ raceId, stage }: { raceId: number; stage?: Stage }) {
+  return <SaveForm label="Сохранить этап" onSave={data => {
+    if (stage && string(data,'status') === 'live' && stage.status !== 'live' && !window.confirm('Начать этап? Сервер отправит уведомление болельщикам.')) return Promise.reject(new Error('Старт отменён'));
+    return save(stage ? `/admin/stages/${stage.id}` : `/admin/races/${raceId}/stages`,stage?'PATCH':'POST',{
+      number:numeric(data,'number'),name:optional(data,'name'),description:optional(data,'description'),distance_km:numeric(data,'distance_km'),start_at:kamchatkaValue(data,'start_at'),finish_at:kamchatkaValue(data,'finish_at'),tracking_interval_minutes:numeric(data,'tracking_interval_minutes'),stale_after_minutes:numeric(data,'stale_after_minutes'),...(stage?{status:string(data,'status')}:{}),
+    });
+  }}><div className="grid"><Field label="Номер этапа" name="number" type="number" required min={1} defaultValue={stage?.number}/><Field label="Название" name="name" defaultValue={stage?.name ?? ''}/></div>
+    <label className="field">Описание<textarea name="description" defaultValue={stage?.description ?? ''}/></label><Field label="Длина, км" name="distance_km" type="number" min={0.01} step="any" defaultValue={stage?.distance_km ?? ''}/>
+    <div className="grid"><Field label="Старт · Камчатка" name="start_at" type="datetime-local" defaultValue={kamchatkaInput(stage?.start_at ?? null)}/><Field label="Финиш · Камчатка" name="finish_at" type="datetime-local" defaultValue={kamchatkaInput(stage?.finish_at ?? null)}/></div>
+    <div className="grid"><Field label="Интервал GPS этапа, мин" name="tracking_interval_minutes" type="number" min={1} max={1440} defaultValue={stage?.tracking_interval_minutes ?? ''}/><Field label="Просрочка GPS этапа, мин" name="stale_after_minutes" type="number" min={1} max={2880} defaultValue={stage?.stale_after_minutes ?? ''}/></div><small>Пустые интервалы наследуют настройки сезона.</small>
+    {stage && <label className="field">Статус этапа<select name="status" defaultValue={stage.status}><option value="planned">Запланирован</option><option value="live">Идёт</option><option value="finished">Завершён</option><option value="cancelled">Отменён</option></select></label>}
+  </SaveForm>;
+}
+function Disciplines() {
+  const items=useResource<Discipline[]>('/admin/disciplines'); const [selected,setSelected]=useState<Discipline>();
+  return <div className="grid"><section className="card"><h2>Дисциплины</h2><LoadState resource={items}/><Table label="Дисциплины"><thead><tr><th>Название</th><th>Собаки</th><th>Состояние</th></tr></thead><tbody>{items.data?.map(item=><tr key={item.id}><td><button onClick={()=>setSelected(item)}>{item.name}</button><small>{item.code}</small></td><td>{item.dogs_min}–{item.dogs_max ?? '∞'}</td><td>{item.is_active?'Активна':'Отключена'}</td></tr>)}</tbody></Table><button onClick={()=>setSelected(undefined)}>Новая дисциплина</button></section>
+    <section className="card"><h2>{selected?'Изменить дисциплину':'Новая дисциплина'}</h2><SaveForm key={selected?.id ?? 'new'} onSave={data=>save(selected?`/admin/disciplines/${selected.id}`:'/admin/disciplines',selected?'PATCH':'POST',{
+      name:string(data,'name'),dogs_min:numeric(data,'dogs_min'),dogs_max:numeric(data,'dogs_max'),sort_order:numeric(data,'sort_order'),...(selected?{is_active:data.has('is_active')}:{code:string(data,'code'),equipment:string(data,'equipment')}),
+    })}><Field label="Название дисциплины" name="name" defaultValue={selected?.name} required/>{!selected && <><Field label="Код дисциплины" name="code" required pattern="[a-z0-9_]+"/><label className="field">Снаряжение<select name="equipment"><option value="sled">Нарта</option><option value="ski">Лыжи</option></select></label></>}
+      <Field label="Минимум собак" name="dogs_min" type="number" min={1} defaultValue={selected?.dogs_min} required/><Field label="Максимум собак" name="dogs_max" type="number" min={1} defaultValue={selected?.dogs_max ?? ''}/><Field label="Порядок в списке" name="sort_order" type="number" min={0} defaultValue={selected?.sort_order ?? 0} required/>{selected && <Field label="Активная дисциплина" name="is_active" type="checkbox" defaultChecked={selected.is_active}/>}</SaveForm></section>
+  </div>;
+}
+function Checkpoints({ stageId }: {stageId?:number}) {
+  const places=useResource<Checkpoint[]>('/admin/checkpoints'); const links=useResource<StageCheckpoint[]>(stageId?`/admin/stages/${stageId}/checkpoints`:null);
+  const [place,setPlace]=useState<Checkpoint>();const [link,setLink]=useState<StageCheckpoint>();
+  return <div className="grid"><section className="card"><h2>Места контрольных пунктов</h2><LoadState resource={places}/><div className="actions">{places.data?.map(p=><button key={p.id} onClick={()=>setPlace(p)}>{p.name}</button>)}<button onClick={()=>setPlace(undefined)}>Новое место</button></div>
+    <SaveForm key={place?.id ?? 'new'} onSave={data=>save(place?`/admin/checkpoints/${place.id}`:'/admin/checkpoints',place?'PATCH':'POST',{name:string(data,'name'),description:optional(data,'description'),latitude:numeric(data,'latitude'),longitude:numeric(data,'longitude'),elevation_m:numeric(data,'elevation_m')})}>
+      <Field label="Название КП" name="name" required defaultValue={place?.name}/><Field label="Описание места" name="description" defaultValue={place?.description ?? ''}/><Field label="Широта" name="latitude" type="number" step="any" min={-90} max={90} required defaultValue={place?.latitude}/><Field label="Долгота" name="longitude" type="number" step="any" min={-180} max={180} required defaultValue={place?.longitude}/><Field label="Высота, м" name="elevation_m" type="number" step="any" defaultValue={place?.elevation_m ?? ''}/>
+    </SaveForm></section><section className="card"><h2>КП выбранного этапа</h2>{!stageId?<p>Сначала создайте этап.</p>:<><LoadState resource={links}/><div className="actions">{links.data?.map(item=><button key={item.id} onClick={()=>setLink(item)}>{item.label || places.data?.find(p=>p.id===item.checkpoint_id)?.name} · {item.order_index}</button>)}<button onClick={()=>setLink(undefined)}>Добавить КП</button></div>
+      <SaveForm key={link?.id ?? 'new'} onSave={data=>save(link?`/admin/stage-checkpoints/${link.id}`:`/admin/stages/${stageId}/checkpoints`,link?'PATCH':'POST',{...(link?{}:{checkpoint_id:numeric(data,'checkpoint_id')}),order_index:numeric(data,'order_index'),role:string(data,'role'),label:optional(data,'label'),km_from_start:numeric(data,'km_from_start'),required_rest_minutes:numeric(data,'required_rest_minutes')})}>
+        {!link && <label className="field">Место КП<select name="checkpoint_id" required><option value="">Выберите место</option>{places.data?.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}
+        <Field label="Порядковый номер КП" name="order_index" type="number" min={0} required defaultValue={link?.order_index}/><label className="field">Роль КП<select name="role" defaultValue={link?.role ?? 'checkpoint'}><option value="start">Старт</option><option value="checkpoint">КП</option><option value="finish">Финиш</option></select></label>
+        <Field label="Обозначение" name="label" maxLength={50} defaultValue={link?.label ?? ''}/><Field label="Километров от старта" name="km_from_start" type="number" min={0} step="any" defaultValue={link?.km_from_start ?? ''}/><Field label="Обязательный отдых, мин" name="required_rest_minutes" type="number" min={0} required defaultValue={link?.required_rest_minutes ?? 0}/>
+      </SaveForm>{link && <ConfirmButton question="Убрать КП с этапа?" action={async()=>{await save(`/admin/stage-checkpoints/${link.id}`,'DELETE');setLink(undefined);}}>Убрать КП с этапа</ConfirmButton>}</>}
+    </section></div>;
+}
+export function RaceSetup({ race }: { race?: Race }) {
+  const [tab,setTab]=useState('stages');const [newRace,setNewRace]=useState(false);const [stageId,setStageId]=useState<number>();
+  const stages=useResource<Stage[]>(race?`/admin/races/${race.id}/stages`:null);const stage=stages.data?.find(s=>s.id===stageId);
+  return <><div className="tabs" aria-label="Настройки гонки">{[['stages','Этапы'],['season','Сезон'],['disciplines','Дисциплины'],['checkpoints','Контрольные пункты']].map(([value,label])=><button key={value} aria-pressed={tab===value} onClick={()=>setTab(value)}>{label}</button>)}</div>
+    {(tab==='season'||!race)&&<section className="card"><h2>{newRace||!race?'Новый сезон':'Настройки сезона'}</h2><button onClick={()=>setNewRace(!newRace)}>{newRace?'Вернуться к сезону':'Создать сезон'}</button><RaceForm key={newRace?'new':race?.id} race={newRace?undefined:race}/></section>}
+    {tab==='disciplines'&&<Disciplines/>}
+    {race && (tab==='stages'||tab==='checkpoints')&&<><LoadState resource={stages}/><div className="toolbar"><label className="field">Выбранный этап<select value={stageId ?? ''} onChange={e=>setStageId(e.target.value?Number(e.target.value):undefined)}><option value="">Новый этап</option>{stages.data?.map(s=><option key={s.id} value={s.id}>Этап {s.number} · {s.name}</option>)}</select></label></div>
+      {tab==='checkpoints'?<Checkpoints key={stageId} stageId={stageId}/>:<div className="grid"><section className="card"><h2>{stage?`Этап ${stage.number}`:'Новый этап'}</h2><StageForm key={stage?.id ?? 'new'} raceId={race.id} stage={stage}/>{stage&&<ConfirmButton question="Удалить этап? Сервер разрешает удаление только пустого этапа." action={async()=>{await save(`/admin/stages/${stage.id}`,'DELETE');setStageId(undefined);}}>Удалить этап</ConfirmButton>}</section>
+      <section className="card"><h2>Маршрут</h2>{stage?<><Status value={stage.status}/><p>{stage.route_source_filename || 'Файл маршрута не загружен'}</p><p>Обновление: {time(stage.route_updated_at)} · {stage.route_length_km ?? '—'} км</p><SaveForm key={stage.id} label="Загрузить маршрут" onSave={data=>save(`/admin/stages/${stage.id}/route`,'PUT',data)}><Field label="GPX, KML или KMZ" name="file" type="file" accept=".gpx,.kml,.kmz" required/></SaveForm>{stage.route_source_filename && <ConfirmButton question="Удалить маршрут этапа?" action={()=>save(`/admin/stages/${stage.id}/route`,'DELETE')}>Удалить маршрут</ConfirmButton>}</>:<p>Сохраните этап, затем загрузите GPX, KML или KMZ.</p>}</section></div>}
+    </>}
+  </>;
+}
