@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, it, vi } from 'vitest';
 import { ParticipantsScreen } from '../src/screens/Participants/ParticipantsScreen';
@@ -36,6 +36,29 @@ it('shows published protocols, penalty explanations and corrections without addi
   expect(screen.getAllByText('00:16:40').length).toBeGreaterThan(0); expect(screen.queryByText('00:18:40')).not.toBeInTheDocument();
   expect(screen.getByText(/Главный судья: Иванов/)).toBeVisible(); expect(screen.getByText(/Главный секретарь: Петрова/)).toBeVisible(); expect(screen.getByText('Погода: Ясно')).toBeVisible();
   expect(screen.getByText(/Исправлено после утверждения/)).toBeVisible();
+  const table = within(screen.getByRole('table'));
+  expect(table.getByRole('columnheader', { name: 'Регион' })).toBeVisible();
+  expect(table.getByRole('cell', { name: 'Камчатский край' })).toBeVisible();
+  expect(table.getByText('Собаки на старте: 8')).toBeVisible();
+  expect(table.getByText('Собаки на финише: 8')).toBeVisible();
+});
+it.each(['Камчатский край', null])('shows region %s and each stage’s own dog counts, including null and zero', region => {
+  const cell = standing.stages[0];
+  render(<StandingTable rows={[{ ...standing, region, stages: [
+    { ...cell, stage_number: 3, dogs_at_start: 8, dogs_at_finish: 7 },
+    { ...cell, stage_number: 4, dogs_at_start: 0, dogs_at_finish: null },
+    { ...cell, stage_number: 5, dogs_at_start: null, dogs_at_finish: 0 },
+  ] }]} onSelect={vi.fn()} />);
+  expect(within(screen.getAllByRole('row')[1]).getAllByRole('cell')[1]).toHaveTextContent(region ?? '—');
+  const third = within(screen.getByText(/^Этап 3:/));
+  expect(third.getByText('Собаки на старте: 8')).toBeVisible();
+  expect(third.getByText('Собаки на финише: 7')).toBeVisible();
+  const fourth = within(screen.getByText(/^Этап 4:/));
+  expect(fourth.getByText('Собаки на старте: 0')).toBeVisible();
+  expect(fourth.getByText('Собаки на финише: —')).toBeVisible();
+  const fifth = within(screen.getByText(/^Этап 5:/));
+  expect(fifth.getByText('Собаки на старте: —')).toBeVisible();
+  expect(fifth.getByText('Собаки на финише: 0')).toBeVisible();
 });
 it('handles preliminary, empty and unpublished protocols without inventing results', async () => {
   mockApi(url => url.endsWith('/protocols') ? { ...protocols, protocols: [{ ...protocols.protocols[0], chief_judge: null, chief_secretary: null, weather: null }, { ...protocols.protocols[0], discipline: { id: 5, code: 'other', name: 'Другая' } }] }

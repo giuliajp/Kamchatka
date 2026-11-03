@@ -8,11 +8,13 @@ import { DataState } from '../../components/DataState';
 
 export function StandingTable({ rows, onSelect }: { rows: Standing[]; onSelect: (participantId: number, entryId: number) => void }) {
   return <div className="results-scroll" tabIndex={0} role="region" aria-label="Таблица результатов"><table>
-    <thead><tr><th>Место</th><th>Участник</th><th>Статус</th><th>Этапы</th><th>Итог</th><th>Отставание</th><th>Штрафы за гонку</th></tr></thead>
+    <thead><tr><th>Место</th><th>Участник</th><th>Регион</th><th>Статус</th><th>Этапы</th><th>Итог</th><th>Отставание</th><th>Штрафы за гонку</th></tr></thead>
     <tbody>{rows.map(row => <tr key={row.race_participant_id}>
       <td>{row.place ?? '—'}</td><th scope="row"><button className="text-action" onClick={() => onSelect(row.participant_id, row.race_participant_id)}>№{row.start_number} · {row.full_name}</button></th>
-      <td>{statusLabel(row.status)}</td><td>{row.stages.map(stage => <div key={stage.stage_number}>Этап {stage.stage_number}: {stage.time ?? '—'}
+      <td>{row.region ?? '—'}</td><td>{statusLabel(row.status)}</td><td>{row.stages.map(stage => <div key={stage.stage_number}>Этап {stage.stage_number}: {stage.time ?? '—'}
         {stage.status && stage.status !== 'finished' && ` (${statusLabel(stage.status)})`}
+        <p>Собаки на старте: {stage.dogs_at_start ?? '—'}</p>
+        <p>Собаки на финише: {stage.dogs_at_finish ?? '—'}</p>
         {stage.is_corrected_after_final && <span className="result-correction"> Исправлено после утверждения</span>}
         {stage.note && <p>{stage.note}</p>}
       </div>)}</td><td>{row.total_time ?? '—'}</td><td>{row.gap_to_leader ?? '—'}</td>
