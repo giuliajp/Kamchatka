@@ -29,7 +29,7 @@ const participationFields = { race_participant_id: number, start_number: number,
   discipline, dogs_count: nullable(number), status: text, place: nullable(number),
   total_time_seconds: nullable(number), total_time: nullable(text) };
 const participant = object({ ...participationFields, participant_id: number, full_name: text,
-  last_name: text, first_name: text, photo_url: nullable(text) });
+  last_name: text, first_name: text, photo_url: nullable(text), supporters_count: number, supporters_change_24h: number });
 const stageCell = object({ stage_number: number, status: nullable(text), time_seconds: nullable(number),
   time: nullable(text), dogs_at_start: nullable(number), dogs_at_finish: nullable(number),
   is_corrected_after_final: boolean, note: nullable(text) });
@@ -47,6 +47,7 @@ const position = object({ race_participant_id: number, participant_id: number, s
   gap_to_leader_km: nullable(number) });
 
 const endpoints: [RegExp, Check][] = [
+  [/^\/races$/, list(race)],
   [/^\/races\/(current|\d+)$/, object({ ...raceFields,
     disciplines: list(object({ ...disciplineFields, participants_count: number })), stages: list(stage) })],
   [/^\/stages\/\d+$/, object({ ...stageFields, race_id: number, description: nullable(text),
@@ -67,7 +68,30 @@ const endpoints: [RegExp, Check][] = [
     points: list(object({ ...pointFields, stage_number: nullable(number) })) })],
 ];
 
-export function validApiData(path: string, value: unknown): boolean {
+const support = object({ race_participant_id: number, supporters_count: number, change_24h: number, is_supported: nullable(boolean), notifications_enabled: nullable(boolean) });
+const locationFields = { id: number, race_id: number, stage_id: nullable(number), location_type: oneOf('start', 'finish', 'festival', 'viewpoint'), name: text, description: nullable(text), latitude: number, longitude: number, address: nullable(text), how_to_get_there: nullable(text), sort_order: number };
+const bookmark = object({ kind: oneOf('news', 'photo'), item_id: text, title: nullable(text), url: nullable(text), image_url: nullable(text), created_at: date });
+endpoints.push(
+  [/^\/race-participants\/\d+\/support$/, support],
+  [/^\/me\/visit$/, object({ vk_user_id: number })],
+  [/^\/me\/notifications$/, object({ notifications_allowed: boolean })],
+  [/^\/me\/supports\/\d+$/, support],
+  [/^\/me\/supports$/, list(object({ race_participant_id: number, race_id: number, start_number: number, full_name: text, photo_url: nullable(text), discipline, notifications_enabled: boolean, supported_since: date }))],
+  [/^\/races\/\d+\/support-rating$/, list(object({ rank: number, race_participant_id: number, start_number: number, full_name: text, photo_url: nullable(text), discipline, supporters_count: number, change_24h: number }))],
+  [/^\/race-participants\/\d+\/checkpoint-passes$/, list(object({ stage_id: number, stage_number: number, stage_checkpoint_id: number, order_index: number, role: oneOf('start', 'checkpoint', 'finish'), label: nullable(text), name: text, km_from_start: nullable(number), required_rest_minutes: number, arrived_at: date, departed_at: nullable(date) }))],
+  [/^\/locations$/, list(object(locationFields))],
+  [/^\/program$/, list(object({ id: number, race_id: number, stage_id: nullable(number), event_type: oneOf('stage_start', 'stage_finish', 'festival'), title: text, description: nullable(text), start_at: date, end_at: nullable(date), location: nullable(object(locationFields)), sort_order: number }))],
+  [/^\/faq$/, list(object({ id: number, question: text, answer: text, sort_order: number }))],
+  [/^\/contacts$/, list(object({ id: number, title: text, name: nullable(text), phone: nullable(text), email: nullable(text), url: nullable(text), sort_order: number }))],
+  [/^\/news$/, object({ items: list(object({ id: text, owner_id: number, post_id: number, date, title: text, preview: text, cover_url: nullable(text), url: text })), total: number, stale: boolean })],
+  [/^\/photos$/, object({ days: list(object({ date, photos: list(object({ id: text, date, text: nullable(text), url: nullable(text), vk_url: text })) })), stale: boolean })],
+  [/^\/me\/bookmarks$/, list(bookmark)],
+);
+
+export function validApiData(path: string, value: unknown, method = 'GET'): boolean {
+  if (method === 'PUT' && path === '/me/bookmarks') return bookmark(value);
+  if (method === 'DELETE' && path.startsWith('/me/bookmarks/')) return object({ deleted: number })(value);
+  if (method === 'DELETE' && path.split('?')[0] === '/me/supports') return object({ cancelled: number })(value);
   const endpoint = endpoints.find(([pattern]) => pattern.test(path.split('?')[0]));
   return endpoint ? endpoint[1](value) : true;
 }

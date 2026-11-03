@@ -7,7 +7,7 @@ export function useApi<T>(path: string | null, poll = 0, persist = true): Resour
   const refresh = useCallback(() => setRevision(v => v + 1), []);
   const [state, setState] = useState<{ path: string | null; snapshot?: Snapshot<T>; error?: ApiError; loading: boolean }>({ path: null, loading: false });
   useEffect(() => {
-    if (path === null) return;
+    if (path === null) { setState({ path: null, loading: false }); return; }
     const controller = new AbortController();
     setState(previous => ({ path, snapshot: previous.path === path ? previous.snapshot : persist ? readCache<T>(path) : undefined, loading: true }));
     const load = async () => {
@@ -28,11 +28,13 @@ export function useApi<T>(path: string | null, poll = 0, persist = true): Resour
     window.addEventListener('online', refresh);
     window.addEventListener('offline', refresh);
     document.addEventListener('visibilitychange', visible);
+    window.addEventListener('avacha:changed', refresh);
     const timer = poll > 0 ? window.setInterval(visible, poll) : undefined;
     return () => {
       window.removeEventListener('online', refresh);
       window.removeEventListener('offline', refresh);
       document.removeEventListener('visibilitychange', visible);
+      window.removeEventListener('avacha:changed', refresh);
       window.clearInterval(timer);
     };
   }, [poll, refresh]);

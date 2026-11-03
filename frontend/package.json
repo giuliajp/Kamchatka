@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@vkontakte/icons": "3.76.0",
+    "@vkontakte/vk-bridge": "3.0.2",
     "@vkontakte/vkui": "8.4.2",
     "leaflet": "1.9.4",
     "leaflet.markercluster": "1.5.3",

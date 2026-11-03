@@ -34,12 +34,13 @@ export interface Positions {
   route_length_km: number | null; official_protocol_disciplines: string[]; participants: Position[];
 }
 export interface Participant {
+  supporters_count: number; supporters_change_24h: number;
   race_participant_id: number; participant_id: number; start_number: number; full_name: string;
   last_name: string; first_name: string; photo_url: string | null; region: string | null;
   discipline: Discipline; dogs_count: number | null; status: string; place: number | null;
   total_time_seconds: number | null; total_time: string | null;
 }
-export interface ParticipantRace extends Omit<Participant, 'participant_id' | 'full_name' | 'last_name' | 'first_name' | 'photo_url'> {
+export interface ParticipantRace extends Omit<Participant, 'participant_id' | 'full_name' | 'last_name' | 'first_name' | 'photo_url' | 'supporters_count' | 'supporters_change_24h'> {
   race: Race; gap_to_leader_seconds: number | null; penalty_total_seconds: number;
 }
 export interface ParticipantDetail {
