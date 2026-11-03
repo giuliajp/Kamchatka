@@ -5,7 +5,7 @@ export class ApiError extends Error {
   constructor(message: string, public status: number, public code?: string, public details?: unknown) { super(message); }
 }
 export interface Snapshot<T> { data: T; savedAt: string }
-const cacheKey = (path: string) => `avacha-api-v1:${apiBase}${path}`;
+const cacheKey = (path: string) => `avacha-api-v2:${apiBase}${path}`;
 export const canPersist = (path: string) => !/^\/me(?:\/|$)|\/support(?:\?|$)/.test(path);
 
 export function readCache<T>(path: string): Snapshot<T> | undefined {

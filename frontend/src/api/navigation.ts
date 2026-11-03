@@ -1,12 +1,16 @@
 import bridge from '@vkontakte/vk-bridge';
 import { request } from './client';
 import type { Participant, Race } from '../types/api';
-export interface RaceLink { raceId?: number; stageId?: number; participantId?: number; entryId?: number; section?: 'map' | 'results' }
+export interface RaceLink { raceId?: number; stageId?: number; participantId?: number; entryId?: number; section?: 'map' | 'results' | 'participants' | 'program' | 'more'; page?: string; view?: string; day?: string; category?: string; eventId?: number; locationId?: number; albumId?: number; archiveRaceId?: number; expanded?: boolean; reminders?: boolean; allEvents?: boolean; discipline?: string; mine?: boolean; track?: boolean; allStages?: boolean }
 export function readRaceLink(): RaceLink {
   const fragment = new URLSearchParams(location.hash.slice(1));
-  const params = ['map','results','race','stage','participant','person','entry'].some(key => fragment.has(key)) ? fragment : new URLSearchParams(location.search);
+  const params = ['map','results','race','stage','participant','person','entry','section','page','view','day','category','event','location','album','archiveRace','expanded','reminders','allEvents','mine','track','allStages'].some(key => fragment.has(key)) ? fragment : new URLSearchParams(location.search);
   const positive = (key: string) => { const value = Number(params.get(key)); return Number.isSafeInteger(value) && value > 0 ? value : undefined; };
   return { raceId: positive('race'), stageId: positive('stage'), participantId: positive('person'), entryId: positive('participant') ?? positive('entry'),
+    ...Object.fromEntries(['page','view','day','category','discipline'].filter(key => params.has(key) && (key !== 'day' || (/^\d{4}-\d{2}-\d{2}$/.test(params.get(key)!) && Number.isFinite(Date.parse(params.get(key)!)) && new Date(params.get(key)!).toISOString().slice(0,10) === params.get(key)))).map(key => [key, params.get(key)!])),
+    ...Object.fromEntries(['event','location','album','archiveRace'].filter(key => positive(key)).map(key => [key + 'Id', positive(key)])),
+    ...Object.fromEntries(['expanded','reminders','allEvents','mine','track','allStages'].filter(key => params.get(key) === '1').map(key => [key, true])),
+    ...(['map','participants','results','program','more'].includes(params.get('section') || '') ? {section: params.get('section') as RaceLink['section']} : {}),
     ...(params.has('results') ? { section: 'results' as const } : params.has('map') ? { section: 'map' as const } : {}) };
 }
 export function navigateRace(fragment: string) { location.hash = fragment; }
@@ -39,4 +43,28 @@ export async function resolveParticipantLink(entryId: number, signal: AbortSigna
     const person = people.data.find(person => person.race_participant_id === entryId);
     if (person) return { raceId: race.id, entryId, participantId: person.participant_id };
   }
+}
+
+export function updateRoute(patch: Partial<RaceLink>, replace = false) {
+  const next = { ...readRaceLink(), ...patch };
+  const keys: Record<string, string> = { raceId: 'race', stageId: 'stage', participantId: 'person', entryId: 'participant', eventId: 'event', locationId: 'location', albumId: 'album', archiveRaceId: 'archiveRace' };
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(next)) if (value !== undefined && value !== false && value !== '') params.set(keys[key] || key, value === true ? '1' : String(value));
+  const previous = readRaceLink();
+  const panel = (route: RaceLink) => route.view === 'track' ? 'track' : route.eventId ? 'event:' + route.eventId : route.locationId ? 'location:' + route.locationId : route.entryId ? 'entry:' + route.entryId : undefined;
+  const samePanel = Boolean(panel(next) && panel(next) === panel(previous));
+  const state = { avachaPrevious: samePanel ? history.state?.avachaPrevious : location.hash };
+  history[replace || samePanel ? 'replaceState' : 'pushState'](state, '', '#' + params);
+  window.dispatchEvent(new Event('hashchange'));
+}
+export function viewLink(route: {raceId:number; participantId:number; entryId:number; stageId?:number}) {
+  const url = new URL(raceLink(route.raceId!, route.stageId, route.participantId!, route.entryId!));
+  const params = new URLSearchParams(url.hash.slice(1));
+  params.set('section', 'results'); params.set('view', 'track');
+  url.hash = params.toString(); return url.href;
+}
+
+export function closeRoute(patch: Partial<RaceLink>) {
+  if (typeof history.state?.avachaPrevious === 'string') history.back();
+  else updateRoute(patch, true);
 }

@@ -32,6 +32,7 @@ it('retains optional card handlers for the UI kit', async () => {
 it('shows published protocols, penalty explanations and corrections without adding times', async () => {
   mockApi(); const select = vi.fn();
   render(<AppProviders><ResultsScreen raceId={10} stageId={103} stageNumber={3} discipline="sled_8" onSelect={select} /></AppProviders>);
+  await userEvent.click(await screen.findByText('Подробная таблица',{selector:'summary'}));
   await userEvent.click(await screen.findByRole('button', { name: '№14 · Алиса Иванова' })); expect(select).toHaveBeenCalledWith(501, 9001);
   expect(screen.getAllByText('00:16:40').length).toBeGreaterThan(0); expect(screen.queryByText('00:18:40')).not.toBeInTheDocument();
   expect(screen.getByText(/Главный судья: Иванов/)).toBeVisible(); expect(screen.getByText(/Главный секретарь: Петрова/)).toBeVisible(); expect(screen.getByText('Погода: Ясно')).toBeVisible();
@@ -90,6 +91,7 @@ it('filters official results to supported participation IDs and shows a real emp
   let supported = true;
   mockApi(url => url.endsWith('/me/supports') ? supported ? [{ ...participant, race_id: 10, discipline, notifications_enabled: false, supported_since: stage.start_at }] : [] : fixtureResponse(url));
   render(<AppProviders><ResultsScreen raceId={10} stageId={103} stageNumber={3} discipline="" mine onSelect={vi.fn()} /></AppProviders>);
+  await userEvent.click(await screen.findByText('Подробная таблица',{selector:'summary'}));
   expect(await screen.findByRole('button', { name: '№14 · Алиса Иванова' })).toBeVisible();
   supported = false; const { act } = await import('@testing-library/react');
   act(() => window.dispatchEvent(new Event('avacha:changed')));

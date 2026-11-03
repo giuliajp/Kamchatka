@@ -28,7 +28,7 @@ it('synchronises support from sheet to map, list and My filter without replacing
   await user.click(screen.getByRole('button', { name: 'Участники' }));
   await user.click(await screen.findByRole('button', { name: 'Вы болеете' }));
   expect(await screen.findByText(/В вашем списке нет участников/)).toBeVisible();
-  expect(api).toHaveBeenCalledWith('/api/races/10/participants?sort=start_number', expect.anything());
+  expect(api).toHaveBeenCalledWith('/api/races/10/participants?discipline=sled_8&sort=start_number', expect.anything());
 });
 it('opens the legend and closes the top surface with Escape', async () => {
   mockApi(); const user = userEvent.setup(); show();

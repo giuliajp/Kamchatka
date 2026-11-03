@@ -21,7 +21,7 @@ it.each(endpoints)('rejects malformed %s without overwriting a usable cache', as
 });
 it('ignores damaged cached data, including valid envelopes with null or wrong nested values', () => {
   for (const data of [null, [], { ...race, disciplines: null }, { ...race, stages: [{ ...stage, start_at: 'not-a-date' }] }]) {
-    localStorage.setItem(`avacha-api-v1:${apiBase}/races/current`, JSON.stringify({ data, savedAt: new Date().toISOString() }));
+    localStorage.setItem(`avacha-api-v2:${apiBase}/races/current`, JSON.stringify({ data, savedAt: new Date().toISOString() }));
     expect(readCache('/races/current')).toBeUndefined();
   }
 });

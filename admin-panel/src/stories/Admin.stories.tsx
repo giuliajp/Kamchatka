@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { App } from '../App';
+import contentCaptures from '../../../frontend/src/stories/design-api-fixtures.json';
 import { Content } from '../pages/Content';
 import { Participants } from '../pages/Participants';
 import { PushPage } from '../pages/Push';
@@ -24,5 +25,5 @@ export const Entries:Story={render:()=> <Participants raceId={1}/>};
 export const Protocols:Story={render:()=> <Results raceId={1}/>};
 export const PushMessages:Story={render:()=> <PushPage raceId={1}/>};
 export const Fans:Story={render:()=> <Supporters raceId={1}/>};
-export const PublishedContent:Story={render:()=> <Content raceId={1}/>};
+export const PublishedContent:Story={beforeEach:()=>installApi(path=>(contentCaptures as Record<string,unknown>)[path]),render:()=> <Content raceId={1}/>};
 export const FieldsAndStates:Story={render:()=> <section className="card"><h1>Поля и состояния</h1><SaveForm onSave={async()=>undefined}><Field label="Название" name="name" required placeholder="Название этапа"/><Field label="Время по Камчатке" name="date" type="datetime-local"/><Field label="Количество" name="count" type="number"/><Field label="Активен" name="active" type="checkbox"/><label className="field">Комментарий<textarea name="note"/></label></SaveForm><div className="tabs"><button aria-pressed>Все</button><button aria-pressed={false}>Мои</button></div><div className="actions">{['planned','live','finished','draft','preliminary','final','sos','overdue','no_tracker','dnf'].map(value=><Status key={value} value={value}/>)}</div><Table label="Пример таблицы"><thead><tr><th>Участник</th><th>Статус</th><th>Батарея</th></tr></thead><tbody><tr data-state="overdue"><th>№14 · Тестова Алиса</th><td><Status value="overdue"/></td><td>15%</td></tr></tbody></Table></section>};

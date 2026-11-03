@@ -5,11 +5,12 @@ import { ParticipantBanner } from './ParticipantBanner';
 import { TimeBadge } from './TimeBadge';
 import { RequestState } from './RequestState';
 import { SupportAction, NotificationToggle } from './ParticipantActions';
+import { useUser } from '../app/UserProvider';
 import { useApi } from '../hooks/useApi';
 import { metric, raceDate, raceTime, stale, statusLabel } from '../api/format';
 import { query } from '../api/client';
-import { raceLink, shareRace } from '../api/navigation';
-import type { CheckpointPass, SupportState } from '../types/content';
+import { raceLink, shareRace, updateRoute } from '../api/navigation';
+import type { CheckpointPass, SupportState, Me } from '../types/content';
 import type { ParticipantDetail, Position, Results, Stage, StageDetail } from '../types/api';
 import './ParticipantSheet.css';
 
@@ -17,6 +18,9 @@ export interface ParticipantSheetProps {
   raceId?: number; participantId: number; entryId: number; position?: Position; threshold: number; onClose: () => void; stage?: Stage | StageDetail; showOfficial?: boolean;
 }
 export function ParticipantSheet({ raceId, participantId, entryId, position, threshold, onClose, stage, showOfficial = false }: ParticipantSheetProps) {
+  const user = useUser();
+  const me = useApi<Me>(user.id ? '/me' : null, 0, false);
+  const own = me.data?.participant_id === participantId && me.data.race_entries.some(item => item.race_participant_id === entryId);
   const person = useApi<ParticipantDetail>(`/participants/${participantId}`);
   const [expanded, setExpanded] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -28,7 +32,7 @@ export function ParticipantSheet({ raceId, participantId, entryId, position, thr
   const support = useApi<SupportState>(entry ? `/race-participants/${entryId}/support` : null, 120000, false);
   const passes = useApi<CheckpointPass[]>(entry ? query(`/race-participants/${entryId}/checkpoint-passes`, { stage_id: stage?.id }) : null, 120000);
   const finish = stage ? passes.data?.find(pass => pass.stage_id === stage.id && pass.role === 'finish')?.arrived_at : undefined;
-  const visits = (passes.data ?? []).map(pass => ({ id: pass.stage_checkpoint_id, index: pass.order_index + 1, title: pass.label || pass.name, arrivedAt: pass.arrived_at, departedAt: pass.departed_at, restMinutes: pass.required_rest_minutes, status: pass.departed_at || pass.role === 'finish' ? 'Пройден' : 'Прибыл' })).reverse();
+  const visits = [...(passes.data ?? [])].sort((a,b) => a.stage_number - b.stage_number || a.order_index - b.order_index).map(pass => ({ id: pass.stage_checkpoint_id, index: pass.order_index + 1, title: pass.label || pass.name, arrivedAt: pass.arrived_at, departedAt: pass.departed_at, restMinutes: pass.required_rest_minutes, status: pass.departed_at || pass.role === 'finish' ? 'Пройден' : 'Прибыл' })).reverse();
   const rest = visits.filter(visit => visit.restMinutes > 0);
   const hasPosition = position?.position !== null && position !== undefined;
   const pointerStart = useRef(0);
@@ -41,10 +45,10 @@ export function ParticipantSheet({ raceId, participantId, entryId, position, thr
         {!entry && <p role="status">Участник не заявлен на выбранную гонку.</p>}
         {entry && <div className="map-participant__tags"><span>№{entry.start_number}</span><span>{entry.discipline.name}</span></div>}
         <div className="map-participant__bio"><ParticipantBanner name={person.data.full_name} region={entry?.region ?? 'Регион не указан'}
-          discipline={entry ? `${entry.discipline.name}${entry.dogs_count === null ? '' : ` | ${entry.dogs_count} собак`}` : ''} photoUrl={person.data.photo_url ?? undefined} expanded={expanded} onOpen={() => setExpanded(!expanded)} />
+          discipline={entry ? `${entry.dog_breed || entry.discipline.name}${entry.dogs_count === null ? '' : ` | ${entry.dogs_count} собак`}` : ''} photoUrl={person.data.photo_url ?? undefined} expanded={expanded} onOpen={() => setExpanded(!expanded)} />
           {expanded && <div className="map-participant__biography"><h3>Биография участника</h3><p>{person.data.bio ?? 'Биография пока не опубликована.'}</p></div>}
         </div>
-        {support.data && <div className="map-participant__fans"><Icon20LikeOutline /><span>{support.data.supporters_count} болельщиков</span><strong>{support.data.change_24h > 0 ? "+" : ""}{support.data.change_24h} за сутки</strong></div>}
+        {support.data && <div className="map-participant__fans"><Icon20LikeOutline /><span>{support.data.supporters_count} болельщиков</span>{entry?.race.status !== 'finished' && <strong>{support.data.change_24h > 0 ? "+" : ""}{support.data.change_24h} за сутки</strong>}</div>}
         <div className="map-participant__position">
           {position ? <span className="map-place" aria-label={`Позиция по GPS-трекеру: ${position.gps_rank ?? '—'}`}>{position.gps_rank ?? '—'} по GPS</span>
             : officialEntry && <span className="map-place">{officialEntry.place === null ? statusLabel(officialEntry.status) : `${officialEntry.place} место`}</span>}
@@ -64,6 +68,8 @@ export function ParticipantSheet({ raceId, participantId, entryId, position, thr
             <span className="race-route-point__status" data-passing={visit.status === 'Прибыл'}>{visit.status}</span></div>) : <p>История прохождения КП пока отсутствует.</p>}
           {rest.length > 0 && <details><summary>Обязательные остановки</summary>{rest.map(visit => <p key={visit.id}>{visit.title}: {visit.restMinutes} мин.</p>)}</details>}
         </section>}
+        {entry && <section className="participant-penalties"><h3>Штрафы</h3>{entry.penalties.length === 0 ? <p>Без штрафов</p> : entry.penalties.map((penalty, i) => <p key={i}>+{penalty.time}{penalty.reason && ` · ${penalty.reason}`}{penalty.rule_reference && ` · п. ${penalty.rule_reference}`}</p>)}</section>}
+        {entry && own && <button className="route-link" onClick={() => { updateRoute({section:'results',view:'track',raceId:entry.race.id,stageId:stage?.id,entryId,participantId}); }}>Трек на карте</button>}
         {entry && <div className="map-participant__actions">
           {<SupportAction raceId={entry.race.id} entryId={entryId} number={entry.start_number} photoUrl={person.data.photo_url ?? undefined} />}
           <IconButton label="Поделиться участником" onClick={async () => setFeedback(await shareRace(raceLink(entry.race.id, stage?.id, participantId, entryId), person.data!.full_name))}><Icon24ShareOutline /></IconButton>

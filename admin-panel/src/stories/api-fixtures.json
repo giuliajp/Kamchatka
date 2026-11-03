@@ -167,7 +167,8 @@
       "end_date": null,
       "location": "Камчатка",
       "tracking_interval_minutes": 20,
-      "stale_after_minutes": 45
+      "stale_after_minutes": 45,
+      "protocol_pdf_url": null
     },
     {
       "id": 2,
@@ -179,7 +180,8 @@
       "end_date": null,
       "location": null,
       "tracking_interval_minutes": 20,
-      "stale_after_minutes": 45
+      "stale_after_minutes": 45,
+      "protocol_pdf_url": null
     }
   ],
   "/admin/races/1/stages": [
@@ -197,7 +199,8 @@
       "stale_after_minutes": null,
       "route_source_filename": "test.gpx",
       "route_updated_at": "2026-11-03T14:03:38.544641+00:00",
-      "route_length_km": 25.92
+      "route_length_km": 25.92,
+      "protocol_pdf_url": null
     }
   ],
   "/admin/checkpoints": [
@@ -219,7 +222,8 @@
       "role": "checkpoint",
       "label": "КП-1",
       "km_from_start": 20.0,
-      "required_rest_minutes": 30
+      "required_rest_minutes": 30,
+      "segment_description": null
     }
   ],
   "/admin/races/1/participants": [
@@ -243,8 +247,10 @@
         "full_name": "Тестова Алиса",
         "birth_year": 1990,
         "photo_url": null,
-        "bio": "Тестовая карточка участника."
-      }
+        "bio": "Тестовая карточка участника.",
+        "vk_user_id": null
+      },
+      "dog_breed": null
     },
     {
       "id": 2,
@@ -266,8 +272,10 @@
         "full_name": "Примеров Иван",
         "birth_year": 1990,
         "photo_url": null,
-        "bio": "Тестовая карточка участника."
-      }
+        "bio": "Тестовая карточка участника.",
+        "vk_user_id": null
+      },
+      "dog_breed": null
     },
     {
       "id": 3,
@@ -289,8 +297,10 @@
         "full_name": "Проверкина Анна",
         "birth_year": 1990,
         "photo_url": null,
-        "bio": "Тестовая карточка участника."
-      }
+        "bio": "Тестовая карточка участника.",
+        "vk_user_id": null
+      },
+      "dog_breed": null
     }
   ],
   "/admin/participants?q=Тест": [
@@ -797,7 +807,8 @@
         "finish_at": null,
         "status": "live"
       }
-    ]
+    ],
+    "protocol_pdf_url": null
   },
   "/races/1": {
     "id": 1,
@@ -838,7 +849,8 @@
         "finish_at": null,
         "status": "live"
       }
-    ]
+    ],
+    "protocol_pdf_url": null
   },
   "/stages/1": {
     "id": 1,
@@ -899,7 +911,8 @@
         "km": 25.924,
         "elevation_m": 180.0
       }
-    ]
+    ],
+    "protocol_pdf_url": null
   },
   "/races/1/participants": [
     {
@@ -922,7 +935,8 @@
       "total_time_seconds": 97322,
       "total_time": "27:02:02",
       "supporters_count": 1,
-      "supporters_change_24h": 1
+      "supporters_change_24h": 1,
+      "dog_breed": null
     },
     {
       "race_participant_id": 2,
@@ -944,7 +958,8 @@
       "total_time_seconds": null,
       "total_time": null,
       "supporters_count": 0,
-      "supporters_change_24h": 0
+      "supporters_change_24h": 0,
+      "dog_breed": null
     },
     {
       "race_participant_id": 3,
@@ -966,7 +981,8 @@
       "total_time_seconds": null,
       "total_time": null,
       "supporters_count": 0,
-      "supporters_change_24h": 0
+      "supporters_change_24h": 0,
+      "dog_breed": null
     }
   ],
   "/participants/1": {
@@ -1003,7 +1019,9 @@
         "total_time_seconds": 97322,
         "total_time": "27:02:02",
         "gap_to_leader_seconds": 0,
-        "penalty_total_seconds": 120
+        "penalty_total_seconds": 120,
+        "dog_breed": null,
+        "penalties": []
       }
     ]
   },

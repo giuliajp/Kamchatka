@@ -36,6 +36,7 @@ it('keeps the results button working when the map is absent', async () => {
   setup({ ...emptyStage, status: 'finished' }); show();
   await screen.findByText(stage.description!);
   await userEvent.click(screen.getByRole('button', { name: 'Результаты этапа' }));
+  await userEvent.click(await screen.findByText('Подробная таблица',{selector:'summary'}));
   expect(await screen.findByRole('button', { name: '№14 · Алиса Иванова' })).toBeVisible();
 });
 it('keeps published finished routes separate from live GPS content', async () => {

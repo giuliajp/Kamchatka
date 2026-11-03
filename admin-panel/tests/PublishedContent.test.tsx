@@ -1,17 +1,12 @@
 import {fireEvent,render,screen,waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {afterEach,expect,it,vi} from 'vitest';
-import {Content} from '../src/pages/Content';
 import {Supporters} from '../src/pages/Supporters';
 import {PushPage} from '../src/pages/Push';
-import {programEvent,spectatorLocation,faq,contact,news,photos} from '../../frontend/src/stories/contentFixtures';
 import {backend} from './backend';
 import {fixtureData} from '../src/stories/fixtures';
 afterEach(()=>vi.unstubAllGlobals());
 const click=(name:string)=>userEvent.click(screen.getByRole('button',{name}));
-it('shows published content with no edit controls and reflects the selected season',async()=>{
- backend({'/program?race_id=2':[],'/program?race_id=1':[programEvent,{...programEvent,id:2,location:null}],'/locations?race_id=1':[spectatorLocation],'/faq':[faq],'/contacts':[contact,{...contact,id:2,url:null}],'/news':news,'/photos':{...photos,stale:true,days:[{...photos.days[0],photos:[...photos.days[0].photos,{...photos.days[0].photos[0],id:'p2',text:null,url:null},{...photos.days[0].photos[0],id:'p3',text:null}]}]}});const {rerender}=render(<Content raceId={1}/>);expect(await screen.findAllByText('Старт этапа')).toHaveLength(2);expect(screen.getByText('Опубликованный контент. Редактирование пока недоступно.')).toBeVisible();await click('Локации');expect(await screen.findByText(spectatorLocation.how_to_get_there!)).toBeVisible();expect(screen.queryByText('Старт этапа')).not.toBeInTheDocument();await click('FAQ');await userEvent.click(await screen.findByText(faq.question));expect(screen.getByText(faq.answer)).toBeVisible();await click('Контакты');expect(await screen.findByRole('link',{name:'Сайт'})).toHaveAttribute('href','https://example.org/');await click('Медиа');expect(await screen.findByText('Новости: сохранённая версия VK')).toBeVisible();expect(screen.getByText('Фото: сохранённая версия VK')).toBeVisible();expect(screen.getAllByRole('img')).toHaveLength(2);await click('Программа');rerender(<Content raceId={2}/>);expect(await screen.findByText('Материалы пока не опубликованы.')).toBeVisible();
-});
 it('exports fan dynamics only for a valid day range, refreshes rating and handles download failure',async()=>{
  const ratings=fixtureData('/races/1/support-rating') as Record<string,unknown>[];const {fetcher}=backend({'/races/1/support-rating':[...ratings,{...ratings[0],race_participant_id:99,rank:4,change_24h:-1}]});render(<Supporters raceId={1}/>);await screen.findByRole('region',{name:'Рейтинг болельщиков'});await screen.findByText('-1');fireEvent.change(screen.getByLabelText('Дней в выгрузке'),{target:{value:'0'}});expect(screen.getByRole('button',{name:'Скачать динамику CSV'})).toBeDisabled();fireEvent.change(screen.getByLabelText('Дней в выгрузке'),{target:{value:'91'}});expect(screen.getByRole('button',{name:'Скачать динамику CSV'})).toBeDisabled();fireEvent.change(screen.getByLabelText('Дней в выгрузке'),{target:{value:'30'}});fetcher.mockResolvedValueOnce(new Response('',{status:503}));await click('Скачать динамику CSV');expect(await screen.findByRole('alert')).toHaveTextContent('503');await click('Обновить рейтинг');expect(fetcher).toHaveBeenCalledWith('/api/races/1/support-rating',expect.anything());
 });

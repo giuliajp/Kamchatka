@@ -1,0 +1,735 @@
+{
+  "/admin/races/1/stages": [
+    {
+      "id": 1,
+      "number": 2,
+      "name": "Налычево",
+      "distance_km": 40.0,
+      "start_at": "2026-11-02T21:36:22.659233+00:00",
+      "finish_at": "2026-11-03T01:36:22.659233+00:00",
+      "status": "finished",
+      "race_id": 1,
+      "description": null,
+      "protocol_pdf_url": "https://example.org/stage-protocol.pdf",
+      "tracking_interval_minutes": null,
+      "stale_after_minutes": null,
+      "route_source_filename": null,
+      "route_updated_at": null,
+      "route_length_km": 25.92
+    },
+    {
+      "id": 2,
+      "number": 3,
+      "name": "Пиначево",
+      "distance_km": 40.0,
+      "start_at": "2026-11-03T19:36:22.659233+00:00",
+      "finish_at": null,
+      "status": "live",
+      "race_id": 1,
+      "description": null,
+      "protocol_pdf_url": null,
+      "tracking_interval_minutes": null,
+      "stale_after_minutes": null,
+      "route_source_filename": null,
+      "route_updated_at": "2026-11-03T21:36:22.659233+00:00",
+      "route_length_km": 25.92
+    },
+    {
+      "id": 3,
+      "number": 4,
+      "name": "Елизово",
+      "distance_km": 45.0,
+      "start_at": "2026-11-04T21:36:22.659233+00:00",
+      "finish_at": null,
+      "status": "planned",
+      "race_id": 1,
+      "description": null,
+      "protocol_pdf_url": null,
+      "tracking_interval_minutes": null,
+      "stale_after_minutes": null,
+      "route_source_filename": null,
+      "route_updated_at": null,
+      "route_length_km": null
+    }
+  ],
+  "/program?race_id=1": [
+    {
+      "id": 1,
+      "race_id": 1,
+      "stage_id": 2,
+      "event_type": "master_class",
+      "title": "Мастер-класс для детей",
+      "description": "Тестовое событие для проверки сценариев приложения.",
+      "start_at": "2026-11-03T22:37:10.995107Z",
+      "end_at": null,
+      "image_urls": [
+        "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+      ],
+      "location": {
+        "id": 3,
+        "race_id": 1,
+        "stage_id": 2,
+        "location_type": "finish",
+        "name": "Финиш: зрительская площадка",
+        "description": "Описание проезда и площадки.",
+        "latitude": 53.3,
+        "longitude": 158.6,
+        "address": null,
+        "how_to_get_there": null,
+        "image_urls": [
+          "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+        ],
+        "sort_order": 0
+      },
+      "sort_order": 0
+    },
+    {
+      "id": 2,
+      "race_id": 1,
+      "stage_id": 2,
+      "event_type": "meeting",
+      "title": "Вечер каюров",
+      "description": "Тестовое событие для проверки сценариев приложения.",
+      "start_at": "2026-11-03T23:37:10.995107Z",
+      "end_at": null,
+      "image_urls": [
+        "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+      ],
+      "location": {
+        "id": 3,
+        "race_id": 1,
+        "stage_id": 2,
+        "location_type": "finish",
+        "name": "Финиш: зрительская площадка",
+        "description": "Описание проезда и площадки.",
+        "latitude": 53.3,
+        "longitude": 158.6,
+        "address": null,
+        "how_to_get_there": null,
+        "image_urls": [
+          "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+        ],
+        "sort_order": 0
+      },
+      "sort_order": 0
+    },
+    {
+      "id": 3,
+      "race_id": 1,
+      "stage_id": 2,
+      "event_type": "festival",
+      "title": "Фестиваль: встреча гостей",
+      "description": "Тестовое событие для проверки сценариев приложения.",
+      "start_at": "2026-11-04T00:37:10.995107Z",
+      "end_at": null,
+      "image_urls": [
+        "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+      ],
+      "location": {
+        "id": 3,
+        "race_id": 1,
+        "stage_id": 2,
+        "location_type": "finish",
+        "name": "Финиш: зрительская площадка",
+        "description": "Описание проезда и площадки.",
+        "latitude": 53.3,
+        "longitude": 158.6,
+        "address": null,
+        "how_to_get_there": null,
+        "image_urls": [
+          "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+        ],
+        "sort_order": 0
+      },
+      "sort_order": 0
+    },
+    {
+      "id": 4,
+      "race_id": 1,
+      "stage_id": 2,
+      "event_type": "stage_finish",
+      "title": "Финиш этапа",
+      "description": "Тестовое событие для проверки сценариев приложения.",
+      "start_at": "2026-11-04T01:37:10.995107Z",
+      "end_at": null,
+      "image_urls": [
+        "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+      ],
+      "location": {
+        "id": 3,
+        "race_id": 1,
+        "stage_id": 2,
+        "location_type": "finish",
+        "name": "Финиш: зрительская площадка",
+        "description": "Описание проезда и площадки.",
+        "latitude": 53.3,
+        "longitude": 158.6,
+        "address": null,
+        "how_to_get_there": null,
+        "image_urls": [
+          "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+        ],
+        "sort_order": 0
+      },
+      "sort_order": 0
+    }
+  ],
+  "/locations?race_id=1": [
+    {
+      "id": 3,
+      "race_id": 1,
+      "stage_id": 2,
+      "location_type": "finish",
+      "name": "Финиш: зрительская площадка",
+      "description": "Описание проезда и площадки.",
+      "latitude": 53.3,
+      "longitude": 158.6,
+      "address": null,
+      "how_to_get_there": null,
+      "image_urls": [
+        "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+      ],
+      "sort_order": 0
+    }
+  ],
+  "/faq": [
+    {
+      "id": 1,
+      "question": "Как смотреть гонку?",
+      "answer": "Откройте карту.",
+      "sort_order": 0
+    }
+  ],
+  "/contacts": [
+    {
+      "id": 1,
+      "title": "Тестовый оргкомитет",
+      "name": null,
+      "phone": null,
+      "email": "organizer@example.org",
+      "url": null,
+      "sort_order": 0
+    }
+  ],
+  "/guest-info": {
+    "how_to_get_there": [
+      {
+        "id": 1,
+        "title": "Самолётом",
+        "text": "До аэропорта Елизово."
+      }
+    ],
+    "what_to_bring": [
+      {
+        "id": 2,
+        "title": null,
+        "text": "Тёплая одежда."
+      }
+    ],
+    "safety": [
+      {
+        "id": 3,
+        "title": null,
+        "text": "Не выходите на трассу."
+      }
+    ]
+  },
+  "/me": {
+    "vk_user_id": 42,
+    "participant_id": 1,
+    "race_entries": [
+      {
+        "race_participant_id": 1,
+        "race_id": 1,
+        "start_number": 14
+      }
+    ]
+  },
+  "/me/notification-settings": {
+    "notifications_allowed": true,
+    "checkpoints": true,
+    "results": true,
+    "news": false
+  },
+  "/me/reminders": {
+    "program_event_ids": []
+  },
+  "/me/bookmarks": [
+    {
+      "kind": "protocol",
+      "item_id": "stage:2",
+      "title": "Тестовый протокол",
+      "url": "https://example.org/stage-protocol.pdf",
+      "image_url": null,
+      "created_at": "2026-11-03T21:37:11.396769+00:00"
+    }
+  ],
+  "/races/current": {
+    "id": 1,
+    "name": "Тест: гонка Авача 2027",
+    "year": 2027,
+    "status": "live",
+    "is_current": true,
+    "start_date": "2026-11-03",
+    "end_date": "2026-11-10",
+    "location": null,
+    "disciplines": [
+      {
+        "id": 1,
+        "code": "ski_2",
+        "name": "Лыжи — длинная дистанция, 2 собаки",
+        "participants_count": 0
+      },
+      {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак",
+        "participants_count": 2
+      },
+      {
+        "id": 3,
+        "code": "sled_8plus",
+        "name": "Нарта — длинная дистанция, более 8 собак",
+        "participants_count": 0
+      }
+    ],
+    "stages": [
+      {
+        "id": 1,
+        "number": 2,
+        "name": "Налычево",
+        "distance_km": 40.0,
+        "start_at": "2026-11-02T21:36:22.659233Z",
+        "finish_at": "2026-11-03T01:36:22.659233Z",
+        "status": "finished"
+      },
+      {
+        "id": 2,
+        "number": 3,
+        "name": "Пиначево",
+        "distance_km": 40.0,
+        "start_at": "2026-11-03T19:36:22.659233Z",
+        "finish_at": null,
+        "status": "live"
+      },
+      {
+        "id": 3,
+        "number": 4,
+        "name": "Елизово",
+        "distance_km": 45.0,
+        "start_at": "2026-11-04T21:36:22.659233Z",
+        "finish_at": null,
+        "status": "planned"
+      }
+    ],
+    "protocol_pdf_url": "https://example.org/race-protocol.pdf"
+  },
+  "/races": [
+    {
+      "id": 1,
+      "name": "Тест: гонка Авача 2027",
+      "year": 2027,
+      "status": "live",
+      "is_current": true,
+      "start_date": "2026-11-03",
+      "end_date": "2026-11-10",
+      "location": null
+    },
+    {
+      "id": 2,
+      "name": "Тест: Авача 2026",
+      "year": 2026,
+      "status": "finished",
+      "is_current": false,
+      "start_date": null,
+      "end_date": null,
+      "location": null
+    }
+  ],
+  "/races/1/participants": [
+    {
+      "race_participant_id": 1,
+      "participant_id": 1,
+      "start_number": 14,
+      "full_name": "Иванова Алиса",
+      "last_name": "Иванова",
+      "first_name": "Алиса",
+      "photo_url": null,
+      "region": "Камчатский край",
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "dogs_count": 8,
+      "dog_breed": "Ездовые лайки",
+      "status": "active",
+      "place": 2,
+      "total_time_seconds": 24600,
+      "total_time": "06:50:00",
+      "supporters_count": 0,
+      "supporters_change_24h": 0
+    },
+    {
+      "race_participant_id": 2,
+      "participant_id": 2,
+      "start_number": 21,
+      "full_name": "Семёнов Иван",
+      "last_name": "Семёнов",
+      "first_name": "Иван",
+      "photo_url": null,
+      "region": null,
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "dogs_count": 8,
+      "dog_breed": null,
+      "status": "active",
+      "place": 1,
+      "total_time_seconds": 24400,
+      "total_time": "06:46:40",
+      "supporters_count": 0,
+      "supporters_change_24h": 0
+    }
+  ],
+  "/races/1/results": {
+    "race": {
+      "id": 1,
+      "name": "Тест: гонка Авача 2027",
+      "year": 2027,
+      "status": "live",
+      "is_current": true,
+      "start_date": "2026-11-03",
+      "end_date": "2026-11-10",
+      "location": null
+    },
+    "up_to_stage": null,
+    "penalty_included_in_stage_times": true,
+    "disciplines": [
+      {
+        "discipline": {
+          "id": 2,
+          "code": "sled_8",
+          "name": "Нарта — длинная дистанция, 8 собак"
+        },
+        "stages": [
+          {
+            "id": 1,
+            "number": 2,
+            "name": "Налычево",
+            "distance_km": 40.0,
+            "protocol_status": "preliminary",
+            "is_final": false
+          }
+        ],
+        "rows": [
+          {
+            "race_participant_id": 2,
+            "participant_id": 2,
+            "place": 1,
+            "start_number": 21,
+            "full_name": "Семёнов Иван",
+            "last_name": "Семёнов",
+            "first_name": "Иван",
+            "region": null,
+            "discipline_code": "sled_8",
+            "status": "active",
+            "stages": [
+              {
+                "stage_number": 2,
+                "status": "finished",
+                "time_seconds": 24400,
+                "time": "06:46:40",
+                "dogs_at_start": 8,
+                "dogs_at_finish": 8,
+                "is_corrected_after_final": false,
+                "note": null
+              }
+            ],
+            "total_time_seconds": 24400,
+            "total_time": "06:46:40",
+            "gap_to_leader_seconds": 0,
+            "gap_to_leader": "00:00:00",
+            "penalties": [],
+            "penalty_total_seconds": 0,
+            "penalty_total": null
+          },
+          {
+            "race_participant_id": 1,
+            "participant_id": 1,
+            "place": 2,
+            "start_number": 14,
+            "full_name": "Иванова Алиса",
+            "last_name": "Иванова",
+            "first_name": "Алиса",
+            "region": "Камчатский край",
+            "discipline_code": "sled_8",
+            "status": "active",
+            "stages": [
+              {
+                "stage_number": 2,
+                "status": "finished",
+                "time_seconds": 24600,
+                "time": "06:50:00",
+                "dogs_at_start": 8,
+                "dogs_at_finish": 8,
+                "is_corrected_after_final": false,
+                "note": null
+              }
+            ],
+            "total_time_seconds": 24600,
+            "total_time": "06:50:00",
+            "gap_to_leader_seconds": 200,
+            "gap_to_leader": "00:03:20",
+            "penalties": [
+              {
+                "seconds": 300,
+                "time": "00:05:00",
+                "reason": "Тестовая причина штрафа",
+                "rule_reference": "14.11"
+              }
+            ],
+            "penalty_total_seconds": 300,
+            "penalty_total": "00:05:00"
+          }
+        ]
+      }
+    ]
+  },
+  "/stages/2": {
+    "id": 2,
+    "number": 3,
+    "name": "Пиначево",
+    "distance_km": 40.0,
+    "start_at": "2026-11-03T19:36:22.659233Z",
+    "finish_at": null,
+    "status": "live",
+    "race_id": 1,
+    "description": null,
+    "checkpoints": [
+      {
+        "id": 3,
+        "order_index": 0,
+        "role": "start",
+        "label": "Старт",
+        "name": "Светлый",
+        "latitude": 53.1,
+        "longitude": 158.4,
+        "elevation_m": null,
+        "km_from_start": 0.0,
+        "required_rest_minutes": 0,
+        "segment_description": "Начало маршрута"
+      },
+      {
+        "id": 4,
+        "order_index": 1,
+        "role": "finish",
+        "label": "Финиш",
+        "name": "Пиначево",
+        "latitude": 53.3,
+        "longitude": 158.6,
+        "elevation_m": null,
+        "km_from_start": 40.0,
+        "required_rest_minutes": 30,
+        "segment_description": null
+      }
+    ],
+    "route_geojson": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          158.4,
+          53.1,
+          200
+        ],
+        [
+          158.5,
+          53.2,
+          220
+        ],
+        [
+          158.6,
+          53.3,
+          180
+        ]
+      ]
+    },
+    "route_updated_at": "2026-11-03T21:36:22.659233Z",
+    "protocol_pdf_url": null,
+    "elevation_profile": [
+      {
+        "km": 0.0,
+        "elevation_m": 200.0
+      },
+      {
+        "km": 12.966,
+        "elevation_m": 220.0
+      },
+      {
+        "km": 25.924,
+        "elevation_m": 180.0
+      }
+    ]
+  },
+  "/stages/2/arrival-estimate": {
+    "stage_id": 2,
+    "generated_at": "2026-11-03T21:37:11.491752+00:00",
+    "tracking_interval_minutes": 20,
+    "first": {
+      "from": "2026-11-03T23:20:00+00:00",
+      "to": "2026-11-04T00:10:00+00:00"
+    },
+    "leaders": [
+      {
+        "discipline": {
+          "id": 2,
+          "code": "sled_8",
+          "name": "Нарта — длинная дистанция, 8 собак"
+        },
+        "race_participant_id": 1,
+        "start_number": 14,
+        "full_name": "Иванова Алиса",
+        "remaining_km": 13.0,
+        "position_at": "2026-11-03T21:26:22.659233+00:00",
+        "expected_at": "2026-11-03T23:45:10.073874+00:00",
+        "from": "2026-11-03T23:20:00+00:00",
+        "to": "2026-11-04T00:10:00+00:00"
+      }
+    ],
+    "note": "Оценка по GPS-трекерам, время может измениться"
+  },
+  "/admin/races/1/program": [
+    {
+      "id": 1,
+      "race_id": 1,
+      "stage_id": 2,
+      "event_type": "master_class",
+      "title": "Мастер-класс для детей",
+      "description": "Тестовое событие для проверки сценариев приложения.",
+      "start_at": "2026-11-03T22:37:10.995107+00:00",
+      "end_at": null,
+      "location_id": 2,
+      "image_urls": [
+        "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+      ],
+      "sort_order": 0,
+      "is_published": true
+    },
+    {
+      "id": 2,
+      "race_id": 1,
+      "stage_id": 2,
+      "event_type": "meeting",
+      "title": "Вечер каюров",
+      "description": "Тестовое событие для проверки сценариев приложения.",
+      "start_at": "2026-11-03T23:37:10.995107+00:00",
+      "end_at": null,
+      "location_id": 2,
+      "image_urls": [
+        "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+      ],
+      "sort_order": 0,
+      "is_published": true
+    },
+    {
+      "id": 3,
+      "race_id": 1,
+      "stage_id": 2,
+      "event_type": "festival",
+      "title": "Фестиваль: встреча гостей",
+      "description": "Тестовое событие для проверки сценариев приложения.",
+      "start_at": "2026-11-04T00:37:10.995107+00:00",
+      "end_at": null,
+      "location_id": 2,
+      "image_urls": [
+        "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+      ],
+      "sort_order": 0,
+      "is_published": true
+    },
+    {
+      "id": 4,
+      "race_id": 1,
+      "stage_id": 2,
+      "event_type": "stage_finish",
+      "title": "Финиш этапа",
+      "description": "Тестовое событие для проверки сценариев приложения.",
+      "start_at": "2026-11-04T01:37:10.995107+00:00",
+      "end_at": null,
+      "location_id": 2,
+      "image_urls": [
+        "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+      ],
+      "sort_order": 0,
+      "is_published": true
+    }
+  ],
+  "/admin/races/1/locations": [
+    {
+      "id": 2,
+      "race_id": 1,
+      "stage_id": 2,
+      "location_type": "checkpoint",
+      "name": "Тест: зрительская площадка",
+      "description": "Тестовая площадка",
+      "latitude": 53.3,
+      "longitude": 158.6,
+      "address": null,
+      "how_to_get_there": null,
+      "image_urls": [
+        "http://127.0.0.1:5175/figma/352-8418/b9ffe.png"
+      ],
+      "sort_order": 0,
+      "is_published": true
+    }
+  ],
+  "/admin/faq": [
+    {
+      "id": 1,
+      "question": "Как смотреть гонку?",
+      "answer": "Откройте карту.",
+      "sort_order": 1,
+      "is_published": true
+    }
+  ],
+  "/admin/contacts": [
+    {
+      "id": 1,
+      "title": "Тестовый оргкомитет",
+      "name": null,
+      "phone": null,
+      "email": "organizer@example.org",
+      "url": null,
+      "sort_order": 1,
+      "is_published": true
+    }
+  ],
+  "/admin/guest-info": [
+    {
+      "id": 1,
+      "section": "how_to_get_there",
+      "title": "Самолётом",
+      "text": "До аэропорта Елизово.",
+      "sort_order": 1,
+      "is_published": true
+    },
+    {
+      "id": 2,
+      "section": "what_to_bring",
+      "title": null,
+      "text": "Тёплая одежда.",
+      "sort_order": 1,
+      "is_published": true
+    },
+    {
+      "id": 3,
+      "section": "safety",
+      "title": null,
+      "text": "Не выходите на трассу.",
+      "sort_order": 1,
+      "is_published": true
+    }
+  ]
+}
