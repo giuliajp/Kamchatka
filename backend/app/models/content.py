@@ -14,6 +14,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     ForeignKeyConstraint,
+    JSON,
     Integer,
     String,
     Text,
@@ -31,7 +32,7 @@ class SpectatorLocation(TimestampMixin, Base):
     __tablename__ = "spectator_locations"
     __table_args__ = (
         CheckConstraint(
-            "location_type IN ('start', 'finish', 'festival', 'viewpoint')",
+            "location_type IN ('start', 'finish', 'festival', 'viewpoint', 'checkpoint')",
             name="location_type_valid",
         ),
         ForeignKeyConstraint(
@@ -59,6 +60,8 @@ class SpectatorLocation(TimestampMixin, Base):
     longitude: Mapped[float] = mapped_column(Float, nullable=False)
     address: Mapped[Optional[str]] = mapped_column(String(500))
     how_to_get_there: Mapped[Optional[str]] = mapped_column(Text)
+    # Фото места для карусели в карточке (ссылки).
+    image_urls: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     is_published: Mapped[bool] = mapped_column(default=False, nullable=False)
 
@@ -72,7 +75,7 @@ class ProgramEvent(TimestampMixin, Base):
     __tablename__ = "program_events"
     __table_args__ = (
         CheckConstraint(
-            "event_type IN ('stage_start', 'stage_finish', 'festival')",
+            "event_type IN ('stage_start', 'stage_finish', 'festival', 'master_class', 'meeting')",
             name="event_type_valid",
         ),
         ForeignKeyConstraint(
@@ -99,6 +102,8 @@ class ProgramEvent(TimestampMixin, Base):
         DateTime(timezone=True), nullable=False, index=True
     )
     end_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    # Фото события для карусели в карточке (ссылки).
+    image_urls: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
     # Удаление локации сохраняет событие, очищая ссылку на место.
     location_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("spectator_locations.id", ondelete="SET NULL"), index=True

@@ -158,6 +158,7 @@ async def test_program_order_utc_and_shared_location(client, session):
         "race_id",
         "stage_id",
         "event_type",
+        "image_urls",
     }
     start_at = datetime.fromisoformat(rows[0]["start_at"])
     end_at = datetime.fromisoformat(rows[0]["end_at"])
@@ -183,6 +184,7 @@ async def test_program_order_utc_and_shared_location(client, session):
         "longitude": 158.65,
         "address": "Камчатка",
         "how_to_get_there": "На автобусе",
+        "image_urls": [],
         "sort_order": 0,
     }
 

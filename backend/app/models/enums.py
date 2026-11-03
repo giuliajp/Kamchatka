@@ -75,7 +75,9 @@ class AlertType(str, enum.Enum):
 class ProgramEventType(str, enum.Enum):
     STAGE_START = "stage_start"
     STAGE_FINISH = "stage_finish"
-    FESTIVAL = "festival"
+    FESTIVAL = "festival"           # культурная программа
+    MASTER_CLASS = "master_class"   # мастер-класс
+    MEETING = "meeting"             # встреча (например, вечер каюров)
 
 
 class LocationType(str, enum.Enum):
@@ -83,3 +85,4 @@ class LocationType(str, enum.Enum):
     FINISH = "finish"
     FESTIVAL = "festival"
     VIEWPOINT = "viewpoint"
+    CHECKPOINT = "checkpoint"       # КП, куда могут приехать зрители

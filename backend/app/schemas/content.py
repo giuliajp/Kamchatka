@@ -24,6 +24,7 @@ class SpectatorLocationOut(BaseModel):
     longitude: float
     address: str | None
     how_to_get_there: str | None
+    image_urls: list[str]
     sort_order: int
 
 
@@ -38,6 +39,7 @@ class ProgramEventOut(BaseModel):
     description: str | None
     start_at: datetime
     end_at: datetime | None
+    image_urls: list[str]
     # Отсутствующая или неопубликованная локация — null.
     location: SpectatorLocationOut | None
     sort_order: int

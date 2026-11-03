@@ -10,7 +10,7 @@
 from datetime import date
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import CheckConstraint, Date, ForeignKey, Index, Integer, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, CheckConstraint, Date, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -37,6 +37,8 @@ class Race(TimestampMixin, Base):
     start_date: Mapped[Optional[date]] = mapped_column(Date)
     end_date: Mapped[Optional[date]] = mapped_column(Date)
     location: Mapped[Optional[str]] = mapped_column(String(200))
+    # Ссылка на официальный протокол (PDF) — кнопка «Скачать протокол».
+    protocol_pdf_url: Mapped[Optional[str]] = mapped_column(String(1000))
 
     # Настройки трекинга по умолчанию (этап может переопределить).
     # Интервал передачи точек трекером, минуты. По брифу базовый — 20.
@@ -99,6 +101,8 @@ class Participant(TimestampMixin, Base):
     birth_year: Mapped[Optional[int]] = mapped_column(Integer)
     photo_url: Mapped[Optional[str]] = mapped_column(String(500))
     bio: Mapped[Optional[str]] = mapped_column(Text)
+    # Страница VK спортсмена: так приложение узнаёт «Мой результат». Вносит организатор.
+    vk_user_id: Mapped[Optional[int]] = mapped_column(BigInteger, unique=True)
 
     race_entries: Mapped[list["RaceParticipant"]] = relationship(
         lazy="raise_on_sql", back_populates="participant"
@@ -131,6 +135,8 @@ class RaceParticipant(TimestampMixin, Base):
     region: Mapped[Optional[str]] = mapped_column(String(200))
     # Заявленное число собак. Фактическое на старте/финише этапа — в StageResult.
     dogs_count: Mapped[Optional[int]] = mapped_column(Integer)
+    # Порода собак в упряжке этого года — «Ездовые лайки» в карточке участника.
+    dog_breed: Mapped[Optional[str]] = mapped_column(String(100))
     status: Mapped[RaceParticipantStatus] = mapped_column(
         str_enum(RaceParticipantStatus), default=RaceParticipantStatus.REGISTERED, nullable=False
     )

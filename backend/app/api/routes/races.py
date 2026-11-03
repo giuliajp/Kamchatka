@@ -59,6 +59,7 @@ async def race_detail(session, race: Race) -> dict:
             {**discipline_short(d), "participants_count": counts.get(d.id, 0)} for d in disciplines
         ],
         "stages": [stage_short(s) for s in stages],
+        "protocol_pdf_url": race.protocol_pdf_url,
     }
 
 
@@ -126,6 +127,7 @@ async def list_race_participants(
                 "region": entry.region,
                 "discipline": discipline_short(entry.discipline),
                 "dogs_count": entry.dogs_count,
+                "dog_breed": entry.dog_breed,
                 "status": row.status,
                 "place": row.place,
                 "total_time_seconds": row.total_seconds,

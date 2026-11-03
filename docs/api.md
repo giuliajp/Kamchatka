@@ -355,3 +355,28 @@ SOS из Iridium360 пока не приходит (в API платформы е
 Ответы VK держатся в памяти `VK_CACHE_SECONDS` (120 с). Если VK недоступен, отдаём последнее
 полученное с `"stale": true`; если данных ещё не было — `503`.
 
+### Под макеты дизайнера (готово)
+
+| Метод и адрес | Что делает |
+|---|---|
+| `GET /api/stages/{id}/arrival-estimate` | «Ожидаемое время прибытия лидеров»: `first.from`–`first.to` (окно, округлено до 10 мин) и по лидеру каждой дисциплины. Только для идущего этапа, оценка по GPS — подписывать «время может измениться» |
+| `PUT/DELETE /api/program/{id}/reminder`, `GET /api/me/reminders` | Колокольчик у события: push за `REMINDER_MINUTES_BEFORE` (30) минут до начала |
+| `GET /api/me` | Если пользователь VK — участник гонки: его заявки (для «Мой результат», «Вы», «Опубликовать результаты») |
+| `GET /api/photos/albums`, `GET /api/photos?album_id=` | Альбомы сообщества для «Архива прошлых лет» и фото альбома |
+
+Новые поля в ответах: `image_urls` у событий программы и локаций (карусель фото);
+`dog_breed` у участника (в списке и карточке); `penalties` (список с причиной) в карточке;
+`protocol_pdf_url` у гонки («Скачать протокол .pdf»). Новые типы: событие `master_class`,
+`meeting` (вместе с `festival` — «Культурная программа»), место `checkpoint`.
+
+### Админка: контент (готово)
+
+| Метод и адрес | Что делает |
+|---|---|
+| `GET /api/admin/races/{id}/program`, `POST /api/admin/program`, `PATCH/DELETE /api/admin/program/{id}` | Программа, включая черновики; `is_published` — показать в приложении |
+| `GET /api/admin/races/{id}/locations`, `POST /api/admin/locations`, `PATCH/DELETE /api/admin/locations/{id}` | Зрительские локации |
+| `GET/POST /api/admin/faq`, `PATCH/DELETE /api/admin/faq/{id}` | FAQ |
+| `GET/POST /api/admin/contacts`, `PATCH/DELETE /api/admin/contacts/{id}` | Контакты организаторов |
+
+Связь спортсмена со страницей VK — `PATCH /api/admin/participants/{id}` с `vk_user_id`;
+порода — `dog_breed` в заявке; ссылка на PDF протокола — `protocol_pdf_url` у гонки.

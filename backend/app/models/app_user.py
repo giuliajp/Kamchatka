@@ -5,11 +5,12 @@
                  Нужен для рассылок «всем»: VK отправляет уведомления только по списку id.
 - Bookmark     — «Сохранённые материалы» в профиле: новость или фото из сообщества VK.
 - PushMessage  — журнал рассылок: что, кому, сколько доставлено, ошибки.
+- EventReminder — напоминание о событии программы (колокольчик в карточке события).
 """
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import BigInteger, DateTime, Integer, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -55,3 +56,18 @@ class PushMessage(Base):
     error: Mapped[Optional[str]] = mapped_column(Text)
     created_by: Mapped[Optional[str]] = mapped_column(String(200))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+
+class EventReminder(Base):
+    """Колокольчик у события программы: push за REMINDER_MINUTES_BEFORE минут до начала."""
+    __tablename__ = "event_reminders"
+    __table_args__ = (
+        UniqueConstraint("vk_user_id", "program_event_id", name="uq_event_reminders_user_event"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vk_user_id: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
+    program_event_id: Mapped[int] = mapped_column(
+        ForeignKey("program_events.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))

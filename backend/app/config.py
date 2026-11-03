@@ -70,6 +70,10 @@ class Settings(BaseSettings):
     # Сколько секунд держим новости и фото в памяти, чтобы не упираться в лимиты VK.
     vk_cache_seconds: int = 120
 
+    # Напоминания о событиях программы: за сколько минут до начала присылать push.
+    reminder_minutes_before: int = 30
+    reminders_enabled: bool = True
+
     # Админка: сколько часов действует вход организатора.
     admin_token_ttl_hours: int = 12
 

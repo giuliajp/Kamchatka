@@ -48,6 +48,7 @@ class RaceDiscipline(DisciplineShort):
 class RaceDetail(RaceShort):
     disciplines: list[RaceDiscipline]
     stages: list[StageShort]
+    protocol_pdf_url: str | None       # «Скачать протокол в формате .pdf»
 
 
 # ── Маршрут этапа ──────────────────────────────────────────────────────
@@ -93,6 +94,7 @@ class ParticipantListItem(BaseModel):
     region: str | None
     discipline: DisciplineShort
     dogs_count: int | None
+    dog_breed: str | None
     status: str
     place: int | None                  # место в дисциплине по опубликованным протоколам
     total_time_seconds: int | None
@@ -108,12 +110,14 @@ class ParticipantRaceEntry(BaseModel):
     region: str | None
     discipline: DisciplineShort
     dogs_count: int | None
+    dog_breed: str | None
     status: str
     place: int | None
     total_time_seconds: int | None
     total_time: str | None
     gap_to_leader_seconds: int | None
     penalty_total_seconds: int
+    penalties: list["PenaltyOut"]
 
 
 class ParticipantDetail(BaseModel):

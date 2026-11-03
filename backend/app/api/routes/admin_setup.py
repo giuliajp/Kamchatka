@@ -65,6 +65,7 @@ class RaceIn(BaseModel):
     start_date: date | None = None
     end_date: date | None = None
     location: str | None = Field(None, max_length=200)
+    protocol_pdf_url: str | None = Field(None, max_length=1000, description="Ссылка на официальный протокол PDF")
     tracking_interval_minutes: int = Field(20, ge=1, le=1440)
     stale_after_minutes: int = Field(45, ge=1, le=2880)
 
@@ -74,6 +75,7 @@ class RacePatch(BaseModel):
     start_date: date | None = None
     end_date: date | None = None
     location: str | None = Field(None, max_length=200)
+    protocol_pdf_url: str | None = Field(None, max_length=1000, description="Ссылка на официальный протокол PDF")
     status: RaceStatus | None = Field(None, description="upcoming — до гонки, live — идёт, finished — завершена")
     is_current: bool | None = Field(None, description="true — эту гонку приложение показывает по умолчанию")
     tracking_interval_minutes: int | None = Field(None, ge=1, le=1440)
@@ -81,7 +83,8 @@ class RacePatch(BaseModel):
 
 
 def race_out(race: Race) -> dict:
-    return {**race_short(race), "tracking_interval_minutes": race.tracking_interval_minutes,
+    return {**race_short(race), "protocol_pdf_url": race.protocol_pdf_url,
+            "tracking_interval_minutes": race.tracking_interval_minutes,
             "stale_after_minutes": race.stale_after_minutes}
 
 
@@ -397,6 +400,8 @@ class EntryIn(BaseModel):
     start_number: int = Field(ge=1)
     region: str | None = Field(None, max_length=200)
     dogs_count: int | None = Field(None, ge=1)
+    dog_breed: str | None = Field(None, max_length=100, examples=["Ездовые лайки"])
+    vk_user_id: int | None = Field(None, gt=0, description="id страницы VK спортсмена — для «Мой результат»")
 
 
 class EntryPatch(BaseModel):
@@ -404,6 +409,7 @@ class EntryPatch(BaseModel):
     start_number: int | None = Field(None, ge=1)
     region: str | None = Field(None, max_length=200)
     dogs_count: int | None = Field(None, ge=1)
+    dog_breed: str | None = Field(None, max_length=100)
     status: RaceParticipantStatus | None = None
 
 
@@ -414,15 +420,17 @@ class PersonPatch(BaseModel):
     birth_year: int | None = Field(None, ge=1900, le=2100)
     photo_url: str | None = Field(None, max_length=500)
     bio: str | None = None
+    vk_user_id: int | None = Field(None, gt=0, description="id страницы VK спортсмена — для «Мой результат»")
 
 
 def entry_out(e: RaceParticipant) -> dict:
     p = e.participant
     return {"id": e.id, "race_id": e.race_id, "start_number": e.start_number, "status": e.status.value,
-            "region": e.region, "dogs_count": e.dogs_count, "discipline": discipline_short(e.discipline),
+            "region": e.region, "dogs_count": e.dogs_count, "dog_breed": e.dog_breed,
+            "discipline": discipline_short(e.discipline),
             "participant": {"id": p.id, "last_name": p.last_name, "first_name": p.first_name,
                             "middle_name": p.middle_name, "full_name": p.full_name, "birth_year": p.birth_year,
-                            "photo_url": p.photo_url, "bio": p.bio}}
+                            "photo_url": p.photo_url, "bio": p.bio, "vk_user_id": p.vk_user_id}}
 
 
 async def load_entry(session, entry_id: int) -> RaceParticipant:
@@ -460,11 +468,13 @@ async def create_entry(race_id: int, body: EntryIn, session: SessionDep, admin: 
         if not body.last_name or not body.first_name:
             raise HTTPException(status_code=422, detail="Укажите фамилию и имя или participant_id")
         person = Participant(last_name=body.last_name, first_name=body.first_name, middle_name=body.middle_name,
-                             birth_year=body.birth_year, photo_url=body.photo_url, bio=body.bio)
+                             birth_year=body.birth_year, photo_url=body.photo_url, bio=body.bio,
+                             vk_user_id=body.vk_user_id)
         session.add(person)
         await session.flush()
     entry = RaceParticipant(race_id=race_id, participant_id=person.id, discipline_id=body.discipline_id,
-                            start_number=body.start_number, region=body.region, dogs_count=body.dogs_count)
+                            start_number=body.start_number, region=body.region, dogs_count=body.dogs_count,
+                            dog_breed=body.dog_breed)
     session.add(entry)
     await commit_or_conflict(session, "Стартовый номер занят или спортсмен уже заявлен в эту гонку")
     return ok(entry_out(await load_entry(session, entry.id)))
@@ -487,9 +497,9 @@ async def patch_entry(entry_id: int, body: EntryPatch, session: SessionDep, admi
 async def patch_person(participant_id: int, body: PersonPatch, session: SessionDep, admin: AdminDep):
     person = await get_or_404(session, Participant, participant_id, "Спортсмен не найден")
     apply(person, body.model_dump(exclude_unset=True))
-    await session.commit()
+    await commit_or_conflict(session, "Эта страница VK уже привязана к другому спортсмену")
     return ok({"id": person.id, "full_name": person.full_name, "birth_year": person.birth_year,
-               "photo_url": person.photo_url, "bio": person.bio})
+               "photo_url": person.photo_url, "bio": person.bio, "vk_user_id": person.vk_user_id})
 
 
 @router.delete("/race-participants/{entry_id}", summary="Убрать ошибочную заявку (если нет результатов)")

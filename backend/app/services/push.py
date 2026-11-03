@@ -3,7 +3,8 @@ Push-уведомления (задача 3.7) через notifications.sendMess
 
 Кому:
 - "all"            — все, кто разрешил уведомления в приложении (AppUser.notifications_allowed);
-- "supporters:<id>" — болельщики участника гонки с включёнными уведомлениями по нему.
+- "supporters:<id>" — болельщики участника гонки с включёнными уведомлениями по нему;
+- "reminder:<id>"   — нажавшие колокольчик у события программы (ещё не получившие напоминание).
 
 Правила текста (бриф): событие уже произошло, данные с задержкой — пишем время события
 и источник («отметка судьи», «по протоколу»), никогда «прямо сейчас».
@@ -18,7 +19,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import AppUser, PushMessage, SupportSubscription
+from app.models import AppUser, EventReminder, PushMessage, SupportSubscription
 from app.services import vk_api
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,14 @@ async def recipients(session: AsyncSession, segment: str) -> list[int]:
             .where(SupportSubscription.race_participant_id == entry_id,
                    SupportSubscription.cancelled_at.is_(None),
                    SupportSubscription.notifications_enabled.is_(True),
+                   AppUser.notifications_allowed.is_not(False))
+        ))
+    if segment.startswith("reminder:"):
+        event_id = int(segment.split(":", 1)[1])
+        return list(await session.scalars(
+            select(EventReminder.vk_user_id)
+            .outerjoin(AppUser, AppUser.vk_user_id == EventReminder.vk_user_id)
+            .where(EventReminder.program_event_id == event_id, EventReminder.sent_at.is_(None),
                    AppUser.notifications_allowed.is_not(False))
         ))
     raise ValueError(f"Неизвестный сегмент: {segment}")

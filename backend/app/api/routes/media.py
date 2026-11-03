@@ -22,7 +22,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 from app.api.deps import SessionDep, VkUserDep
 from app.config import get_settings
-from app.models import AppUser, Bookmark
+from app.models import AppUser, Bookmark, EventReminder, Participant, ProgramEvent, RaceParticipant
 from app.models.base import utcnow
 from app.schemas.common import ok
 from app.services import vk_api
@@ -101,10 +101,22 @@ async def news(offset: int = Query(0, ge=0, le=1000), count: int = Query(20, ge=
     return ok({"items": items, "total": (data or {}).get("count", 0), "stale": stale})
 
 
-@router.get("/photos", summary="Фотогалерея по дням гонки (по Камчатке)")
-async def photos(count: int = Query(200, ge=1, le=1000)):
+@router.get("/photos/albums", summary="Альбомы сообщества (архив: «Берингия. Авача-2026. Первый этап»…)")
+async def albums():
     owner = group_owner()
-    album = get_settings().vk_photo_album_id
+    data, stale = await cached("albums", lambda: vk_api.call("photos.getAlbums", owner_id=owner, need_covers=1))
+    items = [{"id": a["id"], "title": a.get("title"), "size": a.get("size"), "cover_url": a.get("thumb_src"),
+              "url": f"https://vk.com/album{owner}_{a['id']}"} for a in (data or {}).get("items", [])]
+    return ok({"items": items, "stale": stale})
+
+
+@router.get("/photos", summary="Фотогалерея по дням гонки (по Камчатке)")
+async def photos(count: int = Query(200, ge=1, le=1000),
+                 album_id: str | None = Query(None, description="Номер альбома; пусто — альбом из настроек")):
+    owner = group_owner()
+    album = album_id or get_settings().vk_photo_album_id
+    if not (album.isdigit() or album in ("wall", "profile")):
+        raise HTTPException(status_code=422, detail="Неверный альбом")
     data, stale = await cached(f"photos:{album}:{count}", lambda: vk_api.call(
         "photos.get", owner_id=owner, album_id=album, rev=1, count=count))
     days: dict[str, list[dict]] = {}
@@ -147,6 +159,47 @@ async def visit(session: SessionDep, user_id: VkUserDep,
 async def set_notifications(body: NotificationsAllowed, session: SessionDep, user_id: VkUserDep):
     await save_user(session, user_id, body.allowed)
     return ok({"notifications_allowed": body.allowed})
+
+
+# ── Мой профиль: «Мой результат» и напоминания ─────────────────────────
+
+@router.get("/me", summary="Кто я: если я участник гонки — мои заявки (для «Мой результат»)")
+async def me(session: SessionDep, user_id: VkUserDep):
+    person = await session.scalar(select(Participant).where(Participant.vk_user_id == user_id))
+    entries = []
+    if person is not None:
+        entries = [{"race_participant_id": e.id, "race_id": e.race_id, "start_number": e.start_number}
+                   for e in await session.scalars(select(RaceParticipant).where(
+                       RaceParticipant.participant_id == person.id).order_by(RaceParticipant.race_id.desc()))]
+    return ok({"vk_user_id": user_id, "participant_id": person.id if person else None,
+               "race_entries": entries})
+
+
+@router.get("/me/reminders", summary="События, о которых я попросил напомнить")
+async def my_reminders(session: SessionDep, user_id: VkUserDep):
+    ids = await session.scalars(select(EventReminder.program_event_id).where(EventReminder.vk_user_id == user_id))
+    return ok({"program_event_ids": sorted(ids)})
+
+
+@router.put("/program/{event_id}/reminder",
+            summary="Колокольчик: напомнить о событии (push за REMINDER_MINUTES_BEFORE минут)")
+async def add_reminder(event_id: int, session: SessionDep, user_id: VkUserDep):
+    event = await session.get(ProgramEvent, event_id)
+    if event is None or not event.is_published:
+        raise HTTPException(status_code=404, detail="Событие не найдено")
+    stmt = insert(EventReminder).values(vk_user_id=user_id, program_event_id=event_id, created_at=utcnow())
+    await session.execute(stmt.on_conflict_do_nothing(constraint="uq_event_reminders_user_event"))
+    await session.commit()
+    return ok({"program_event_id": event_id, "reminder": True,
+               "minutes_before": get_settings().reminder_minutes_before})
+
+
+@router.delete("/program/{event_id}/reminder", summary="Убрать напоминание")
+async def remove_reminder(event_id: int, session: SessionDep, user_id: VkUserDep):
+    await session.execute(delete(EventReminder).where(
+        EventReminder.vk_user_id == user_id, EventReminder.program_event_id == event_id))
+    await session.commit()
+    return ok({"program_event_id": event_id, "reminder": False})
 
 
 # ── Закладки ───────────────────────────────────────────────────────────

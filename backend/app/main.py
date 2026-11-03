@@ -12,13 +12,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import (
-    admin_auth, admin_push, admin_race, admin_results, admin_setup, content, health, media,
+    admin_auth, admin_content, admin_push, admin_race, admin_results, admin_setup, content, health, media,
     participants, races, stages, support, tracking,
 )
 from app.config import get_settings
-from app.db import engine
+from app.db import SessionLocal, engine
 from app.middleware.errors import register_error_handlers
 from app.services.iridium360.poller import polling_enabled, run_poller
+from app.services.reminders import reminders_enabled, run_reminders
 
 
 @asynccontextmanager
@@ -26,10 +27,13 @@ async def lifespan(app: FastAPI):
     # Фоновый опрос Iridium360 (задача 2.6). Без ключа в .env не запускается.
     stop = asyncio.Event()
     poller = asyncio.create_task(run_poller(stop)) if polling_enabled() else None
+    # Напоминания о событиях программы — раз в минуту.
+    reminders = asyncio.create_task(run_reminders(stop, SessionLocal)) if reminders_enabled() else None
     yield
-    if poller is not None:
-        stop.set()
-        await poller
+    stop.set()
+    for task in (poller, reminders):
+        if task is not None:
+            await task
     # При остановке сервера аккуратно закрываем соединения с базой.
     await engine.dispose()
 
@@ -68,6 +72,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_results.router, prefix="/api") # админка: протоколы, CSV, штрафы
     app.include_router(admin_setup.router, prefix="/api")   # админка: гонки, этапы, участники, трекеры
     app.include_router(admin_push.router, prefix="/api")    # админка: push-рассылки
+    app.include_router(admin_content.router, prefix="/api") # админка: программа, локации, FAQ, контакты
     app.include_router(media.router, prefix="/api")         # новости, фото, закладки, push-согласие
 
     # Новые разделы подключаем здесь, например:

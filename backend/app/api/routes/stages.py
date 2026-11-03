@@ -63,3 +63,26 @@ async def stage_protocols(stage_id: int, session: SessionDep):
         for s in standings if stage.number in s.protocols
     ]
     return ok({"stage": stage_short(stage), "race_id": stage.race_id, "protocols": protocols})
+
+
+@router.get("/stages/{stage_id}/arrival-estimate",
+            summary="Ожидаемое время прибытия лидеров на финиш (оценка по GPS, не официальное)")
+async def arrival_estimate(stage_id: int, session: SessionDep):
+    from app.models.base import utcnow
+    from app.services.arrival import leaders_arrival
+
+    stage = (await session.execute(
+        select(Stage).where(Stage.id == stage_id).options(selectinload(Stage.race))
+    )).scalar_one_or_none()
+    if stage is None:
+        raise HTTPException(status_code=404, detail="Этап не найден")
+    now = utcnow()
+    leaders = await leaders_arrival(session, stage.race, stage, now)
+    return ok({
+        "stage_id": stage.id, "generated_at": now,
+        "tracking_interval_minutes": stage.effective_interval_minutes,
+        # Самое раннее окно — для карточки финиша в программе и экрана «Итоги этапа».
+        "first": {"from": leaders[0]["from"], "to": leaders[0]["to"]} if leaders else None,
+        "leaders": leaders,
+        "note": "Оценка по GPS-трекерам, время может измениться",
+    })

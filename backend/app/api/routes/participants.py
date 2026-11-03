@@ -44,12 +44,15 @@ async def get_participant(participant_id: int, session: SessionDep):
             "region": entry.region,
             "discipline": discipline_short(entry.discipline),
             "dogs_count": entry.dogs_count,
+            "dog_breed": entry.dog_breed,
             "status": row.status,
             "place": row.place,
             "total_time_seconds": row.total_seconds,
             "total_time": format_duration(row.total_seconds),
             "gap_to_leader_seconds": row.gap_to_leader_seconds,
             "penalty_total_seconds": sum(p.seconds for p in entry.penalties),
+            "penalties": [{"seconds": p.seconds, "time": format_duration(p.seconds), "reason": p.reason,
+                           "rule_reference": p.rule_reference} for p in entry.penalties],
         })
 
     return ok({
