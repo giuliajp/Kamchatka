@@ -8,7 +8,7 @@ const meta = {
   args: { name: 'Александра Константинопольская', number: 12, region: 'Камчатский край', discipline: 'Упряжки, 8–12 собак', supported: false, onSupportToggle: fn() },
   render: function Render(args) {
     const [, updateArgs] = useArgs<ParticipantCardProps>();
-    return <ParticipantCard {...args} onSupportToggle={() => { args.onSupportToggle(); updateArgs({ supported: !args.supported }); }} />;
+    return <ParticipantCard {...args} onSupportToggle={() => { args.onSupportToggle?.(); updateArgs({ supported: !args.supported }); }} />;
   },
   parameters: { docs: { description: { component: 'Компактная карточка или строка участника. Фото необязательно; при ошибке загрузки VKUI показывает стандартную иконку. Данные и обработчики поступают через props.' } } },
 } satisfies Meta<typeof ParticipantCard>;

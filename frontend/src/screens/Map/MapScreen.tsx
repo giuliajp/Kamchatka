@@ -1,120 +1,136 @@
-import { useEffect, useEffectEvent, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, ModalCard, SimpleCell } from '@vkontakte/vkui';
 import { RaceHeader } from '../../components/RaceHeader';
-import { RaceTabbar } from '../../components/RaceTabbar';
+import { RaceTabbar, type RaceDestination } from '../../components/RaceTabbar';
 import { TopParticipantsCard } from '../../components/TopParticipantsCard';
 import { TimeBadge } from '../../components/TimeBadge';
 import { ParticipantSheet } from '../../components/ParticipantSheet';
-import { NotificationPrompt } from '../../components/NotificationPrompt';
-import { DataState } from '../../components/DataState';
+import { RequestState } from '../../components/RequestState';
+import { useApi } from '../../hooks/useApi';
+import { query } from '../../api/client';
+import { raceTime, stageOption, stale } from '../../api/format';
+import type { Position, Positions, RaceDetail, Stage, StageDetail, Track } from '../../types/api';
+import { ParticipantsScreen } from '../Participants/ParticipantsScreen';
+import { ResultsScreen } from '../Results/ResultsScreen';
 import { MapCanvas } from './MapCanvas';
 import { StageContent } from './StageContent';
-import { disciplines, liveStage, participants, race, raceTime, readPreferences, route, stageOptions, stages, writePreferences, type Preferences } from './demo';
+import { prepareMapData } from './mapData';
 import './map.css';
+import { MapLegend } from '../../components/MapLegend';
+import { mockFeaturesEnabled, participationKey, useExtras } from '../../mocks/extras';
+import { readRaceLink, type RaceLink } from '../../api/navigation';
 
-const disciplineOptions = [{ value: 'all', label: 'все' }, ...disciplines.map(d => ({ value: String(d.id), label: d.name }))];
-const disciplineLeaders = disciplines.flatMap(d => participants.filter(p => p.discipline_id === d.id && p.place === 1)
-  .map(p => ({ id: String(p.id), number: String(p.start_number), label: d.name })));
-
-export interface MapScreenProps {
-  initialStage?: number; initialDiscipline?: string; initialTab?: 'all' | 'mine';
-  initialParticipant?: number; initialExpanded?: boolean; initialGalleryExpanded?: boolean;
-  initialPrompt?: number; initialSupported?: number[];
-  scenario?: 'ready' | 'loading' | 'error' | 'empty' | 'stale' | 'offline';
-  now?: number; persist?: boolean;
+export function currentStage(stages: Stage[], now = Date.now()) {
+  const live = stages.filter(stage => stage.status === 'live');
+  const started = stages.filter(stage => stage.start_at !== null && Date.parse(stage.start_at) <= now);
+  return live.at(-1) ?? started.at(-1) ?? stages[0];
 }
-export function MapScreen({ initialStage = liveStage.id, initialDiscipline = 'all', initialTab = 'all', initialParticipant,
-  initialExpanded = false, initialGalleryExpanded = false, initialPrompt, initialSupported,
-  scenario = 'ready', now, persist = true }: MapScreenProps) {
-  const [stageId, setStageId] = useState(initialStage);
-  const [discipline, setDiscipline] = useState(initialDiscipline);
-  const [tab, setTab] = useState(initialTab);
-  const [selected, setSelected] = useState(initialParticipant);
-  const [prompt, setPrompt] = useState(initialPrompt);
-  const [cluster, setCluster] = useState<number[]>([]);
+export function MapScreen() {
+  const [link, setLink] = useState(readRaceLink);
+  useEffect(() => { const update = () => setLink(readRaceLink()); window.addEventListener('popstate', update); return () => window.removeEventListener('popstate', update); }, []);
+  const race = useApi<RaceDetail>(link.raceId ? `/races/${link.raceId}` : '/races/current', 120000);
+  if (!race.data) return <main className="race-screen race-content"><h1>Авача</h1><RequestState resource={race} /></main>;
+  return <RaceView key={race.data.id} race={race.data} link={link} warning={<RequestState resource={race} />} />;
+}
+function RaceView({ race, link, warning }: { race: RaceDetail; link: RaceLink; warning: React.ReactNode }) {
+  const { value } = useExtras();
+  const enabled = mockFeaturesEnabled();
+  const [tab, setTab] = useState<'all' | 'mine'>('all');
+  const [legend, setLegend] = useState(false);
   const [feedback, setFeedback] = useState('');
-  const [state, setState] = useState(scenario);
-  const [offline, setOffline] = useState(scenario === 'offline' || !navigator.onLine);
-  const [preferences, setPreferences] = useState<Preferences>(() => {
-    const saved = persist ? readPreferences() : { supported: [], prompted: [], notifications: [] };
-    return { ...saved, supported: initialSupported ?? saved.supported };
-  });
+  const supported = useMemo(() => (enabled ? value.supported : []).filter(key => key.startsWith(`${race.id}:`)).map(key => Number(key.split(':')[1])), [value.supported, race.id, enabled]);
+  const [section, setSection] = useState<RaceDestination>('map');
+  const [stageId, setStageId] = useState<number | undefined>(link.stageId);
+  const [allStages, setAllStages] = useState(false);
+  const [discipline, setDiscipline] = useState('');
+  const [selected, setSelected] = useState<{ participantId: number; entryId: number } | undefined>(link.participantId && link.entryId ? { participantId: link.participantId, entryId: link.entryId } : undefined);
+  useEffect(() => { setSection('map'); setAllStages(false); setTab('all'); setDiscipline(''); setCluster([]); setLegend(false); setFeedback(''); setStageId(link.stageId); setSelected(link.participantId && link.entryId ? { participantId: link.participantId, entryId: link.entryId } : undefined); }, [link]);
+  const [cluster, setCluster] = useState<Position[]>([]);
   useEffect(() => {
-    const disconnected = () => setOffline(true);
-    const connected = () => setOffline(false);
-    window.addEventListener('offline', disconnected); window.addEventListener('online', connected);
-    return () => { window.removeEventListener('offline', disconnected); window.removeEventListener('online', connected); };
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && document.querySelectorAll('[role="dialog"]').length <= 1) { setSelected(undefined); setCluster([]); setLegend(false); }
+    };
+    window.addEventListener('keydown', close, true);
+    return () => window.removeEventListener('keydown', close, true);
   }, []);
-  const save = (next: Preferences) => {
-    setPreferences(next);
-    if (persist && !writePreferences(next)) setFeedback('Не удалось сохранить выбор. Он действует до закрытия страницы.');
+  const stage = race.stages.find(s => s.id === stageId) ?? currentStage(race.stages);
+  const stageScreen = section === 'map' && stage && stage.status !== 'live';
+  const positions = useApi<Positions>(section === 'map' && stage?.status === 'live' ? query(`/races/${race.id}/positions`, { stage: stage.number, discipline }) : null, 120000);
+  const hasStageDetails = stage?.status === 'live' || stage?.status === 'finished';
+  const detail = useApi<StageDetail>((section === 'map' && hasStageDetails) || (selected && stage) ? `/stages/${stage.id}` : null, 120000);
+  const visible = useMemo(() => positions.data?.participants.filter(p => !positions.data!.official_protocol_disciplines.includes(p.discipline.code) && (tab === 'all' || value.supported.includes(participationKey(race.id, p.race_participant_id)))) ?? [], [positions.data, tab, value.supported, race.id]);
+  const mapData = useMemo(() => detail.data ? prepareMapData(detail.data, visible) : undefined, [detail.data, visible]);
+  const mapped = mapData?.participants ?? [];
+  const selectedPosition = visible.find(p => p.race_participant_id === selected?.entryId && p.participant_id === selected.participantId);
+  const track = useApi<Track>(section === 'map' && selectedPosition && stage ? query(`/race-participants/${selectedPosition.race_participant_id}/track`, { stage: stage.number }) : null, 120000, false);
+  const selectPerson = useCallback((participantId: number, entryId: number) => setSelected({ participantId, entryId }), []);
+  const selectMapPerson = useCallback((p: Position) => selectPerson(p.participant_id, p.race_participant_id), [selectPerson]);
+  const chooseStage = (id: string) => {
+    setAllStages(id === 'all');
+    if (id !== 'all') setStageId(Number(id));
+    setSelected(undefined); setCluster([]);
   };
-  const unavailable = () => setFeedback('Это действие недоступно в демонстрации. API и функции VK ещё не подключены.');
-  const refresh = () => { setState('ready'); setFeedback('Показан демонстрационный набор. Новые координаты с сервера не запрашивались.'); };
-  const chooseStage = (value = String(liveStage.id)) => { setStageId(Number(value)); setSelected(undefined); setCluster([]); };
-  const support = (id: number) => {
-    const supported = preferences.supported.includes(id);
-    save({ ...preferences, supported: supported ? preferences.supported.filter(v => v !== id) : [...preferences.supported, id],
-      notifications: supported ? preferences.notifications.filter(v => v !== id) : preferences.notifications });
-    if (!supported && !preferences.prompted.includes(id)) { setSelected(undefined); setPrompt(id); }
-  };
-  const finishPrompt = (notify: boolean) => {
-    const id = prompt!;
-    save({ ...preferences, prompted: [...preferences.prompted, id], notifications: notify ? [...preferences.notifications, id] : preferences.notifications });
-    setPrompt(undefined);
-    if (notify) setFeedback('Выбор сохранён только для демонстрации. Настоящие push-уведомления не отправляются.');
-  };
-  // Also close when a demo message temporarily holds focus outside the VKUI modal.
-  const close = useEffectEvent((event: KeyboardEvent) => {
-    if (event.key !== 'Escape') return;
-    setSelected(undefined); setCluster([]); setFeedback('');
-    if (prompt !== undefined) finishPrompt(false);
-  });
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => close(event);
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
-  const stage = stages.find(s => s.id === stageId) ?? liveStage;
-  const participant = participants.find(p => p.id === selected);
-  const participantDiscipline = participant ? disciplines.find(d => d.id === participant.discipline_id)!.name : '';
-  const participantSupported = participant !== undefined && preferences.supported.includes(participant.id);
-  const promptParticipant = participants.find(p => p.id === prompt);
-  const disciplineParticipants = participants.filter(p => discipline === 'all' || String(p.discipline_id) === discipline);
-  const visible = state === 'empty' ? [] : tab === 'mine' ? participants.filter(p => preferences.supported.includes(p.id)) : disciplineParticipants;
-  const showDisciplineLeaders = discipline === 'all' || tab === 'mine';
-  const leaders = showDisciplineLeaders
-    ? disciplineLeaders
-    : [...disciplineParticipants].sort((a, b) => a.place - b.place).slice(0, 3).map(p => ({ id: String(p.id), number: String(p.start_number), label: p.name, place: p.place }));
-  const note = (label: string) => setFeedback(label + '. Демонстрационные отметки; официальные результаты публикуются отдельно.');
-  return <main className="race-screen">
+  const leaders = discipline === '' ? race.disciplines.flatMap(d => mapped.filter(p => p.discipline.code === d.code && p.gps_rank === 1).map(p => ({ id: String(p.race_participant_id), number: String(p.start_number), label: d.name })))
+    : mapped.filter(p => p.gps_rank !== null).sort((a, b) => a.gps_rank! - b.gps_rank!).slice(0, 3).map(p => ({ id: String(p.race_participant_id), number: String(p.start_number), label: p.full_name, place: p.gps_rank! }));
+  const latestPosition = [...mapped].sort((a, b) => Date.parse(b.position!.position_at) - Date.parse(a.position!.position_at))[0];
+  const latest = latestPosition?.position?.position_at;
+  const threshold = positions.data?.stale_after_minutes ?? 45;
+  const refresh = () => { positions.refresh(); detail.refresh(); track.refresh(); };
+  const navigate = (value: RaceDestination) => { if (value === 'program' || value === 'more') { setFeedback(value === 'program' ? 'Раздел «Программа» пока не реализован.' : 'Раздел «Ещё» пока не реализован.'); return; } setSection(value); setSelected(undefined); setCluster([]); setLegend(false); };
+  return <main className={stageScreen ? 'race-screen race-screen--stage' : 'race-screen'}>
     <div className="race-screen__header"><RaceHeader
-      header={{ title: race.name, onBack: () => chooseStage(), onMenu: () => setFeedback('Демонстрационные данные. Карта и фотографии из Figma; время — Камчатка (UTC+12). Поддержка хранится в этом браузере.'), onClose: unavailable }}
-      stage={{ value: String(stage.id), options: stageOptions, onChange: chooseStage }}
-      filters={stage.status === 'live' ? { tab, discipline, options: disciplineOptions, mineCount: preferences.supported.length, onTabChange: setTab, onDisciplineChange: setDiscipline } : undefined} />
+      header={{ title: race.name, onBack: section === 'map' ? undefined : () => navigate('map') }}
+      stage={{ value: section === 'results' && allStages ? 'all' : String(stage?.id ?? ''),
+        options: [...(section === 'results' ? [{ value: 'all', label: 'Общий зачёт', details: 'все опубликованные этапы' }] : []), ...race.stages.map(stageOption)], onChange: chooseStage, disabled: race.stages.length === 0 }}
+      filters={stageScreen ? undefined : { tab, discipline, options: [{ value: '', label: 'все' }, ...race.disciplines.map(d => ({ value: d.code, label: d.name }))],
+        mineCount: supported.length, onTabChange: selectedTab => { setTab(selectedTab); setSelected(undefined); }, onDisciplineChange: value => { setDiscipline(value); setSelected(undefined); setCluster([]); setLegend(false); }, showMine: enabled }} />
     </div>
-    {stage.status === 'live' ? <section className="race-screen__map" aria-label="Трансляция гонки">
-      {state === 'loading' || state === 'error' ? <div className="map-state"><DataState status={state} onRetry={refresh} />{state === 'loading' && <Button onClick={refresh}>Показать демоданные</Button>}</div> : <>
-        <MapCanvas participants={visible} supported={preferences.supported} stale={state === 'stale'} onSelect={setSelected} onCluster={setCluster} onCheckpoint={note} onRefresh={refresh} />
-        {visible.length > 0 ? <div className="map-leaders-slot"><TopParticipantsCard compact title={showDisciplineLeaders ? 'Лидеры по дисциплинам' : 'Топ-3 по дисциплине'} entries={leaders} onSelect={id => setSelected(Number(id))} /></div>
-          : <div className="map-empty" role="status"><h2>{tab === 'mine' ? 'Вы пока ни за кого не болеете' : 'Положения отсутствуют'}</h2><p>{tab === 'mine' ? 'Выберите участника на карте и нажмите «Болею за».' : 'Координаты появятся после получения данных трекеров.'}</p>{tab === 'mine' && <Button onClick={() => setTab('all')}>Все участники</Button>}</div>}
-        <div className="map-time"><TimeBadge state={offline ? 'offline' : state === 'empty' ? 'unavailable' : state === 'stale' ? 'stale' : 'position'} onRetry={refresh}>
-          {offline ? 'Нет соединения. Сохранённые данные на 14:36' : state === 'empty' ? 'Положения отсутствуют' : state === 'stale' ? 'Обновлено 48 минут назад' : 'Положение на 14:36'}
-        </TimeBadge></div>
+    {warning}
+    <div id="race-data">
+      {section === 'map' && <>
+        {!stage && <div className="race-content"><h2>Этапы пока не объявлены</h2><p>Список появится после публикации организаторами.</p></div>}
+        {stage && stage.status !== 'live' && <StageContent stage={stage} liveStage={race.stages.find(s => s.status === 'live')}
+          onStage={id => chooseStage(String(id))} onResults={() => { setAllStages(false); setSection('results'); }} />}
+        <RequestState resource={detail} /><RequestState resource={positions} /><RequestState resource={track} />
+        {detail.data && hasStageDetails && mapData && <>
+          {stage?.status === 'live' && positions.data?.official_protocol_disciplines.length !== 0 && positions.data && <div className="race-content protocol-notice">
+            <p>По дисциплинам {positions.data.official_protocol_disciplines.join(', ')} опубликован протокол. GPS-позиции скрыты.</p>
+            <Button onClick={() => { setAllStages(false); setSection('results'); }}>Открыть протокол</Button>
+          </div>}
+          {stage.status === 'live' && mapData.bounds.isValid() ? <section className="race-screen__map" aria-label="Маршрут и позиции участников">
+            <MapCanvas data={mapData} viewKey={`${stage.id}:${discipline}:${tab}:${detail.data.route_updated_at}:${mapData.hasRoute}:${mapData.checkpoints.length}`} threshold={threshold} track={track.data} onSelect={selectMapPerson} onCluster={setCluster} onRefresh={refresh} onLegend={() => setLegend(true)} supported={supported} refreshing={positions.loading || detail.loading} />
+            {leaders.length > 0 && <div className="map-leaders-slot"><TopParticipantsCard compact title={discipline === '' ? 'Лидеры по GPS в дисциплинах' : 'Топ-3 по GPS в дисциплине'} entries={leaders}
+              onSelect={id => selectMapPerson(visible.find(p => p.race_participant_id === Number(id))!)} /></div>}
+            {stage.status === 'live' && positions.data && tab === 'all' && !latest && (positions.data.official_protocol_disciplines.length === 0 || visible.length > 0) && <div className="map-empty"><h2>Положения отсутствуют</h2><p>Координаты появятся после получения данных трекеров.</p></div>}
+            {tab === 'mine' && mapped.length === 0 && <div className="map-empty"><h2>{supported.length ? 'У ваших участников пока нет координат' : 'Вы пока ни за кого не болеете'}</h2><p>Выберите участника во вкладке «Дисциплина: все» и нажмите «Болею за».</p></div>}
+            {latest && <div className="map-time"><TimeBadge state={stale(latestPosition, threshold) ? 'stale' : 'position'}>{stale(latestPosition, threshold) ? 'Последняя подтверждённая точка' : 'Положение'} на {raceTime(latest)} (Камчатка)</TimeBadge></div>}
+          </section> : stage.status === 'live' && !mapData.bounds.isValid() && positions.data && <div className="race-content map-unavailable" role="status">
+            <p>Маршрут пока не опубликован.</p>
+            {tab === 'mine' && <p>У поддерживаемых участников пока нет подтверждённых координат.</p>}
+            {positions.data.official_protocol_disciplines.length === 0 && <p>Положения отсутствуют. Координаты появятся после получения данных трекеров.</p>}
+          </div>}
+          {stage.status === 'finished' && <section className="race-content stage-route" aria-label="Маршрут завершённого этапа"><h2>Маршрут {stage.number} этапа</h2>
+            {detail.data.description && <p>{detail.data.description}</p>}
+            {mapData.bounds.isValid() ? <div className="stage-route__map"><MapCanvas data={mapData} viewKey={`route:${stage.id}`} threshold={threshold} onSelect={selectMapPerson} onCluster={setCluster} onRefresh={refresh} refreshing={detail.loading} /></div> : <p>Маршрут пока не опубликован.</p>}
+          </section>}
+          {stage.status === 'live' && (detail.data.description || mapData.bounds.isValid()) && <div className="race-content route-description">
+            {detail.data.description && <p>{detail.data.description}</p>}
+            {mapData.bounds.isValid() && <>
+              {!mapData.hasRoute && <p>Маршрут пока не опубликован.</p>}
+              <p>Время указано по Камчатке (UTC+12). Позиции GPS не являются официальными результатами.</p>
+            </>}
+          </div>}
+        </>}
       </>}
-    </section> : <StageContent key={stage.id} stage={stage} now={now} galleryExpanded={initialGalleryExpanded} onLive={() => chooseStage()} onUnavailable={unavailable} />}
-    <footer className="race-screen__footer"><RaceTabbar value="map" onChange={destination => destination === 'map' ? chooseStage() : unavailable()} /><small>Демонстрационные данные</small></footer>
-    {participant && <ParticipantSheet key={participant.id} open onClose={() => setSelected(undefined)} onShare={unavailable}
-      participant={{ name: participant.name, number: participant.start_number, region: participant.region, discipline: participantDiscipline,
-        photoUrl: participant.photoUrl, supported: participantSupported, onSupportToggle: () => support(participant.id) }}
-      position={{ place: participant.place, gap: participant.gap }}
-      details={{ disciplineLabel: participantDiscipline, biography: participant.biography, supporters: participant.supporters + Number(participantSupported), speed: participant.speed, distance: participant.distance, expanded: initialExpanded }}
-      freshness={[{ state: participant.position.stale || state === 'stale' ? 'stale' : 'position', children: 'Положение на ' + raceTime(participant.position.position_at) }]}
-      route={route.map(point => ({ ...point, onSelect: () => note(point.title) }))} />}
-    {promptParticipant && <NotificationPrompt open number={String(promptParticipant.start_number)} photoUrl={promptParticipant.photoUrl} onConfirm={() => finishPrompt(true)} onLater={() => finishPrompt(false)} onClose={() => finishPrompt(false)} demo />}
-    <ModalCard open={cluster.length > 0} onClose={() => setCluster([])} title="Участники рядом" aria-label="Участники рядом" dismissLabel="Закрыть список">
-      {participants.filter(p => cluster.includes(p.id)).map(p => <SimpleCell key={p.id} Component="button" className="race-native-action" onClick={() => { setCluster([]); setSelected(p.id); }}>{p.name} · №{p.start_number}</SimpleCell>)}
+      {section === 'participants' && <ParticipantsScreen raceId={race.id} discipline={discipline} mine={tab === 'mine'} onSelect={selectPerson} />}
+      {section === 'results' && <ResultsScreen raceId={race.id} discipline={discipline} mine={tab === 'mine'} stageId={allStages ? undefined : stage?.id} stageNumber={allStages ? undefined : stage?.number} onSelect={selectPerson} />}
+    </div>
+    <footer className="race-screen__footer"><RaceTabbar value={section} onChange={navigate} /></footer>
+    {selected && <ParticipantSheet raceId={race.id} key={selected.entryId} {...selected} position={selectedPosition} threshold={threshold} stage={section === 'results' && allStages ? undefined : detail.data ?? stage} showOfficial={section === 'results'} onClose={() => setSelected(undefined)} />}
+    <MapLegend open={legend} onClose={() => setLegend(false)} />
+    <ModalCard dismissButtonMode="inside" open={Boolean(feedback)} onClose={() => setFeedback('')} title="Информация" aria-label="Информация" dismissLabel="Закрыть сообщение"><p>{feedback}</p></ModalCard>
+    <ModalCard dismissButtonMode="inside" open={cluster.length > 0} onClose={() => setCluster([])} title="Участники рядом" aria-label="Участники рядом" dismissLabel="Закрыть список">
+      {cluster.map(p => <SimpleCell key={p.race_participant_id} Component="button" className="race-native-action" onClick={() => { setCluster([]); selectMapPerson(p); }}>{p.full_name} · №{p.start_number}</SimpleCell>)}
     </ModalCard>
-    {feedback && <div className="map-feedback" role="status"><span>{feedback}</span><Button size="s" mode="tertiary" aria-label="Закрыть сообщение" onClick={() => setFeedback('')}>Понятно</Button></div>}
   </main>;
 }

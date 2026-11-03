@@ -1,5 +1,5 @@
 import { Flex, IconButton, Spinner } from '@vkontakte/vkui';
-import { Icon24Add, Icon24MinusOutline, Icon24RefreshOutline } from '@vkontakte/icons';
+import { Icon24Add, Icon24MinusOutline, Icon24RefreshOutline, Icon24InfoCircleOutline } from '@vkontakte/icons';
 export interface MapControlsProps {
   canZoomIn: boolean;
   canZoomOut: boolean;
@@ -7,11 +7,12 @@ export interface MapControlsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onRefresh: () => void;
+  onInfo?: () => void;
 }
-export function MapControls({ canZoomIn, canZoomOut, refreshing, onZoomIn, onZoomOut, onRefresh }: MapControlsProps) {
+export function MapControls({ canZoomIn, canZoomOut, refreshing, onZoomIn, onZoomOut, onRefresh, onInfo }: MapControlsProps) {
   return <Flex direction="column" align="start">
     <IconButton label="Увеличить масштаб" disabled={!canZoomIn} onClick={onZoomIn}><Icon24Add /></IconButton>
     <IconButton label="Уменьшить масштаб" disabled={!canZoomOut} onClick={onZoomOut}><Icon24MinusOutline /></IconButton>
-    <IconButton label="Обновить" disabled={refreshing} aria-busy={refreshing} onClick={onRefresh}>{refreshing ? <Spinner size="s" aria-hidden="true" /> : <Icon24RefreshOutline />}</IconButton>
+    {onInfo ? <IconButton label="Условные обозначения" onClick={onInfo}><Icon24InfoCircleOutline /></IconButton> : <IconButton label="Обновить" disabled={refreshing} aria-busy={refreshing} onClick={onRefresh}>{refreshing ? <Spinner size="s" aria-hidden="true" /> : <Icon24RefreshOutline />}</IconButton>}
   </Flex>;
 }
