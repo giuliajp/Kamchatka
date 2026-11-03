@@ -22,7 +22,7 @@ npm run dev
 | `VITE_DEV_API_TARGET` | `http://127.0.0.1:8000` | Proxy Vite на backend |
 | `VITE_MAP_TILE_URL` | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | Подложка Leaflet |
 | `VITE_MAP_ATTRIBUTION` | © OpenStreetMap contributors | Атрибуция поставщика |
-| `VITE_MOCK_MISSING_FEATURES` | `true` | Локальные дополнения; `false` отключает их |
+| `VITE_MOCK_MISSING_FEATURES` | `false` | Демонстрационные дополнения включаются только явным `true` |
 
 После изменения `VITE_*` перезапустите Vite или пересоберите приложение. Эти настройки
 публичны; ключи Iridium и PostgreSQL остаются в `backend/.env`.
@@ -58,7 +58,8 @@ API-контракты остаются в `src/types/api.ts`. Backend и миг
 GPS-рейтинг, отставание в километрах и свежесть точки отделены от официальных мест,
 временного отставания и состояния сети. Время гонки — Камчатка, UTC+12.
 
-Локальные дополнения из `src/mocks/extras.tsx`:
+Локальные дополнения из `src/mocks/extras.tsx` выключены по умолчанию.
+Для демонстрации задайте `VITE_MOCK_MISSING_FEATURES=true`:
 
 - Поддержка, подписки и показ предложения уведомлений: `avacha-extras-v1` в
   localStorage, ключ участия `raceId:raceParticipantId`. Общий React-контекст

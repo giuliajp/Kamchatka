@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Stage, StageDetail } from '../types/api';
 
-export const mockFeaturesEnabled = () => import.meta.env.VITE_MOCK_MISSING_FEATURES !== 'false';
+export const mockFeaturesEnabled = () => import.meta.env.VITE_MOCK_MISSING_FEATURES === 'true';
 export const preferencesKey = 'avacha-extras-v1';
 export interface Preferences { supported: string[]; subscriptions: string[]; prompted: string[] }
 export const participationKey = (raceId: number, entryId: number) => `${raceId}:${entryId}`;

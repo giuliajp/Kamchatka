@@ -1,10 +1,21 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { AppProviders } from '../src/app/AppProviders';
 import { ParticipantSheet } from '../src/components/ParticipantSheet';
 import { mockApi, person, positions } from './fixtures';
-afterEach(() => { vi.unstubAllGlobals(); localStorage.clear(); });
+beforeEach(() => { vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'true'); });
+afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); localStorage.clear(); });
+it.each([undefined, 'false', 'anything'])('keeps official data without fake counters, checkpoint visits or finish (flag: %s)', async flag => {
+  const { stage } = await import('./fixtures');
+  vi.stubEnv('VITE_MOCK_MISSING_FEATURES', flag); mockApi();
+  render(<AppProviders><ParticipantSheet participantId={501} entryId={9001} stage={{ ...stage, status: 'finished' }} threshold={45} onClose={vi.fn()} /></AppProviders>);
+  expect(await screen.findByText('00:16:40')).toBeVisible();
+  expect(screen.queryByText(/болельщиков/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/^Финиш /)).not.toBeInTheDocument();
+  expect(screen.queryByText('Прохождение контрольных пунктов (КП)')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Болею за' })).not.toBeInTheDocument();
+});
 it('loads identity by person ID and matches participation by entry ID, with labelled demonstration extras', async () => {
   const api = mockApi(); const close = vi.fn(); const user = userEvent.setup();
   render(<AppProviders><ParticipantSheet participantId={501} entryId={9001} position={positions.participants[0]} threshold={45} onClose={close} /></AppProviders>);

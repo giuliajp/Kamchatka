@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { MapScreen } from '../src/screens/Map/MapScreen';
 import { AppProviders } from '../src/app/AppProviders';
 import { preferencesKey } from '../src/mocks/extras';
@@ -10,6 +10,7 @@ vi.mock('../src/screens/Map/MapCanvas', () => ({ MapCanvas: (props: MapCanvasPro
   {props.data.participants.map(p => <button key={p.race_participant_id} onClick={() => props.onSelect(p)}>Точка {p.start_number}{props.supported?.includes(p.race_participant_id) ? ' — мой' : ''}</button>)}
   <button onClick={props.onLegend}>Легенда</button>
 </div> }));
+beforeEach(() => { vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'true'); });
 afterEach(() => { localStorage.clear(); history.replaceState(null, '', '/'); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 const show = () => render(<AppProviders><MapScreen /></AppProviders>);
 it('synchronises support from sheet to map, list and My filter without replacing API results', async () => {

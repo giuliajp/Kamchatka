@@ -6,7 +6,7 @@ import { ResultsScreen, StandingTable } from '../src/screens/Results/ResultsScre
 import { ParticipantCard } from '../src/components/ParticipantCard';
 import { AppProviders } from '../src/app/AppProviders';
 import { fixtureResponse, mockApi, participant, protocols, results, standing } from './fixtures';
-afterEach(() => { vi.unstubAllGlobals(); localStorage.clear(); });
+afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); localStorage.clear(); });
 it('searches and sorts real participants and opens a card with independent IDs', async () => {
   const api = mockApi(); const selected = vi.fn(); const user = userEvent.setup();
   render(<AppProviders><ParticipantsScreen raceId={10} discipline="sled_8" onSelect={selected} /></AppProviders>);
@@ -56,6 +56,7 @@ it('preserves null, DNF/DNS/DSQ and penalty metadata in result rows', () => {
   expect(screen.getByText(/\(DNF\)/)).toBeVisible(); expect(screen.getByText(/\(DNS\)/)).toBeVisible(); expect(screen.getByText(/\(DSQ\)/)).toBeVisible();
 });
 it('sorts supporters locally with the existing API sort and honours the supplemental switch', async () => {
+  vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'true');
   const api = mockApi(() => [participant, { ...participant, race_participant_id: 9002, participant_id: 502, full_name: 'Иван Петров' }]);
   const { rerender } = render(<AppProviders><ParticipantsScreen raceId={10} discipline="" onSelect={vi.fn()} /></AppProviders>);
   await screen.findByText('Алиса Иванова');

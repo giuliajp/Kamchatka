@@ -55,6 +55,7 @@ it('requires a provider', () => {
   expect(() => render(<Snapshot />)).toThrow('ExtrasProvider is required');
 });
 it('produces deterministic supplemental visits only for existing checkpoints and valid dates', () => {
+  vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'true');
   const checkpoint = stage.checkpoints[0];
   const detail = { ...stage, checkpoints: [{ ...checkpoint, id: 2, order_index: 2, label: null, km_from_start: null, required_rest_minutes: 20 }, checkpoint] };
   const live = mockVisits(detail, 9001);
@@ -65,11 +66,18 @@ it('produces deterministic supplemental visits only for existing checkpoints and
   for (const patch of [{ start_at: null }, { start_at: 'bad' }, { finish_at: 'bad' }, { finish_at: '2020-01-01' }, { status: 'cancelled' as const }]) expect(mockVisits({ ...detail, ...patch }, 1)).toEqual([]);
 });
 it('derives demo finish only from completed participation with valid start and official duration, and can disable all mocks', () => {
+  vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'true');
   const finished = { ...stage, status: 'finished' as const };
   expect(mockFinish(finished, 'finished', 60)).toBe('2026-10-27T01:01:00.000Z');
   for (const [value, status, duration] of [[stage, 'finished', 60], [finished, 'dnf', 60], [{ ...finished, start_at: null }, 'finished', 60], [finished, 'finished', null], [{ ...finished, start_at: 'bad' }, 'finished', 60]] as const) expect(mockFinish(value, status, duration)).toBeNull();
   vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'false'); expect(mockFeaturesEnabled()).toBe(false);
   expect(mockFinish(finished, 'finished', 60)).toBeNull(); expect(mockVisits(stage, 1)).toEqual([]);
+});
+it.each([undefined, 'false', 'anything', 'true'])('enables supplemental data only for explicit true (flag: %s)', flag => {
+  vi.stubEnv('VITE_MOCK_MISSING_FEATURES', flag);
+  expect(mockFeaturesEnabled()).toBe(flag === 'true');
+  expect(mockVisits(stage, 9001)).toHaveLength(flag === 'true' ? stage.checkpoints.length : 0);
+  expect(mockFinish({ ...stage, status: 'finished' }, 'finished', 60)).toBe(flag === 'true' ? '2026-10-27T01:01:00.000Z' : null);
 });
 it('preserves another tab’s just-saved preferences before the storage event arrives', async () => {
   render(actions);
