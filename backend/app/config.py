@@ -58,6 +58,18 @@ class Settings(BaseSettings):
     # если запрос пришёл без параметров запуска. В production не действует.
     vk_dev_user_id: int | None = None
 
+    # VK API: «Сервисный ключ доступа» мини-приложения. Нужен для push-уведомлений
+    # (notifications.sendMessage) и чтения стены и фото сообщества.
+    vk_service_token: str = ""
+    vk_api_url: str = "https://api.vk.com/method"
+    vk_api_version: str = "5.199"
+    # Сообщество гонки (vk.ru/avacha.race): числовой id без минуса.
+    vk_group_id: int | None = None
+    # Альбом фотогалереи: "wall" — фото со стены, или номер альбома сообщества.
+    vk_photo_album_id: str = "wall"
+    # Сколько секунд держим новости и фото в памяти, чтобы не упираться в лимиты VK.
+    vk_cache_seconds: int = 120
+
     # Админка: сколько часов действует вход организатора.
     admin_token_ttl_hours: int = 12
 

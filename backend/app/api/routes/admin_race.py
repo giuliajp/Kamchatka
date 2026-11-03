@@ -22,7 +22,7 @@ from sqlalchemy.orm import selectinload
 from app.api.deps import AdminDep, SessionDep
 from app.api.presenters import discipline_short, stage_short
 from app.models import (
-    ChangeAction, CheckpointPass, CheckpointPassLog, Race, RaceParticipant, Stage,
+    ChangeAction, CheckpointPass, CheckpointPassLog, Participant, Race, RaceParticipant, Stage,
     StageCheckpoint, StageStatus, TrackerAlert, TrackerAssignment,
 )
 from app.models.base import utcnow
@@ -31,6 +31,7 @@ from app.schemas.admin import (
     CheckpointPassPatch, StageMonitoring,
 )
 from app.schemas.common import ApiResponse, ok
+from app.services import push
 from app.services.positions import last_two_points
 from app.services.support import counts_at
 
@@ -206,6 +207,13 @@ async def create_pass(body: CheckpointPassIn, session: SessionDep, admin: AdminD
     session.add(CheckpointPassLog(
         checkpoint_pass_id=item.id, race_participant_id=entry.id, stage_checkpoint_id=checkpoint.id,
         action=ChangeAction.CREATE, before=None, after=pass_snapshot(item), changed_by=admin.full_name))
+    # Болельщикам: событие уже произошло — называем время отметки судьи, а не «сейчас».
+    person = await session.get(Participant, entry.participant_id)
+    point = checkpoint.label or f"КП {checkpoint.order_index}"
+    await push.send(session, segment=f"supporters:{entry.id}", trigger="checkpoint",
+                    fragment=f"participant={entry.id}", created_by=admin.full_name,
+                    message=f"№{entry.start_number} {person.last_name}: {point} пройден в "
+                            f"{push.kamchatka_time(item.arrived_at)} по Камчатке (отметка судьи).")
     await session.commit()
     return ok(pass_out(item))
 

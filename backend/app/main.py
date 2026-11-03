@@ -12,7 +12,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import (
-    admin_auth, admin_race, content, health, participants, races, stages, support, tracking,
+    admin_auth, admin_push, admin_race, admin_results, admin_setup, content, health, media,
+    participants, races, stages, support, tracking,
 )
 from app.config import get_settings
 from app.db import engine
@@ -64,6 +65,10 @@ def create_app() -> FastAPI:
     app.include_router(support.router, prefix="/api")       # «Болею за», рейтинг, отметки КП
     app.include_router(admin_auth.router, prefix="/api")    # админка: вход
     app.include_router(admin_race.router, prefix="/api")    # админка: мониторинг, КП, SOS
+    app.include_router(admin_results.router, prefix="/api") # админка: протоколы, CSV, штрафы
+    app.include_router(admin_setup.router, prefix="/api")   # админка: гонки, этапы, участники, трекеры
+    app.include_router(admin_push.router, prefix="/api")    # админка: push-рассылки
+    app.include_router(media.router, prefix="/api")         # новости, фото, закладки, push-согласие
 
     # Новые разделы подключаем здесь, например:
     # from app.api.routes import participants

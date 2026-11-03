@@ -165,7 +165,8 @@ class ResultChangeLog(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     # Протокол храним всегда: по нему смотрят историю. Ссылки на строку — без внешних ключей,
     # чтобы запись журнала пережила удаление строки.
-    protocol_id: Mapped[int] = mapped_column(ForeignKey("protocols.id", ondelete="CASCADE"), nullable=False, index=True)
+    # Пусто — правка штрафа: штраф относится к гонке, а не к протоколу этапа.
+    protocol_id: Mapped[Optional[int]] = mapped_column(ForeignKey("protocols.id", ondelete="CASCADE"), index=True)
     entity: Mapped[str] = mapped_column(String(30), nullable=False)
     entity_id: Mapped[Optional[int]] = mapped_column(Integer)
     race_participant_id: Mapped[Optional[int]] = mapped_column(Integer, index=True)

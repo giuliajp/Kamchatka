@@ -285,22 +285,73 @@
 SOS из Iridium360 пока не приходит (в API платформы его нет, вопрос в поддержке);
 таблица и адреса готовы.
 
-## Запланированные адреса (черновик)
+### Админка: протоколы, CSV, штрафы (готово: задачи 3.3, 3.4)
 
-Номера задач — из `docs/backend-plan.md`. Когда адрес готов, переносим его
-в раздел «Готовые адреса» с примером ответа.
+Порядок работы после этапа: загрузить CSV → проверить в админке → опубликовать → после
+решения главного судьи утвердить. Подробно для организатора — [csv-import.md](csv-import.md).
 
-### Административная панель (только после входа)
+| Метод и адрес | Что делает |
+|---|---|
+| `POST /api/admin/races/{id}/protocol-import` | Загрузить CSV (форма: `file`, `dry_run=true` — только проверить). Ошибка — `422`, в `error.details` все ошибочные строки, ничего не сохранено |
+| `GET /api/admin/races/{id}/protocols` | Все протоколы гонки, включая черновики |
+| `GET /api/admin/protocols/{id}` | Строки протокола и участники дисциплины без строки |
+| `PATCH /api/admin/protocols/{id}` | Шапка: погода, главный судья, секретарь |
+| `POST /api/admin/protocols/{id}/publish` | Опубликовать (появится в приложении; push болельщикам и о смене лидера) |
+| `POST /api/admin/protocols/{id}/finalize` | Утвердить (только опубликованный) |
+| `POST /api/admin/protocols/{id}/results` | Добавить строку: `race_participant_id`, `status`, `time` «ЧЧ:ММ:СС», собаки, место, примечание |
+| `PATCH /api/admin/stage-results/{id}` | Исправить строку предварительного протокола (`reason` — в журнал) |
+| `DELETE /api/admin/stage-results/{id}?reason=` | Удалить ошибочную строку предварительного протокола |
+| `POST /api/admin/stage-results/{id}/post-final-correction` | Исправить утверждённый: `reason` и `approved_by` обязательны; в приложении у строки пометка |
+| `GET/POST /api/admin/race-participants/{id}/penalties` | Штрафы за гонку: `time` «ЧЧ:ММ:СС», `rule_reference`, `reason` |
+| `DELETE /api/admin/penalties/{id}?reason=` | Отменить штраф |
+| `GET /api/admin/protocols/{id}/changes`, `GET /api/admin/races/{id}/changes` | Журнал правок (новые сверху) |
 
-| Метод и адрес | Что делает | Задача |
+### Админка: гонка, этапы, участники, трекеры (готово: задача 3.5)
+
+| Метод и адрес | Что делает |
+|---|---|
+| `GET/POST /api/admin/races`, `PATCH /api/admin/races/{id}` | Гонки; `status` upcoming/live/finished — режим приложения; `is_current: true` — гонка по умолчанию |
+| `GET/POST /api/admin/disciplines`, `PATCH .../{id}` | Справочник дисциплин |
+| `GET/POST /api/admin/races/{id}/stages`, `PATCH/DELETE /api/admin/stages/{id}` | Этапы. `status: live` — старт этапа, уходит push всем |
+| `PUT /api/admin/stages/{id}/route` | Трек из KML, KMZ или GPX (форма: `file`). Можно заменить во время гонки. В ответе — точки из файла для создания КП |
+| `DELETE /api/admin/stages/{id}/route` | Убрать трек |
+| `GET/POST /api/admin/checkpoints`, `PATCH .../{id}` | Места КП |
+| `GET/POST /api/admin/stages/{id}/checkpoints`, `PATCH/DELETE /api/admin/stage-checkpoints/{id}` | КП на этапе: порядок, роль, подпись, км, обязательная остановка |
+| `GET/POST /api/admin/races/{id}/participants` | Заявки; новый спортсмен или `participant_id` из прошлых лет |
+| `GET /api/admin/participants?q=` | Поиск спортсмена прошлых лет по фамилии |
+| `PATCH/DELETE /api/admin/race-participants/{id}` | Номер, дисциплина, регион, собаки, статус; удалить можно только без результатов, отметок и точек |
+| `PATCH /api/admin/participants/{id}` | Карточка: ФИО, фото (`photo_url`), биография |
+| `GET/POST /api/admin/trackers`, `PATCH .../{id}` | Трекеры (новые появляются сами из Iridium360, выключенными) |
+| `POST /api/admin/trackers/{id}/assign`, `.../unassign` | Выдать или забрать трекер; прошлая выдача закрывается |
+| `POST /api/admin/trackers/poll` | Запросить Iridium360 сейчас; в ответе — что реально пришло |
+
+### Push-уведомления (готово: задача 3.7)
+
+Отправляются через `notifications.sendMessage` VK (нужен `VK_SERVICE_TOKEN`). Ошибка VK не
+мешает действию организатора: она записывается в журнал рассылок.
+
+| Когда | Кому | Текст |
 |---|---|---|
-| `POST /api/admin/protocols/import` | Загрузка протокола файлом | 3.4 |
-| `PATCH /api/admin/stage-results/{id}` | Правка результата (с причиной → журнал) | 3.3 |
-| `POST /api/admin/protocols/{id}/publish` | Опубликовать протокол | 3.3 |
-| `POST /api/admin/protocols/{id}/finalize` | Утвердить окончательный | 3.3 |
-| `POST /api/admin/stage-results/{id}/post-final-correction` | Исправление окончательного (основание, кто утвердил) | 3.3 |
-| `GET /api/admin/protocols/{id}/changes` | Журнал правок протокола | 3.3 |
-| `/api/admin/participants`, `/stages`, `/checkpoints` | Создание, изменение, удаление | 3.5 |
-| `PUT /api/admin/stages/{id}/route` | Загрузить или заменить трек этапа (KML/GPX) | 3.5 |
-| `/api/admin/trackers` | Трекеры и привязка к участникам | 3.5 |
-| `PUT /api/admin/races/{id}/status` | Переключение режима гонки | 3.5 |
+| Этап переведён в `live` | всем, кто разрешил уведомления | «Этап 2 стартовал в 10:00 по Камчатке…» |
+| Внесена отметка судьи на КП | болельщикам участника | «№14 Попов: КП-2 пройден в 14:58 по Камчатке (отметка судьи)» |
+| Опубликован протокол | болельщикам каждого участника протокола | время или DNF/DNS по протоколу судей |
+| После публикации сменился лидер дисциплины | всем | «…лидирует №18 Шевчук (по протоколу судей)» |
+
+| Метод и адрес | Что делает |
+|---|---|
+| `POST /api/admin/push` | Ручная рассылка: `message` (до 254 символов), `race_participant_id` — только его болельщикам |
+| `GET /api/admin/push` | Журнал рассылок: получателей, доставлено, ошибка |
+| `POST /api/me/visit` | Фронтенд вызывает при запуске: запоминаем пользователя и `vk_are_notifications_enabled` |
+| `PUT /api/me/notifications` | `{"allowed": true}` — после `VKWebAppAllowNotifications` (или `false` после запрета) |
+
+### Новости, фото, сохранённые материалы (готово)
+
+| Метод и адрес | Что делает |
+|---|---|
+| `GET /api/news?offset=&count=` | Карточки-анонсы со стены сообщества: `title`, `preview`, `cover_url`, `date`, `owner_id`, `post_id`, `url`. Полный текст — во VK; «Поделиться» — репост `wall{owner_id}_{post_id}` через VK Bridge |
+| `GET /api/photos` | Фото из альбома `VK_PHOTO_ALBUM_ID`, сгруппированы по дням по Камчатке |
+| `GET/PUT /api/me/bookmarks`, `DELETE /api/me/bookmarks/{kind}/{item_id}` | «Сохранённые материалы»: `kind` news или photo, `item_id` как в ответах выше |
+
+Ответы VK держатся в памяти `VK_CACHE_SECONDS` (120 с). Если VK недоступен, отдаём последнее
+полученное с `"stale": true`; если данных ещё не было — `503`.
+

@@ -8,6 +8,7 @@
     from app.models import Race, RaceParticipant, Protocol
 """
 from app.models.admin import AdminUser
+from app.models.app_user import AppUser, Bookmark, PushMessage
 from app.models.content import (
     FaqItem,
     OrganizerContact,
@@ -61,5 +62,5 @@ __all__ = [
     "ProgramEvent", "FaqItem", "SpectatorLocation", "OrganizerContact",
     "ProgramEventType", "LocationType",
     # админка и болельщики
-    "AdminUser", "SupportSubscription",
+    "AdminUser", "SupportSubscription", "AppUser", "Bookmark", "PushMessage",
 ]

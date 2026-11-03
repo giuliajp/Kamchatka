@@ -1,0 +1,189 @@
+"""
+Новости и фото из сообщества VK, «Сохранённые материалы», учёт пользователей для push.
+
+- Новости — карточка-анонс (заголовок, обложка, дата, первые строки). Полный текст
+  открывается во VK по owner_id и post_id; «Поделиться» — репост исходной записи (VK Bridge).
+- Фото — из альбома сообщества (VK_PHOTO_ALBUM_ID), сгруппированы по дням по Камчатке.
+- Ответы VK держим в памяти VK_CACHE_SECONDS. Если VK недоступен — отдаём последнее,
+  что получили (с пометкой stale), а не пустой экран.
+"""
+
+from __future__ import annotations
+
+import time
+from datetime import datetime, timedelta, timezone
+from typing import Any
+from urllib.parse import parse_qsl
+
+from fastapi import APIRouter, Header, HTTPException, Query
+from pydantic import BaseModel, Field
+from sqlalchemy import delete, select
+from sqlalchemy.dialects.postgresql import insert
+
+from app.api.deps import SessionDep, VkUserDep
+from app.config import get_settings
+from app.models import AppUser, Bookmark
+from app.models.base import utcnow
+from app.schemas.common import ok
+from app.services import vk_api
+
+router = APIRouter(tags=["Новости, фото, профиль"])
+KAMCHATKA = timezone(timedelta(hours=12))
+PREVIEW_CHARS = 280
+
+_cache: dict[str, tuple[float, Any]] = {}
+
+
+async def cached(key: str, loader) -> tuple[Any, bool]:
+    """(данные, устарели ли). Ошибка VK при наличии старых данных — отдаём старые."""
+    now = time.monotonic()
+    hit = _cache.get(key)
+    if hit and now - hit[0] < get_settings().vk_cache_seconds:
+        return hit[1], False
+    try:
+        data = await loader()
+    except vk_api.VkApiError:
+        if hit:
+            return hit[1], True
+        raise HTTPException(status_code=503, detail="Новости VK временно недоступны, попробуйте позже") from None
+    _cache[key] = (now, data)
+    return data, False
+
+
+def group_owner() -> int:
+    group_id = get_settings().vk_group_id
+    if not group_id:
+        raise HTTPException(status_code=503, detail="Не задан VK_GROUP_ID в backend/.env")
+    return -abs(group_id)
+
+
+def biggest(sizes: list[dict]) -> str | None:
+    best = max(sizes or [], key=lambda s: (s.get("width") or 0) * (s.get("height") or 0), default=None)
+    return best.get("url") if best else None
+
+
+def cover_of(post: dict) -> str | None:
+    for attachment in post.get("attachments") or []:
+        kind = attachment.get("type")
+        if kind == "photo":
+            return biggest(attachment["photo"].get("sizes"))
+        if kind == "video":
+            images = attachment["video"].get("image") or []
+            return biggest(images)
+        if kind == "link" and attachment["link"].get("photo"):
+            return biggest(attachment["link"]["photo"].get("sizes"))
+    return None
+
+
+def news_item(post: dict) -> dict:
+    text = (post.get("text") or "").strip()
+    if not text and post.get("copy_history"):
+        text = (post["copy_history"][0].get("text") or "").strip()
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    title = lines[0][:150] if lines else ""
+    rest = " ".join(lines[1:])
+    preview = rest[:PREVIEW_CHARS] + ("…" if len(rest) > PREVIEW_CHARS else "")
+    owner, post_id = post["owner_id"], post["id"]
+    return {"id": f"{owner}_{post_id}", "owner_id": owner, "post_id": post_id,
+            "date": datetime.fromtimestamp(post["date"], tz=timezone.utc),
+            "title": title, "preview": preview, "cover_url": cover_of(post),
+            "is_pinned": bool(post.get("is_pinned")),
+            "url": f"https://vk.com/wall{owner}_{post_id}",
+            "likes": (post.get("likes") or {}).get("count"), "reposts": (post.get("reposts") or {}).get("count")}
+
+
+@router.get("/news", summary="Новости сообщества гонки (карточки-анонсы)")
+async def news(offset: int = Query(0, ge=0, le=1000), count: int = Query(20, ge=1, le=50)):
+    owner = group_owner()
+    data, stale = await cached(f"news:{offset}:{count}", lambda: vk_api.call(
+        "wall.get", owner_id=owner, offset=offset, count=count, filter="owner"))
+    items = [news_item(p) for p in (data or {}).get("items", []) if p.get("post_type", "post") == "post"]
+    return ok({"items": items, "total": (data or {}).get("count", 0), "stale": stale})
+
+
+@router.get("/photos", summary="Фотогалерея по дням гонки (по Камчатке)")
+async def photos(count: int = Query(200, ge=1, le=1000)):
+    owner = group_owner()
+    album = get_settings().vk_photo_album_id
+    data, stale = await cached(f"photos:{album}:{count}", lambda: vk_api.call(
+        "photos.get", owner_id=owner, album_id=album, rev=1, count=count))
+    days: dict[str, list[dict]] = {}
+    for p in (data or {}).get("items", []):
+        taken = datetime.fromtimestamp(p["date"], tz=timezone.utc)
+        day = taken.astimezone(KAMCHATKA).date().isoformat()
+        days.setdefault(day, []).append({
+            "id": f"{p['owner_id']}_{p['id']}", "date": taken, "text": p.get("text") or None,
+            "url": biggest(p.get("sizes")), "vk_url": f"https://vk.com/photo{p['owner_id']}_{p['id']}"})
+    return ok({"days": [{"date": d, "photos": items} for d, items in sorted(days.items(), reverse=True)],
+               "stale": stale})
+
+
+# ── Пользователь приложения ────────────────────────────────────────────
+
+class NotificationsAllowed(BaseModel):
+    allowed: bool
+
+
+async def save_user(session, user_id: int, allowed: bool | None) -> None:
+    values = {"vk_user_id": user_id, "last_seen_at": utcnow()}
+    if allowed is not None:
+        values["notifications_allowed"] = allowed
+    stmt = insert(AppUser).values(**values)
+    await session.execute(stmt.on_conflict_do_update(
+        index_elements=[AppUser.vk_user_id], set_={k: stmt.excluded[k] for k in values if k != "vk_user_id"}))
+    await session.commit()
+
+
+@router.post("/me/visit", summary="Отметить запуск приложения (вызывать при старте)")
+async def visit(session: SessionDep, user_id: VkUserDep,
+                x_vk_launch_params: str | None = Header(None)):
+    params = dict(parse_qsl((x_vk_launch_params or "").lstrip("?")))
+    flag = params.get("vk_are_notifications_enabled")
+    await save_user(session, user_id, None if flag is None else flag == "1")
+    return ok({"vk_user_id": user_id})
+
+
+@router.put("/me/notifications", summary="Пользователь разрешил или запретил уведомления в приложении")
+async def set_notifications(body: NotificationsAllowed, session: SessionDep, user_id: VkUserDep):
+    await save_user(session, user_id, body.allowed)
+    return ok({"notifications_allowed": body.allowed})
+
+
+# ── Закладки ───────────────────────────────────────────────────────────
+
+class BookmarkIn(BaseModel):
+    kind: str = Field(pattern=r"^(news|photo)$")
+    item_id: str = Field(pattern=r"^-?\d+_\d+$", description="Как в ответе /news или /photos: «-123_456»")
+    title: str | None = Field(None, max_length=300)
+    url: str | None = Field(None, max_length=1000)
+    image_url: str | None = Field(None, max_length=1000)
+
+
+def bookmark_out(b: Bookmark) -> dict:
+    return {"kind": b.kind, "item_id": b.item_id, "title": b.title, "url": b.url, "image_url": b.image_url,
+            "created_at": b.created_at}
+
+
+@router.get("/me/bookmarks", summary="Сохранённые материалы")
+async def list_bookmarks(session: SessionDep, user_id: VkUserDep):
+    items = await session.scalars(select(Bookmark).where(Bookmark.vk_user_id == user_id)
+                                  .order_by(Bookmark.created_at.desc(), Bookmark.id.desc()))
+    return ok([bookmark_out(b) for b in items])
+
+
+@router.put("/me/bookmarks", summary="Сохранить новость или фото (повтор ничего не меняет)")
+async def add_bookmark(body: BookmarkIn, session: SessionDep, user_id: VkUserDep):
+    stmt = insert(Bookmark).values(vk_user_id=user_id, created_at=utcnow(), **body.model_dump())
+    await session.execute(stmt.on_conflict_do_nothing(constraint="uq_bookmarks_user_item"))
+    await session.commit()
+    item = await session.scalar(select(Bookmark).where(
+        Bookmark.vk_user_id == user_id, Bookmark.kind == body.kind, Bookmark.item_id == body.item_id))
+    return ok(bookmark_out(item))
+
+
+@router.delete("/me/bookmarks/{kind}/{item_id}", summary="Убрать из сохранённых")
+async def delete_bookmark(kind: str, item_id: str, session: SessionDep, user_id: VkUserDep):
+    result = await session.execute(delete(Bookmark).where(
+        Bookmark.vk_user_id == user_id, Bookmark.kind == kind, Bookmark.item_id == item_id))
+    await session.commit()
+    return ok({"deleted": result.rowcount})

@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from alembic import command
+from alembic.script import ScriptDirectory
 from alembic.config import Config
 from app.models import OrganizerContact, ProgramEvent
 from scripts.seed_content import seed_content
@@ -78,7 +79,7 @@ def verify_roundtrip(connection):
     """)
     )
     command.upgrade(config, "head")
-    assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0006"
+    assert connection.scalar(text("SELECT version_num FROM alembic_version")) == ScriptDirectory.from_config(config).get_current_head()
     for table in ("program_events", "spectator_locations"):
         assert connection.scalar(text(f"SELECT count(*) FROM {table}")) == 0
     for table in ("races", "faq_items", "admin_users"):

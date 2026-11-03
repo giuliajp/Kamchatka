@@ -316,6 +316,18 @@ python backend/scripts/create_admin.py --login ivanov --name "Иван Иван�
 строку `VK_DEV_USER_ID=1` — запросы без параметров запуска будут от пользователя 1.
 В production (`ENVIRONMENT=production`) эта настройка не действует.
 
+## Протоколы из Excel судей
+
+Админка → `POST /api/admin/races/{id}/protocol-import` (файл CSV). Как сохранить лист и что
+проверяется — [docs/csv-import.md](../docs/csv-import.md). Проверить в Swagger: **Authorize**,
+затем у адреса **Try it out** → выбрать файл → `dry_run` = true.
+
+## VK: push, новости, фото
+
+В `backend/.env` нужны `VK_SERVICE_TOKEN` (сервисный ключ из настроек мини-приложения)
+и `VK_GROUP_ID` (числовой id сообщества avacha.race без минуса). Без них эти адреса отвечают
+понятной ошибкой, остальное приложение работает. Журнал рассылок — `GET /api/admin/push`.
+
 ## Примеры контента
 
 Для нового seed нужна миграция `0006` (после `0005`) и хотя бы одна гонка.

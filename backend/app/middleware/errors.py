@@ -4,6 +4,7 @@
 Чтобы вернуть ошибку из эндпоинта:
     from fastapi import HTTPException
     raise HTTPException(status_code=404, detail="Участник не найден")
+    raise HTTPException(status_code=422, detail={"message": "...", "details": ["строка 5: ..."]})
 """
 
 import logging
@@ -25,6 +26,7 @@ ERRORS = {
     405: ("method_not_allowed", "Этот метод не поддерживается для данного адреса"),
     422: ("validation_error", "Данные заполнены неверно"),
     429: ("too_many_requests", "Слишком много запросов, попробуйте позже"),
+    503: ("service_unavailable", "Сервис временно недоступен"),
 }
 
 
@@ -40,6 +42,11 @@ def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(StarletteHTTPException)
     async def handle_http_error(request: Request, exc: StarletteHTTPException):
         code, default_message = ERRORS.get(exc.status_code, ("error", "Ошибка"))
+        # detail={"message": "...", "details": [...]} — ошибка со списком подробностей
+        # (например, все ошибочные строки загруженного протокола).
+        if isinstance(exc.detail, dict):
+            return error_response(exc.status_code, code, exc.detail.get("message", default_message),
+                                  exc.detail.get("details"))
         # Стандартные английские тексты заменяем русскими, свои (из detail) оставляем.
         message = exc.detail if isinstance(exc.detail, str) and exc.detail not in (
             "Not Found", "Method Not Allowed",
