@@ -4,7 +4,16 @@ import { Countdown, StageContent } from '../src/screens/Map/StageContent';
 import { TopParticipantsCard } from '../src/components/TopParticipantsCard';
 import { AppProviders } from '../src/app/AppProviders';
 import { stage } from './fixtures';
-afterEach(() => { vi.useRealTimers(); });
+afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
+it('keeps media off the finished-stage map even when demo features are enabled', () => {
+  vi.stubEnv('VITE_MOCK_MISSING_FEATURES', 'true');
+  render(<AppProviders><StageContent stage={{ ...stage, status: 'finished' }} onStage={vi.fn()} onResults={vi.fn()} /></AppProviders>);
+  expect(screen.getByRole('button', { name: 'Результаты этапа' })).toBeVisible();
+  expect(screen.queryByText(/Демонстрационные материалы/)).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: /Фото .* этапа/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /Смотреть видео/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /Открыть .*фото/ })).not.toBeInTheDocument();
+});
 it('counts from the actual clock and never changes stage status at zero', () => {
   vi.useFakeTimers(); vi.setSystemTime('2026-10-27T00:00:00Z');
   const { unmount } = render(<Countdown startAt="2026-10-27T00:00:02Z" />);
