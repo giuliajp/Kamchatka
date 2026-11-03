@@ -44,3 +44,7 @@ __pycache__/
 .mypy_cache/
 .playwright-mcp/
 *.egg-info/
+
+# UI verification artifacts
+**/coverage/
+**/storybook-static/

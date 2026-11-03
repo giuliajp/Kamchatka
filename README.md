@@ -28,12 +28,13 @@ kamchatka-avacha/
    проекта. Текущий интерфейс и источники шрифтов описаны в `DESIGN.md`.
 4. Каждая папка (`frontend/`, `backend/`, `admin-panel/`) — со своим README и инструкцией по запуску.
 
-Фронтенд подключён к публичному API: карта, участники и результаты. Поддержка,
-подписки и медиа дополнены локальными моками, отключаемыми через `VITE_MOCK_MISSING_FEATURES`.
-Запуск — [frontend/README.md](frontend/README.md), результаты проверки —
-[docs/frontend-integration.md](docs/frontend-integration.md).
-Глубокое ревью, исправления и ограничения поставки —
-[docs/frontend-review.md](docs/frontend-review.md).
+Мини-приложение и административная панель подключены к готовым API. Поддержка,
+уведомления, закладки и судейские отметки работают через сервер; фикстуры доступны
+только в тестах и Storybook. Backend и миграции этой поставкой не изменяются.
+
+Запуск: [frontend](frontend/README.md), [admin-panel](admin-panel/README.md).
+Актуальные возможности, проверки и ограничения: [карта готовности](docs/frontend-admin-completion.md).
+Предыдущее ревью PR #4 сохранено в [историческом отчёте](docs/frontend-review.md).
 
 ## Документация бэкенда
 
