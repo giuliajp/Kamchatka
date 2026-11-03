@@ -1,0 +1,1421 @@
+{
+  "/admin/me": {
+    "id": 1,
+    "login": "ui-test",
+    "full_name": "Тестовый организатор"
+  },
+  "/admin/disciplines": [
+    {
+      "id": 1,
+      "code": "ski_2",
+      "name": "Лыжи — длинная дистанция, 2 собаки",
+      "equipment": "ski",
+      "dogs_min": 2,
+      "dogs_max": 2,
+      "sort_order": 1,
+      "is_active": true
+    },
+    {
+      "id": 2,
+      "code": "sled_8",
+      "name": "Нарта — длинная дистанция, 8 собак",
+      "equipment": "sled",
+      "dogs_min": 8,
+      "dogs_max": 8,
+      "sort_order": 2,
+      "is_active": true
+    },
+    {
+      "id": 3,
+      "code": "sled_8plus",
+      "name": "Нарта — длинная дистанция, более 8 собак",
+      "equipment": "sled",
+      "dogs_min": 9,
+      "dogs_max": null,
+      "sort_order": 3,
+      "is_active": true
+    }
+  ],
+  "/me/visit": {
+    "vk_user_id": 42
+  },
+  "/race-participants/1/support": {
+    "race_participant_id": 1,
+    "supporters_count": 1,
+    "change_24h": 1,
+    "is_supported": true,
+    "notifications_enabled": false
+  },
+  "/me/supports": [
+    {
+      "race_participant_id": 1,
+      "race_id": 1,
+      "start_number": 14,
+      "full_name": "Тестова Алиса",
+      "photo_url": null,
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "notifications_enabled": true,
+      "supported_since": "2026-11-03T14:03:38.622246Z"
+    }
+  ],
+  "/me/notifications": {
+    "notifications_allowed": true
+  },
+  "/me/bookmarks": [
+    {
+      "kind": "news",
+      "item_id": "-1_1",
+      "title": "Тестовая новость",
+      "url": "https://vk.com/wall-1_1",
+      "image_url": null,
+      "created_at": "2026-11-03T14:03:38.645091+00:00"
+    }
+  ],
+  "state:draft": {
+    "id": 2,
+    "stage": {
+      "id": 1,
+      "number": 1,
+      "name": "Тест маршрута",
+      "distance_km": 40.0,
+      "start_at": "2026-11-02T21:00:00+00:00",
+      "finish_at": null,
+      "status": "live"
+    },
+    "discipline": {
+      "id": 2,
+      "code": "sled_8",
+      "name": "Нарта — длинная дистанция, 8 собак"
+    },
+    "status": "preliminary",
+    "published_at": null,
+    "finalized_at": null,
+    "finalized_by": null,
+    "weather": null,
+    "chief_judge": null,
+    "chief_secretary": null,
+    "source_filename": null,
+    "results_count": 1
+  },
+  "state:published": {
+    "id": 2,
+    "stage": {
+      "id": 1,
+      "number": 1,
+      "name": "Тест маршрута",
+      "distance_km": 40.0,
+      "start_at": "2026-11-02T21:00:00+00:00",
+      "finish_at": null,
+      "status": "live"
+    },
+    "discipline": {
+      "id": 2,
+      "code": "sled_8",
+      "name": "Нарта — длинная дистанция, 8 собак"
+    },
+    "status": "preliminary",
+    "published_at": "2026-11-03T14:03:38.731005+00:00",
+    "finalized_at": null,
+    "finalized_by": null,
+    "weather": null,
+    "chief_judge": null,
+    "chief_secretary": null,
+    "source_filename": null,
+    "results_count": 1,
+    "results": [
+      {
+        "id": 2,
+        "race_participant_id": 1,
+        "start_number": 14,
+        "full_name": "Тестова Алиса",
+        "region": "Камчатский край",
+        "status": "finished",
+        "time": "27:01:02",
+        "time_seconds": 97262,
+        "dogs_at_start": 8,
+        "dogs_at_finish": 7,
+        "place": 1,
+        "note": null,
+        "is_corrected_after_final": false
+      }
+    ],
+    "without_result": [
+      {
+        "race_participant_id": 2,
+        "start_number": 22,
+        "full_name": "Примеров Иван"
+      },
+      {
+        "race_participant_id": 3,
+        "start_number": 31,
+        "full_name": "Проверкина Анна"
+      }
+    ]
+  },
+  "/admin/races": [
+    {
+      "id": 1,
+      "name": "Авача · тестовый сезон",
+      "year": 2026,
+      "status": "live",
+      "is_current": true,
+      "start_date": null,
+      "end_date": null,
+      "location": "Камчатка",
+      "tracking_interval_minutes": 20,
+      "stale_after_minutes": 45
+    },
+    {
+      "id": 2,
+      "name": "Авача · архивный тест",
+      "year": 2025,
+      "status": "upcoming",
+      "is_current": false,
+      "start_date": null,
+      "end_date": null,
+      "location": null,
+      "tracking_interval_minutes": 20,
+      "stale_after_minutes": 45
+    }
+  ],
+  "/admin/races/1/stages": [
+    {
+      "id": 1,
+      "number": 1,
+      "name": "Тест маршрута",
+      "distance_km": 40.0,
+      "start_at": "2026-11-02T21:00:00+00:00",
+      "finish_at": null,
+      "status": "live",
+      "race_id": 1,
+      "description": "Тестовые данные для проверки интерфейсов.",
+      "tracking_interval_minutes": null,
+      "stale_after_minutes": null,
+      "route_source_filename": "test.gpx",
+      "route_updated_at": "2026-11-03T14:03:38.544641+00:00",
+      "route_length_km": 25.92
+    }
+  ],
+  "/admin/checkpoints": [
+    {
+      "id": 1,
+      "name": "Тестовый КП",
+      "description": null,
+      "latitude": 53.2,
+      "longitude": 158.5,
+      "elevation_m": null
+    }
+  ],
+  "/admin/stages/1/checkpoints": [
+    {
+      "id": 1,
+      "stage_id": 1,
+      "checkpoint_id": 1,
+      "order_index": 1,
+      "role": "checkpoint",
+      "label": "КП-1",
+      "km_from_start": 20.0,
+      "required_rest_minutes": 30
+    }
+  ],
+  "/admin/races/1/participants": [
+    {
+      "id": 1,
+      "race_id": 1,
+      "start_number": 14,
+      "status": "finished",
+      "region": "Камчатский край",
+      "dogs_count": 8,
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "participant": {
+        "id": 1,
+        "last_name": "Тестова",
+        "first_name": "Алиса",
+        "middle_name": null,
+        "full_name": "Тестова Алиса",
+        "birth_year": 1990,
+        "photo_url": null,
+        "bio": "Тестовая карточка участника."
+      }
+    },
+    {
+      "id": 2,
+      "race_id": 1,
+      "start_number": 22,
+      "status": "registered",
+      "region": "Камчатский край",
+      "dogs_count": 8,
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "participant": {
+        "id": 2,
+        "last_name": "Примеров",
+        "first_name": "Иван",
+        "middle_name": null,
+        "full_name": "Примеров Иван",
+        "birth_year": 1990,
+        "photo_url": null,
+        "bio": "Тестовая карточка участника."
+      }
+    },
+    {
+      "id": 3,
+      "race_id": 1,
+      "start_number": 31,
+      "status": "registered",
+      "region": "Камчатский край",
+      "dogs_count": 8,
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "participant": {
+        "id": 3,
+        "last_name": "Проверкина",
+        "first_name": "Анна",
+        "middle_name": null,
+        "full_name": "Проверкина Анна",
+        "birth_year": 1990,
+        "photo_url": null,
+        "bio": "Тестовая карточка участника."
+      }
+    }
+  ],
+  "/admin/participants?q=Тест": [
+    {
+      "id": 1,
+      "full_name": "Тестова Алиса",
+      "birth_year": 1990
+    }
+  ],
+  "/admin/trackers": [
+    {
+      "id": 1,
+      "imei": "123456789012345",
+      "name": "Тестовый трекер",
+      "is_active": true,
+      "assigned_to": {
+        "assignment_id": 1,
+        "race_participant_id": 1,
+        "race_id": 1,
+        "start_number": 14,
+        "full_name": "Тестова Алиса",
+        "stage_id": 1,
+        "valid_from": "2026-11-03T14:03:38.605092+00:00"
+      }
+    }
+  ],
+  "/admin/stages/1/monitoring": {
+    "stage": {
+      "id": 1,
+      "number": 1,
+      "name": "Тест маршрута",
+      "distance_km": 40.0,
+      "start_at": "2026-11-02T21:00:00Z",
+      "finish_at": null,
+      "status": "live"
+    },
+    "race_id": 1,
+    "generated_at": "2026-11-03T14:03:38.843831Z",
+    "tracking_interval_minutes": 20,
+    "stale_after_minutes": 45,
+    "checkpoints": [
+      {
+        "stage_checkpoint_id": 1,
+        "order_index": 1,
+        "role": "checkpoint",
+        "label": "КП-1",
+        "name": "Тестовый КП"
+      }
+    ],
+    "summary": {
+      "total": 3,
+      "sos": 0,
+      "overdue": 1,
+      "no_tracker": 2,
+      "ok": 0
+    },
+    "rows": [
+      {
+        "race_participant_id": 1,
+        "start_number": 14,
+        "full_name": "Тестова Алиса",
+        "discipline": {
+          "id": 2,
+          "code": "sled_8",
+          "name": "Нарта — длинная дистанция, 8 собак"
+        },
+        "status": "finished",
+        "tracker": {
+          "imei": "123456789012345",
+          "name": "Тестовый трекер"
+        },
+        "last_position": null,
+        "minutes_since_last": null,
+        "is_overdue": true,
+        "active_alerts": [],
+        "passes": [
+          {
+            "id": 1,
+            "race_participant_id": 1,
+            "stage_checkpoint_id": 1,
+            "arrived_at": "2026-11-03T00:00:00Z",
+            "departed_at": "2026-11-03T00:30:00Z",
+            "entered_by": "Тестовый организатор",
+            "note": "Проверка ввода по Камчатке",
+            "updated_at": "2026-11-03T14:03:38.587899Z"
+          }
+        ]
+      },
+      {
+        "race_participant_id": 2,
+        "start_number": 22,
+        "full_name": "Примеров Иван",
+        "discipline": {
+          "id": 2,
+          "code": "sled_8",
+          "name": "Нарта — длинная дистанция, 8 собак"
+        },
+        "status": "registered",
+        "tracker": null,
+        "last_position": null,
+        "minutes_since_last": null,
+        "is_overdue": false,
+        "active_alerts": [],
+        "passes": []
+      },
+      {
+        "race_participant_id": 3,
+        "start_number": 31,
+        "full_name": "Проверкина Анна",
+        "discipline": {
+          "id": 2,
+          "code": "sled_8",
+          "name": "Нарта — длинная дистанция, 8 собак"
+        },
+        "status": "registered",
+        "tracker": null,
+        "last_position": null,
+        "minutes_since_last": null,
+        "is_overdue": false,
+        "active_alerts": [],
+        "passes": []
+      }
+    ]
+  },
+  "/admin/stages/1/checkpoint-passes/log": [
+    {
+      "id": 1,
+      "checkpoint_pass_id": 1,
+      "race_participant_id": 1,
+      "stage_checkpoint_id": 1,
+      "action": "create",
+      "before": null,
+      "after": {
+        "arrived_at": "2026-11-03T12:00:00+12:00",
+        "departed_at": "2026-11-03T12:30:00+12:00",
+        "note": "Проверка ввода по Камчатке"
+      },
+      "changed_by": "Тестовый организатор",
+      "changed_at": "2026-11-03T14:03:38.589338Z"
+    }
+  ],
+  "/admin/races/1/alerts?active=false": [],
+  "/admin/races/1/protocols": [
+    {
+      "id": 2,
+      "stage": {
+        "id": 1,
+        "number": 1,
+        "name": "Тест маршрута",
+        "distance_km": 40.0,
+        "start_at": "2026-11-02T21:00:00+00:00",
+        "finish_at": null,
+        "status": "live"
+      },
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "status": "final",
+      "published_at": "2026-11-03T14:03:38.731005+00:00",
+      "finalized_at": "2026-11-03T14:03:38.768091+00:00",
+      "finalized_by": "Тестовый организатор",
+      "weather": null,
+      "chief_judge": null,
+      "chief_secretary": null,
+      "source_filename": null,
+      "results_count": 1
+    }
+  ],
+  "/admin/protocols/2": {
+    "id": 2,
+    "stage": {
+      "id": 1,
+      "number": 1,
+      "name": "Тест маршрута",
+      "distance_km": 40.0,
+      "start_at": "2026-11-02T21:00:00+00:00",
+      "finish_at": null,
+      "status": "live"
+    },
+    "discipline": {
+      "id": 2,
+      "code": "sled_8",
+      "name": "Нарта — длинная дистанция, 8 собак"
+    },
+    "status": "final",
+    "published_at": "2026-11-03T14:03:38.731005+00:00",
+    "finalized_at": "2026-11-03T14:03:38.768091+00:00",
+    "finalized_by": "Тестовый организатор",
+    "weather": null,
+    "chief_judge": null,
+    "chief_secretary": null,
+    "source_filename": null,
+    "results_count": 1,
+    "results": [
+      {
+        "id": 2,
+        "race_participant_id": 1,
+        "start_number": 14,
+        "full_name": "Тестова Алиса",
+        "region": "Камчатский край",
+        "status": "finished",
+        "time": "27:02:02",
+        "time_seconds": 97322,
+        "dogs_at_start": 8,
+        "dogs_at_finish": 7,
+        "place": 1,
+        "note": null,
+        "is_corrected_after_final": true
+      }
+    ],
+    "without_result": [
+      {
+        "race_participant_id": 2,
+        "start_number": 22,
+        "full_name": "Примеров Иван"
+      },
+      {
+        "race_participant_id": 3,
+        "start_number": 31,
+        "full_name": "Проверкина Анна"
+      }
+    ]
+  },
+  "/admin/protocols/2/changes": [
+    {
+      "id": 5,
+      "protocol_id": 2,
+      "entity": "stage_result",
+      "entity_id": 2,
+      "race_participant_id": 1,
+      "action": "update",
+      "field": "final_time_seconds",
+      "old_value": "97262",
+      "new_value": "97322",
+      "changed_by": "Тестовый организатор",
+      "changed_at": "2026-11-03T14:03:38.794404+00:00",
+      "reason": "Тест исправления",
+      "is_post_final": true,
+      "approved_by": "Тестовый судья"
+    },
+    {
+      "id": 4,
+      "protocol_id": 2,
+      "entity": "protocol",
+      "entity_id": 2,
+      "race_participant_id": null,
+      "action": "update",
+      "field": "status",
+      "old_value": "preliminary",
+      "new_value": "final",
+      "changed_by": "Тестовый организатор",
+      "changed_at": "2026-11-03T14:03:38.769764+00:00",
+      "reason": null,
+      "is_post_final": false,
+      "approved_by": null
+    },
+    {
+      "id": 3,
+      "protocol_id": 2,
+      "entity": "protocol",
+      "entity_id": 2,
+      "race_participant_id": null,
+      "action": "update",
+      "field": "published_at",
+      "old_value": null,
+      "new_value": "2026-11-03T14:03:38.731005+00:00",
+      "changed_by": "Тестовый организатор",
+      "changed_at": "2026-11-03T14:03:38.733163+00:00",
+      "reason": null,
+      "is_post_final": false,
+      "approved_by": null
+    },
+    {
+      "id": 2,
+      "protocol_id": 2,
+      "entity": "stage_result",
+      "entity_id": 2,
+      "race_participant_id": 1,
+      "action": "update",
+      "field": "place",
+      "old_value": null,
+      "new_value": "1",
+      "changed_by": "Тестовый организатор",
+      "changed_at": "2026-11-03T14:03:38.695326+00:00",
+      "reason": "Импорт protocol.csv",
+      "is_post_final": false,
+      "approved_by": null
+    }
+  ],
+  "/admin/races/1/changes": [
+    {
+      "id": 6,
+      "protocol_id": null,
+      "entity": "penalty",
+      "entity_id": 1,
+      "race_participant_id": 1,
+      "action": "create",
+      "field": null,
+      "old_value": null,
+      "new_value": "00:02:00 Тест",
+      "changed_by": "Тестовый организатор",
+      "changed_at": "2026-11-03T14:03:38.804492+00:00",
+      "reason": "Проверка журнала",
+      "is_post_final": false,
+      "approved_by": null
+    },
+    {
+      "id": 5,
+      "protocol_id": 2,
+      "entity": "stage_result",
+      "entity_id": 2,
+      "race_participant_id": 1,
+      "action": "update",
+      "field": "final_time_seconds",
+      "old_value": "97262",
+      "new_value": "97322",
+      "changed_by": "Тестовый организатор",
+      "changed_at": "2026-11-03T14:03:38.794404+00:00",
+      "reason": "Тест исправления",
+      "is_post_final": true,
+      "approved_by": "Тестовый судья"
+    },
+    {
+      "id": 4,
+      "protocol_id": 2,
+      "entity": "protocol",
+      "entity_id": 2,
+      "race_participant_id": null,
+      "action": "update",
+      "field": "status",
+      "old_value": "preliminary",
+      "new_value": "final",
+      "changed_by": "Тестовый организатор",
+      "changed_at": "2026-11-03T14:03:38.769764+00:00",
+      "reason": null,
+      "is_post_final": false,
+      "approved_by": null
+    },
+    {
+      "id": 3,
+      "protocol_id": 2,
+      "entity": "protocol",
+      "entity_id": 2,
+      "race_participant_id": null,
+      "action": "update",
+      "field": "published_at",
+      "old_value": null,
+      "new_value": "2026-11-03T14:03:38.731005+00:00",
+      "changed_by": "Тестовый организатор",
+      "changed_at": "2026-11-03T14:03:38.733163+00:00",
+      "reason": null,
+      "is_post_final": false,
+      "approved_by": null
+    },
+    {
+      "id": 2,
+      "protocol_id": 2,
+      "entity": "stage_result",
+      "entity_id": 2,
+      "race_participant_id": 1,
+      "action": "update",
+      "field": "place",
+      "old_value": null,
+      "new_value": "1",
+      "changed_by": "Тестовый организатор",
+      "changed_at": "2026-11-03T14:03:38.695326+00:00",
+      "reason": "Импорт protocol.csv",
+      "is_post_final": false,
+      "approved_by": null
+    }
+  ],
+  "/admin/race-participants/1/penalties": [
+    {
+      "id": 1,
+      "race_participant_id": 1,
+      "seconds": 120,
+      "time": "00:02:00",
+      "rule_reference": "Тест",
+      "reason": "Тестовое нарушение"
+    }
+  ],
+  "/admin/push": [
+    {
+      "id": 5,
+      "segment": "all",
+      "message": "Нарта — длинная дистанция, 8 собак: после этапа 1 лидирует №14 Тестова (по протоколу судей).",
+      "fragment": "results",
+      "trigger": "leader",
+      "recipients": 1,
+      "delivered": 0,
+      "error": "Не задан VK_SERVICE_TOKEN в backend/.env",
+      "created_by": "Тестовый организатор",
+      "created_at": "2026-11-03T14:03:38.743073+00:00"
+    },
+    {
+      "id": 4,
+      "segment": "supporters:1",
+      "message": "Этап 1, Нарта — длинная дистанция, 8 собак: протокол судей опубликован. №14 Тестова — время 27:01:02.",
+      "fragment": "participant=1",
+      "trigger": "protocol",
+      "recipients": 0,
+      "delivered": 0,
+      "error": null,
+      "created_by": "Тестовый организатор",
+      "created_at": "2026-11-03T14:03:38.741000+00:00"
+    },
+    {
+      "id": 3,
+      "segment": "all",
+      "message": "Тест локального журнала, интеграция VK отключена",
+      "fragment": "results",
+      "trigger": "manual",
+      "recipients": 1,
+      "delivered": 0,
+      "error": "Не задан VK_SERVICE_TOKEN в backend/.env",
+      "created_by": "Тестовый организатор",
+      "created_at": "2026-11-03T14:03:38.657975+00:00"
+    },
+    {
+      "id": 2,
+      "segment": "supporters:1",
+      "message": "№14 Тестова: КП-1 пройден в 12:00 по Камчатке (отметка судьи).",
+      "fragment": "participant=1",
+      "trigger": "checkpoint",
+      "recipients": 0,
+      "delivered": 0,
+      "error": null,
+      "created_by": "Тестовый организатор",
+      "created_at": "2026-11-03T14:03:38.592453+00:00"
+    },
+    {
+      "id": 1,
+      "segment": "all",
+      "message": "Этап 1 «Тест маршрута» стартовал в 09:00 по Камчатке. Положение участников — на карте.",
+      "fragment": "map&stage=1",
+      "trigger": "stage_start",
+      "recipients": 0,
+      "delivered": 0,
+      "error": null,
+      "created_by": "Тестовый организатор",
+      "created_at": "2026-11-03T14:03:38.538653+00:00"
+    }
+  ],
+  "/races": [
+    {
+      "id": 1,
+      "name": "Авача · тестовый сезон",
+      "year": 2026,
+      "status": "live",
+      "is_current": true,
+      "start_date": null,
+      "end_date": null,
+      "location": "Камчатка"
+    },
+    {
+      "id": 2,
+      "name": "Авача · архивный тест",
+      "year": 2025,
+      "status": "upcoming",
+      "is_current": false,
+      "start_date": null,
+      "end_date": null,
+      "location": null
+    }
+  ],
+  "/races/current": {
+    "id": 1,
+    "name": "Авача · тестовый сезон",
+    "year": 2026,
+    "status": "live",
+    "is_current": true,
+    "start_date": null,
+    "end_date": null,
+    "location": "Камчатка",
+    "disciplines": [
+      {
+        "id": 1,
+        "code": "ski_2",
+        "name": "Лыжи — длинная дистанция, 2 собаки",
+        "participants_count": 0
+      },
+      {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак",
+        "participants_count": 3
+      },
+      {
+        "id": 3,
+        "code": "sled_8plus",
+        "name": "Нарта — длинная дистанция, более 8 собак",
+        "participants_count": 0
+      }
+    ],
+    "stages": [
+      {
+        "id": 1,
+        "number": 1,
+        "name": "Тест маршрута",
+        "distance_km": 40.0,
+        "start_at": "2026-11-02T21:00:00Z",
+        "finish_at": null,
+        "status": "live"
+      }
+    ]
+  },
+  "/races/1": {
+    "id": 1,
+    "name": "Авача · тестовый сезон",
+    "year": 2026,
+    "status": "live",
+    "is_current": true,
+    "start_date": null,
+    "end_date": null,
+    "location": "Камчатка",
+    "disciplines": [
+      {
+        "id": 1,
+        "code": "ski_2",
+        "name": "Лыжи — длинная дистанция, 2 собаки",
+        "participants_count": 0
+      },
+      {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак",
+        "participants_count": 3
+      },
+      {
+        "id": 3,
+        "code": "sled_8plus",
+        "name": "Нарта — длинная дистанция, более 8 собак",
+        "participants_count": 0
+      }
+    ],
+    "stages": [
+      {
+        "id": 1,
+        "number": 1,
+        "name": "Тест маршрута",
+        "distance_km": 40.0,
+        "start_at": "2026-11-02T21:00:00Z",
+        "finish_at": null,
+        "status": "live"
+      }
+    ]
+  },
+  "/stages/1": {
+    "id": 1,
+    "number": 1,
+    "name": "Тест маршрута",
+    "distance_km": 40.0,
+    "start_at": "2026-11-02T21:00:00Z",
+    "finish_at": null,
+    "status": "live",
+    "race_id": 1,
+    "description": "Тестовые данные для проверки интерфейсов.",
+    "checkpoints": [
+      {
+        "id": 1,
+        "order_index": 1,
+        "role": "checkpoint",
+        "label": "КП-1",
+        "name": "Тестовый КП",
+        "latitude": 53.2,
+        "longitude": 158.5,
+        "elevation_m": null,
+        "km_from_start": 20.0,
+        "required_rest_minutes": 30,
+        "segment_description": null
+      }
+    ],
+    "route_geojson": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          158.4,
+          53.1,
+          100.0
+        ],
+        [
+          158.5,
+          53.2,
+          300.0
+        ],
+        [
+          158.6,
+          53.3,
+          180.0
+        ]
+      ]
+    },
+    "route_updated_at": "2026-11-03T14:03:38.544641Z",
+    "elevation_profile": [
+      {
+        "km": 0.0,
+        "elevation_m": 100.0
+      },
+      {
+        "km": 12.966,
+        "elevation_m": 300.0
+      },
+      {
+        "km": 25.924,
+        "elevation_m": 180.0
+      }
+    ]
+  },
+  "/races/1/participants": [
+    {
+      "race_participant_id": 1,
+      "participant_id": 1,
+      "start_number": 14,
+      "full_name": "Тестова Алиса",
+      "last_name": "Тестова",
+      "first_name": "Алиса",
+      "photo_url": null,
+      "region": "Камчатский край",
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "dogs_count": 8,
+      "status": "finished",
+      "place": 1,
+      "total_time_seconds": 97322,
+      "total_time": "27:02:02",
+      "supporters_count": 1,
+      "supporters_change_24h": 1
+    },
+    {
+      "race_participant_id": 2,
+      "participant_id": 2,
+      "start_number": 22,
+      "full_name": "Примеров Иван",
+      "last_name": "Примеров",
+      "first_name": "Иван",
+      "photo_url": null,
+      "region": "Камчатский край",
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "dogs_count": 8,
+      "status": "dns",
+      "place": null,
+      "total_time_seconds": null,
+      "total_time": null,
+      "supporters_count": 0,
+      "supporters_change_24h": 0
+    },
+    {
+      "race_participant_id": 3,
+      "participant_id": 3,
+      "start_number": 31,
+      "full_name": "Проверкина Анна",
+      "last_name": "Проверкина",
+      "first_name": "Анна",
+      "photo_url": null,
+      "region": "Камчатский край",
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "dogs_count": 8,
+      "status": "dns",
+      "place": null,
+      "total_time_seconds": null,
+      "total_time": null,
+      "supporters_count": 0,
+      "supporters_change_24h": 0
+    }
+  ],
+  "/participants/1": {
+    "id": 1,
+    "full_name": "Тестова Алиса",
+    "last_name": "Тестова",
+    "first_name": "Алиса",
+    "middle_name": null,
+    "photo_url": null,
+    "bio": "Тестовая карточка участника.",
+    "races": [
+      {
+        "race": {
+          "id": 1,
+          "name": "Авача · тестовый сезон",
+          "year": 2026,
+          "status": "live",
+          "is_current": true,
+          "start_date": null,
+          "end_date": null,
+          "location": "Камчатка"
+        },
+        "race_participant_id": 1,
+        "start_number": 14,
+        "region": "Камчатский край",
+        "discipline": {
+          "id": 2,
+          "code": "sled_8",
+          "name": "Нарта — длинная дистанция, 8 собак"
+        },
+        "dogs_count": 8,
+        "status": "finished",
+        "place": 1,
+        "total_time_seconds": 97322,
+        "total_time": "27:02:02",
+        "gap_to_leader_seconds": 0,
+        "penalty_total_seconds": 120
+      }
+    ]
+  },
+  "/races/1/positions": {
+    "stage": {
+      "id": 1,
+      "number": 1,
+      "name": "Тест маршрута",
+      "distance_km": 40.0,
+      "start_at": "2026-11-02T21:00:00Z",
+      "finish_at": null,
+      "status": "live"
+    },
+    "generated_at": "2026-11-03T14:03:38.953601Z",
+    "tracking_interval_minutes": 20,
+    "stale_after_minutes": 45,
+    "route_length_km": 25.92,
+    "official_protocol_disciplines": [
+      "sled_8"
+    ],
+    "participants": [
+      {
+        "race_participant_id": 1,
+        "participant_id": 1,
+        "start_number": 14,
+        "full_name": "Тестова Алиса",
+        "photo_url": null,
+        "discipline": {
+          "id": 2,
+          "code": "sled_8",
+          "name": "Нарта — длинная дистанция, 8 собак"
+        },
+        "position": null,
+        "previous_position": null,
+        "is_stale": false,
+        "km_on_route": null,
+        "avg_speed_kmh": null,
+        "gps_rank": null,
+        "gap_to_leader_km": null
+      },
+      {
+        "race_participant_id": 2,
+        "participant_id": 2,
+        "start_number": 22,
+        "full_name": "Примеров Иван",
+        "photo_url": null,
+        "discipline": {
+          "id": 2,
+          "code": "sled_8",
+          "name": "Нарта — длинная дистанция, 8 собак"
+        },
+        "position": null,
+        "previous_position": null,
+        "is_stale": false,
+        "km_on_route": null,
+        "avg_speed_kmh": null,
+        "gps_rank": null,
+        "gap_to_leader_km": null
+      },
+      {
+        "race_participant_id": 3,
+        "participant_id": 3,
+        "start_number": 31,
+        "full_name": "Проверкина Анна",
+        "photo_url": null,
+        "discipline": {
+          "id": 2,
+          "code": "sled_8",
+          "name": "Нарта — длинная дистанция, 8 собак"
+        },
+        "position": null,
+        "previous_position": null,
+        "is_stale": false,
+        "km_on_route": null,
+        "avg_speed_kmh": null,
+        "gps_rank": null,
+        "gap_to_leader_km": null
+      }
+    ]
+  },
+  "/races/1/results": {
+    "race": {
+      "id": 1,
+      "name": "Авача · тестовый сезон",
+      "year": 2026,
+      "status": "live",
+      "is_current": true,
+      "start_date": null,
+      "end_date": null,
+      "location": "Камчатка"
+    },
+    "up_to_stage": null,
+    "penalty_included_in_stage_times": true,
+    "disciplines": [
+      {
+        "discipline": {
+          "id": 2,
+          "code": "sled_8",
+          "name": "Нарта — длинная дистанция, 8 собак"
+        },
+        "stages": [
+          {
+            "id": 1,
+            "number": 1,
+            "name": "Тест маршрута",
+            "distance_km": 40.0,
+            "protocol_status": "final",
+            "is_final": true
+          }
+        ],
+        "rows": [
+          {
+            "race_participant_id": 1,
+            "participant_id": 1,
+            "place": 1,
+            "start_number": 14,
+            "full_name": "Тестова Алиса",
+            "last_name": "Тестова",
+            "first_name": "Алиса",
+            "region": "Камчатский край",
+            "discipline_code": "sled_8",
+            "status": "finished",
+            "stages": [
+              {
+                "stage_number": 1,
+                "status": "finished",
+                "time_seconds": 97322,
+                "time": "27:02:02",
+                "dogs_at_start": 8,
+                "dogs_at_finish": 7,
+                "is_corrected_after_final": true,
+                "note": null
+              }
+            ],
+            "total_time_seconds": 97322,
+            "total_time": "27:02:02",
+            "gap_to_leader_seconds": 0,
+            "gap_to_leader": "00:00:00",
+            "penalties": [
+              {
+                "seconds": 120,
+                "time": "00:02:00",
+                "reason": "Тестовое нарушение",
+                "rule_reference": "Тест"
+              }
+            ],
+            "penalty_total_seconds": 120,
+            "penalty_total": "00:02:00"
+          },
+          {
+            "race_participant_id": 2,
+            "participant_id": 2,
+            "place": null,
+            "start_number": 22,
+            "full_name": "Примеров Иван",
+            "last_name": "Примеров",
+            "first_name": "Иван",
+            "region": "Камчатский край",
+            "discipline_code": "sled_8",
+            "status": "dns",
+            "stages": [
+              {
+                "stage_number": 1,
+                "status": null,
+                "time_seconds": null,
+                "time": null,
+                "dogs_at_start": null,
+                "dogs_at_finish": null,
+                "is_corrected_after_final": false,
+                "note": null
+              }
+            ],
+            "total_time_seconds": null,
+            "total_time": null,
+            "gap_to_leader_seconds": null,
+            "gap_to_leader": null,
+            "penalties": [],
+            "penalty_total_seconds": 0,
+            "penalty_total": null
+          },
+          {
+            "race_participant_id": 3,
+            "participant_id": 3,
+            "place": null,
+            "start_number": 31,
+            "full_name": "Проверкина Анна",
+            "last_name": "Проверкина",
+            "first_name": "Анна",
+            "region": "Камчатский край",
+            "discipline_code": "sled_8",
+            "status": "dns",
+            "stages": [
+              {
+                "stage_number": 1,
+                "status": null,
+                "time_seconds": null,
+                "time": null,
+                "dogs_at_start": null,
+                "dogs_at_finish": null,
+                "is_corrected_after_final": false,
+                "note": null
+              }
+            ],
+            "total_time_seconds": null,
+            "total_time": null,
+            "gap_to_leader_seconds": null,
+            "gap_to_leader": null,
+            "penalties": [],
+            "penalty_total_seconds": 0,
+            "penalty_total": null
+          }
+        ]
+      }
+    ]
+  },
+  "/stages/1/protocols": {
+    "stage": {
+      "id": 1,
+      "number": 1,
+      "name": "Тест маршрута",
+      "distance_km": 40.0,
+      "start_at": "2026-11-02T21:00:00Z",
+      "finish_at": null,
+      "status": "live"
+    },
+    "race_id": 1,
+    "protocols": [
+      {
+        "discipline": {
+          "id": 2,
+          "code": "sled_8",
+          "name": "Нарта — длинная дистанция, 8 собак"
+        },
+        "status": "final",
+        "is_final": true,
+        "published_at": "2026-11-03T14:03:38.731005Z",
+        "finalized_at": "2026-11-03T14:03:38.768091Z",
+        "weather": null,
+        "chief_judge": null,
+        "chief_secretary": null,
+        "rows": [
+          {
+            "race_participant_id": 1,
+            "participant_id": 1,
+            "place": 1,
+            "start_number": 14,
+            "full_name": "Тестова Алиса",
+            "last_name": "Тестова",
+            "first_name": "Алиса",
+            "region": "Камчатский край",
+            "discipline_code": "sled_8",
+            "status": "finished",
+            "stages": [
+              {
+                "stage_number": 1,
+                "status": "finished",
+                "time_seconds": 97322,
+                "time": "27:02:02",
+                "dogs_at_start": 8,
+                "dogs_at_finish": 7,
+                "is_corrected_after_final": true,
+                "note": null
+              }
+            ],
+            "total_time_seconds": 97322,
+            "total_time": "27:02:02",
+            "gap_to_leader_seconds": 0,
+            "gap_to_leader": "00:00:00",
+            "penalties": [
+              {
+                "seconds": 120,
+                "time": "00:02:00",
+                "reason": "Тестовое нарушение",
+                "rule_reference": "Тест"
+              }
+            ],
+            "penalty_total_seconds": 120,
+            "penalty_total": "00:02:00"
+          },
+          {
+            "race_participant_id": 2,
+            "participant_id": 2,
+            "place": null,
+            "start_number": 22,
+            "full_name": "Примеров Иван",
+            "last_name": "Примеров",
+            "first_name": "Иван",
+            "region": "Камчатский край",
+            "discipline_code": "sled_8",
+            "status": "dns",
+            "stages": [
+              {
+                "stage_number": 1,
+                "status": null,
+                "time_seconds": null,
+                "time": null,
+                "dogs_at_start": null,
+                "dogs_at_finish": null,
+                "is_corrected_after_final": false,
+                "note": null
+              }
+            ],
+            "total_time_seconds": null,
+            "total_time": null,
+            "gap_to_leader_seconds": null,
+            "gap_to_leader": null,
+            "penalties": [],
+            "penalty_total_seconds": 0,
+            "penalty_total": null
+          },
+          {
+            "race_participant_id": 3,
+            "participant_id": 3,
+            "place": null,
+            "start_number": 31,
+            "full_name": "Проверкина Анна",
+            "last_name": "Проверкина",
+            "first_name": "Анна",
+            "region": "Камчатский край",
+            "discipline_code": "sled_8",
+            "status": "dns",
+            "stages": [
+              {
+                "stage_number": 1,
+                "status": null,
+                "time_seconds": null,
+                "time": null,
+                "dogs_at_start": null,
+                "dogs_at_finish": null,
+                "is_corrected_after_final": false,
+                "note": null
+              }
+            ],
+            "total_time_seconds": null,
+            "total_time": null,
+            "gap_to_leader_seconds": null,
+            "gap_to_leader": null,
+            "penalties": [],
+            "penalty_total_seconds": 0,
+            "penalty_total": null
+          }
+        ]
+      }
+    ]
+  },
+  "/races/1/support-rating": [
+    {
+      "rank": 1,
+      "race_participant_id": 1,
+      "start_number": 14,
+      "full_name": "Тестова Алиса",
+      "photo_url": null,
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "supporters_count": 1,
+      "change_24h": 1
+    },
+    {
+      "rank": 2,
+      "race_participant_id": 2,
+      "start_number": 22,
+      "full_name": "Примеров Иван",
+      "photo_url": null,
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "supporters_count": 0,
+      "change_24h": 0
+    },
+    {
+      "rank": 2,
+      "race_participant_id": 3,
+      "start_number": 31,
+      "full_name": "Проверкина Анна",
+      "photo_url": null,
+      "discipline": {
+        "id": 2,
+        "code": "sled_8",
+        "name": "Нарта — длинная дистанция, 8 собак"
+      },
+      "supporters_count": 0,
+      "change_24h": 0
+    }
+  ],
+  "/race-participants/1/checkpoint-passes": [
+    {
+      "stage_id": 1,
+      "stage_number": 1,
+      "stage_checkpoint_id": 1,
+      "order_index": 1,
+      "role": "checkpoint",
+      "label": "КП-1",
+      "name": "Тестовый КП",
+      "km_from_start": 20.0,
+      "required_rest_minutes": 30,
+      "arrived_at": "2026-11-03T00:00:00Z",
+      "departed_at": "2026-11-03T00:30:00Z"
+    }
+  ],
+  "/race-participants/1/track": {
+    "race_participant_id": 1,
+    "start_number": 14,
+    "full_name": "Тестова Алиса",
+    "points": []
+  },
+  "/program?race_id=1": [],
+  "/locations?race_id=1": [],
+  "/faq": [],
+  "/contacts": []
+}

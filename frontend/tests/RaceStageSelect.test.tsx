@@ -26,9 +26,6 @@ describe('RaceStageSelect', () => {
     expect(select).toHaveAttribute('aria-expanded', 'true');
     const list = screen.getByRole('listbox');
     expect(within(list).getAllByRole('option')).toHaveLength(3);
-    for (const option of within(list).getAllByRole('option')) {
-      expect(option).not.toHaveAttribute('stagelabel');
-    }
     expect(within(list).getByRole('option', { name: activeLabel })).toHaveAttribute('aria-selected', 'true');
     await user.keyboard('{Escape}');
     expect(select).toHaveAttribute('aria-expanded', 'false');

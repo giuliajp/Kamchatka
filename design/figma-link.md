@@ -1,5 +1,11 @@
 # Figma
 
+Ссылка на рабочий файл: https://www.figma.com/design/dZcOxRfG88AY1tWW1s7HKH/?node-id=339-7522
+
+Текущий интерфейс и ограничения сверки: [DESIGN.md](../DESIGN.md).
+
+## История переноса UI-kit
+
 Актуальная сверка: [UI_KIT_FIGMA_AUDIT.md](../docs/UI_KIT_FIGMA_AUDIT.md).
 
 ## Текущий источник переноса, 16.10.2026

@@ -1,0 +1,9 @@
+@font-face { font-family: 'Gotham Pro'; src: url('/fonts/GothamPro.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Gotham Pro'; src: url('/fonts/GothamPro-Medium.woff2') format('woff2'); font-weight: 500 600; font-display: swap; }
+@font-face { font-family: 'Gotham Pro'; src: url('/fonts/GothamPro-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Gotham Pro'; src: url('/fonts/GothamPro-Black.woff2') format('woff2'); font-weight: 900; font-display: swap; }
+@font-face { font-family: 'VK Sans Display'; src: url('/fonts/VKSansDisplay-Medium.woff2') format('woff2'); font-weight: 500; font-display: swap; }
+@font-face { font-family: 'VK Sans Display'; src: url('/fonts/VKSansDisplay-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'VK Sans Display'; src: url('/fonts/VKSansDisplay-DemiBold.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'VK Sans Display'; src: url('/fonts/VKSansDisplay-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+.ui-root { --vkui--font_family_base: 'Gotham Pro', system-ui, sans-serif; --vkui--font_family_accent: 'Gotham Pro', system-ui, sans-serif; }

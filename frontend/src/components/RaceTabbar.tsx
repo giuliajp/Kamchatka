@@ -10,14 +10,14 @@ const destinations = [
   { value: 'more', label: 'Ещё', Icon: Icon28MenuOutline },
 ] as const;
 export type RaceDestination = typeof destinations[number]['value'];
-export interface RaceTabbarProps { value: RaceDestination; onChange: (value: RaceDestination) => void }
+export interface RaceTabbarProps { value: RaceDestination; onChange: (value: RaceDestination) => void; available?: readonly RaceDestination[] }
 
-export function RaceTabbar({ value, onChange }: RaceTabbarProps) {
+export function RaceTabbar({ value, onChange, available }: RaceTabbarProps) {
   return (
     <nav aria-label="Разделы гонки">
       <Tabbar className="race-tabbar" mode="vertical">
-        {destinations.map(({ value: destination, label, Icon }) => (
-          <TabbarItem key={destination} label={label} selected={value === destination}
+        {destinations.filter(item => !available || available.includes(item.value)).map(({ value: destination, label, Icon }) => (
+          <TabbarItem key={destination} label={label} aria-label={label} selected={value === destination}
             aria-current={value === destination ? 'page' : undefined} onClick={() => onChange(destination)}>
             <Icon />
           </TabbarItem>

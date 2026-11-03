@@ -1,0 +1,16 @@
+.content-page { max-width: 1040px; margin: 0 auto; padding-bottom: 32px; }
+.content-page h2 { margin: 16px 0; }.content-page p { line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
+.content-card { padding: 20px; margin: 14px 0; border: 1px solid var(--vkui--color_separator_primary); border-radius: 16px; background: var(--vkui--color_background_content); }
+.content-card h3,.content-card h4 { margin: 4px 0 12px; }.content-card small { color: var(--vkui--color_text_secondary); }
+.content-actions,.content-filters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.content-page label { display: grid; gap: 8px; }.content-page select,.season-select select { font: inherit; padding: 8px; color: inherit; background: var(--vkui--color_background_content); border: 1px solid var(--vkui--color_separator_primary); border-radius: 8px; }
+.content-image { width: 100%; max-height: 70vh; object-fit: contain; border-radius: 12px; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,260px),1fr)); gap: 16px; }
+.photo-preview { width: 100%; padding: 0; border: 0; background: transparent; cursor: pointer; }.photo-preview img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 12px; }
+.more-menu { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit,minmax(min(100%,240px),1fr)); }
+.content-map { position: relative; height: 380px; border-radius: 16px; overflow: hidden; z-index: 0; }
+.content-map .race-map { height: 100%; }.elevation-chart { width: 100%; color: var(--vkui--color_text_accent); }
+.support-rating li { padding: 12px 0; }.support-rating span { display: block; margin-top: 6px; color: var(--vkui--color_text_secondary); }.support-rating button { font: inherit; color: inherit; border: 0; background: none; text-align: left; cursor: pointer; }
+.season-select { display: flex; align-items: center; gap: 8px; padding: 8px 16px; justify-content: center; background: var(--vkui--color_background_content); }
+.content-page a { color: var(--vkui--color_text_link); }.content-page summary { cursor: pointer; font-weight: 600; }
+.content-page button:focus-visible,.content-page a:focus-visible,.content-page select:focus-visible,.content-page summary:focus-visible { outline: 2px solid var(--vkui--color_text_accent); outline-offset: 4px; }

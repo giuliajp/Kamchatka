@@ -1,5 +1,5 @@
-import './race-kit.css';
 import './TopParticipantsCard.css';
+import './race-kit.css';
 import { useId } from 'react';
 import { Card, Div, Footnote, Header, SimpleCell } from '@vkontakte/vkui';
 export interface TopParticipant {
@@ -21,7 +21,7 @@ export function TopParticipantsCard({ title, entries, onSelect, compact = false 
     <h2 id={titleId}>{title}</h2>
     {entries.length === 0 ? <Footnote>Результатов пока нет</Footnote> : entries.map(entry =>
       <button key={entry.id} className="map-leaders__row" onClick={() => onSelect(entry.id)}>
-        <span>{entry.place && String(entry.place) + '. '}{entry.label}</span><span>№{entry.number}</span>{entry.time && <span>{entry.time}</span>}
+        <span>{entry.place && String(entry.place) + '. '}{entry.label}</span>{' '}<span>№{entry.number}</span>{entry.time && <span>{entry.time}</span>}
       </button>)}
   </section>;
   return (

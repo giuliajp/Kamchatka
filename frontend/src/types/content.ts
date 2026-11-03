@@ -1,0 +1,15 @@
+import type { Discipline } from './api';
+
+export interface SupportState { race_participant_id: number; supporters_count: number; change_24h: number; is_supported: boolean | null; notifications_enabled: boolean | null }
+export interface MySupport { race_participant_id: number; race_id: number; start_number: number; full_name: string; photo_url: string | null; discipline: Discipline; notifications_enabled: boolean; supported_since: string }
+export interface SupportRating { rank: number; race_participant_id: number; start_number: number; full_name: string; photo_url: string | null; discipline: Discipline; supporters_count: number; change_24h: number }
+export interface CheckpointPass { stage_id: number; stage_number: number; stage_checkpoint_id: number; order_index: number; role: string; label: string | null; name: string; km_from_start: number | null; required_rest_minutes: number; arrived_at: string; departed_at: string | null }
+export interface Location { id: number; race_id: number; stage_id: number | null; location_type: 'start' | 'finish' | 'festival' | 'viewpoint'; name: string; description: string | null; latitude: number; longitude: number; address: string | null; how_to_get_there: string | null; sort_order: number }
+export interface ProgramEvent { id: number; race_id: number; stage_id: number | null; event_type: 'stage_start' | 'stage_finish' | 'festival'; title: string; description: string | null; start_at: string; end_at: string | null; location: Location | null; sort_order: number }
+export interface Faq { id: number; question: string; answer: string; sort_order: number }
+export interface Contact { id: number; title: string; name: string | null; phone: string | null; email: string | null; url: string | null; sort_order: number }
+export interface NewsItem { id: string; owner_id: number; post_id: number; date: string; title: string; preview: string; cover_url: string | null; url: string }
+export interface News { items: NewsItem[]; total: number; stale: boolean }
+export interface Photo { id: string; date: string; text: string | null; url: string | null; vk_url: string }
+export interface Photos { days: { date: string; photos: Photo[] }[]; stale: boolean }
+export interface Bookmark { kind: 'news' | 'photo'; item_id: string; title: string | null; url: string | null; image_url: string | null; created_at: string }
