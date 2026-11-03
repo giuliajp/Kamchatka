@@ -19,7 +19,7 @@ export function NotificationPrompt({ open, number, photoUrl, loading, onConfirm,
       }}
       icon={<Avatar src={photoUrl} alt={`Участник №${number}`} fallbackIcon={<Icon28UserOutline />} />}
       title={`Получать уведомления об участнике №${number}?`}
-      description="Демонстрационная подписка на прохождение КП, смену позиции и финиш. Настоящие push пока не отправляются."
+      description="Получайте уведомления VK о событиях участника. Изменить разрешение можно в профиле."
       actions={<ButtonGroup mode="horizontal" gap="s" stretched>
         <Button size="l" mode="secondary" stretched onClick={onLater}>Позже</Button>
         <Button size="l" stretched loading={loading} disabled={loading} loadingLabel="Да, уведомлять" onClick={onConfirm}>Да, уведомлять</Button>

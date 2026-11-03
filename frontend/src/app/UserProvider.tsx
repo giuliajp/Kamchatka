@@ -26,6 +26,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const setNotifications = async (allowed: boolean) => {
     if (!current?.id || !bridge.isEmbedded()) throw new Error('Откройте приложение во ВКонтакте');
     const result = await bridge.send(allowed ? 'VKWebAppAllowNotifications' : 'VKWebAppDenyNotifications');
+    if (location.search !== launch) throw new Error('Сессия изменилась. Повторите действие.');
     if (!result.result) throw new Error('Разрешение не подтверждено');
     const saved = await mutate<{ notifications_allowed: boolean }>('/me/notifications', 'PUT', { allowed });
     setSession(previous => previous?.launch === launch ? { ...previous, allowed: saved.notifications_allowed } : previous);

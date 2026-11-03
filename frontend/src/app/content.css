@@ -11,6 +11,6 @@
 .content-map { position: relative; height: 380px; border-radius: 16px; overflow: hidden; z-index: 0; }
 .content-map .race-map { height: 100%; }.elevation-chart { width: 100%; color: var(--vkui--color_text_accent); }
 .support-rating li { padding: 12px 0; }.support-rating span { display: block; margin-top: 6px; color: var(--vkui--color_text_secondary); }.support-rating button { font: inherit; color: inherit; border: 0; background: none; text-align: left; cursor: pointer; }
-.season-select { display: flex; align-items: center; gap: 8px; padding: 8px 16px 84px; justify-content: center; background: var(--vkui--color_background_content); }
+.season-select { display: flex; align-items: center; gap: 8px; padding: 8px 16px; justify-content: center; background: var(--vkui--color_background_content); }
 .content-page a { color: var(--vkui--color_text_link); }.content-page summary { cursor: pointer; font-weight: 600; }
 .content-page button:focus-visible,.content-page a:focus-visible,.content-page select:focus-visible,.content-page summary:focus-visible { outline: 2px solid var(--vkui--color_text_accent); outline-offset: 4px; }

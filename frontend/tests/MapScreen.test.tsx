@@ -45,7 +45,7 @@ it('uses backend stage IDs, numbers and discipline codes; connects map, track an
   expect(screen.getByRole('tab', { name: 'Дисциплина: Нарта, 8 собак' })).toBeVisible();
   await user.click(screen.getByRole('button', { name: 'Назад' }));
   expect(await screen.findByRole('button', { name: 'Точка 14' })).toBeVisible();
-});
+}, 15000); // Full keyboard/map/dialog journey with real VKUI transitions under coverage.
 it('hides GPS independently for every published discipline and opens official results', async () => {
   mockApi(url => url.includes('/positions') ? { ...positions, official_protocol_disciplines: ['sled_8'] } : fixtureResponse(url));
   const user = userEvent.setup(); show();

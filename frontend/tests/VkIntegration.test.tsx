@@ -24,3 +24,15 @@ it('keeps public UI available on unauthorized visits', async () => {
   render(<UserProvider><Probe /></UserProvider>);
   await waitFor(() => expect(screen.getByText('Гость')).toBeVisible());
 });
+
+it('does not save permission to a different VK session after a delayed dialog', async () => {
+  const { act, fireEvent } = await import('@testing-library/react');
+  let finish!: (value: { result: true }) => void;
+  vi.mocked(bridge.send).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  const fetcher = vi.fn(async (url: string, init?: RequestInit) => new Response(JSON.stringify({ data: url.includes('/me/visit') ? { vk_user_id: String((init?.headers as Record<string,string>)['X-VK-Launch-Params']).includes('99') ? 99 : 42 } : url.includes('/me/supports') ? [] : { notifications_allowed: true }, error: null })));
+  vi.stubGlobal('fetch', fetcher); render(<UserProvider><Probe /></UserProvider>);
+  await screen.findByText('42'); await userEvent.click(screen.getByRole('button',{name:'Разрешить'}));
+  act(() => { history.replaceState(null,'','/?vk_user_id=99'); fireEvent(window,new PopStateEvent('popstate')); });
+  await screen.findByText('99'); await act(async()=>finish({result:true}));
+  expect(fetcher.mock.calls.filter(([url])=>url.endsWith('/me/notifications'))).toHaveLength(0);
+});

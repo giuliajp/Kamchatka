@@ -21,7 +21,7 @@ import { useUser } from './UserProvider';
 import { ProgramScreen } from '../screens/Content/ProgramScreen';
 import { MoreScreen } from '../screens/Content/MoreScreen';
 import './content.css';
-import { navigateRace, readRaceLink, type RaceLink } from '../api/navigation';
+import { navigateRace, readRaceLink, resolveParticipantLink, type RaceLink } from '../api/navigation';
 
 export function currentStage(stages: Stage[], now = Date.now()) {
   const live = stages.filter(stage => stage.status === 'live');
@@ -29,23 +29,33 @@ export function currentStage(stages: Stage[], now = Date.now()) {
   return live.at(-1) ?? started.at(-1) ?? stages[0];
 }
 export function RaceApp() {
-  const [link, setLink] = useState(readRaceLink);
+  const [incoming, setIncoming] = useState(readRaceLink);
+  const [resolved, setResolved] = useState<{ incoming: RaceLink; link?: RaceLink; error?: string }>();
+  const needsLookup = Boolean(incoming.entryId && !incoming.raceId);
+  useEffect(() => {
+    if (!incoming.entryId || incoming.raceId) return;
+    const controller = new AbortController();
+    void resolveParticipantLink(incoming.entryId, controller.signal).then(link => { if (!controller.signal.aborted) setResolved({ incoming, link }); }).catch(error => { if (!controller.signal.aborted) setResolved({ incoming, error: error instanceof Error ? error.message : 'Не удалось открыть ссылку' }); });
+    return () => controller.abort();
+  }, [incoming]);
+  const link = useMemo(() => resolved?.incoming === incoming && resolved.link ? { ...incoming, ...resolved.link } : incoming, [incoming, resolved]);
   const [welcome, setWelcome] = useState(() => { try { return !localStorage.getItem('avacha:welcome'); } catch { return true; } });
-  useEffect(() => { const update = () => setLink(readRaceLink()); window.addEventListener('popstate', update); window.addEventListener('hashchange', update); return () => { window.removeEventListener('popstate', update); window.removeEventListener('hashchange', update); }; }, []);
+  const dismissWelcome = () => { try { localStorage.setItem('avacha:welcome', '1'); } catch { /* Storage may be disabled in the webview. */ } setWelcome(false); };
+  useEffect(() => { const update = () => setIncoming(readRaceLink()); window.addEventListener('popstate', update); window.addEventListener('hashchange', update); return () => { window.removeEventListener('popstate', update); window.removeEventListener('hashchange', update); }; }, []);
   const linkedStage = useApi<StageDetail>(!link.raceId && link.stageId ? `/stages/${link.stageId}` : null);
   const raceId = link.raceId ?? linkedStage.data?.race_id;
   const race = useApi<RaceDetail>(!link.raceId && link.stageId && !linkedStage.data ? null : raceId ? `/races/${raceId}` : '/races/current', 120000);
   const seasons = useApi<Race[]>('/races');
+  if (needsLookup && resolved?.incoming !== incoming) return <main className="race-screen race-content"><p role="status">Открываем участника…</p></main>;
   if (!race.data) return <main className="race-screen race-content"><h1>Авача</h1><RequestState resource={linkedStage} /><RequestState resource={race} /></main>;
-  return <><RaceView key={race.data.id} race={race.data} link={link} warning={<><RequestState resource={race} /><RequestState resource={linkedStage} /></>} />
-    <label className="season-select">Сезон<select value={race.data.id} onChange={event => navigateRace(`race=${event.target.value}`)}>{(seasons.data ?? [race.data]).map(season => <option key={season.id} value={season.id}>{season.year}</option>)}</select></label>
-    <ModalCard open={welcome} onClose={() => setWelcome(false)} title="Добро пожаловать в Авачу" aria-label="Первый запуск" dismissLabel="Закрыть знакомство" dismissButtonMode="inside">
+  return <><RaceView key={race.data.id} race={race.data} link={link} warning={<><RequestState resource={race} /><RequestState resource={linkedStage} />{resolved?.incoming === incoming && resolved.error && <p role="alert">{resolved.error}</p>}</>} season={<label className="season-select">Сезон<select value={race.data.id} onChange={event => navigateRace(`race=${event.target.value}`)}>{(seasons.data ?? [race.data]).map(season => <option key={season.id} value={season.id}>{season.year}</option>)}</select></label>} />
+    <ModalCard open={welcome} onClose={dismissWelcome} title="Добро пожаловать в Авачу" aria-label="Первый запуск" dismissLabel="Закрыть знакомство" dismissButtonMode="inside">
       <p>Следите за гонкой на карте, болейте за участников и смотрите официальные результаты.</p><p>Время в приложении указано по Камчатке. GPS показывает положение на маршруте; итоговые места определяет судейский протокол.</p>
-      <Button size="l" onClick={() => { try { localStorage.setItem('avacha:welcome', '1'); } catch { /* Storage may be disabled in the webview. */ } setWelcome(false); }}>Начать</Button>
+      <Button size="l" onClick={dismissWelcome}>Начать</Button>
     </ModalCard>
   </>;
 }
-function RaceView({ race, link, warning }: { race: RaceDetail; link: RaceLink; warning: React.ReactNode }) {
+function RaceView({ race, link, warning, season }: { race: RaceDetail; link: RaceLink; warning: React.ReactNode; season: React.ReactNode }) {
   const user = useUser();
   const [tab, setTab] = useState<'all' | 'mine'>('all');
   const [legend, setLegend] = useState(false);
@@ -91,7 +101,7 @@ function RaceView({ race, link, warning }: { race: RaceDetail; link: RaceLink; w
   const refresh = () => { positions.refresh(); detail.refresh(); track.refresh(); };
   const navigate = (value: RaceDestination) => { setSection(value); setSelected(undefined); setCluster([]); setLegend(false); };
   return <main className={stageScreen ? 'race-screen race-screen--stage' : 'race-screen'}>
-    <div className="race-screen__header"><RaceHeader
+    <div className="race-screen__header">{season}<RaceHeader
       header={{ title: race.name, onBack: section === 'map' ? undefined : () => navigate('map') }}
       stage={{ value: section === 'results' && allStages ? 'all' : String(stage?.id ?? ''),
         options: [...(section === 'results' ? [{ value: 'all', label: 'Общий зачёт', details: 'все опубликованные этапы' }] : []), ...race.stages.map(stageOption)], onChange: chooseStage, disabled: race.stages.length === 0 }}

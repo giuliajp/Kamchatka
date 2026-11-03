@@ -13,3 +13,15 @@ it('reads server push fragments and keeps signed launch parameters out of sharin
   history.replaceState(null, '', '/#results');
   expect(readRaceLink()).toMatchObject({ section: 'results' });
 });
+
+it('resolves participant-only push links in an archived season and honours cancellation', async () => {
+  const { resolveParticipantLink } = await import('../src/api/navigation');
+  const { vi } = await import('vitest');
+  const { race, participant } = await import('./fixtures');
+  vi.stubGlobal('fetch',vi.fn(async(input:string)=>new Response(JSON.stringify({data:input.endsWith('/races')?[race,{...race,id:11,is_current:false}]:input.includes('/races/11/')?[{...participant,race_participant_id:55}]:[],error:null}))));
+  const controller=new AbortController();
+  expect(await resolveParticipantLink(55,controller.signal)).toMatchObject({raceId:11,participantId:501,entryId:55});
+  expect(await resolveParticipantLink(999,controller.signal)).toBeUndefined();
+  controller.abort();expect(await resolveParticipantLink(55,controller.signal)).toBeUndefined();
+  vi.unstubAllGlobals();
+});

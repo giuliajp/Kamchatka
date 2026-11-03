@@ -6,5 +6,6 @@ const config: StorybookConfig = {
   addons: ['@storybook/addon-docs', '@storybook/addon-a11y'],
   staticDirs: ['../public'],
   core: { disableTelemetry: true },
+  viteFinal: config => ({ ...config, server: { ...config.server, watch: { ...config.server?.watch, ignored: ['**/coverage/**', '**/storybook-static/**'] } } }),
 };
 export default config;

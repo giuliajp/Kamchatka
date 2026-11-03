@@ -3,7 +3,7 @@ import { MapScreen } from '../screens/Map/MapScreen';
 import { installStoryApi } from './fixtures';
 const meta = { title: 'Экраны/Карта Авача', component: MapScreen,
   beforeEach: installStoryApi,
-  parameters: { fullScreen: true, canvasPadding: 0, figma: { nodeId: '339:7524' }, docs: { description: { component: 'Карта, участники и результаты. Только в Storybook запросы заменены тестовыми ответами API.' } } },
+  parameters: { fullScreen: true, canvasPadding: 0, figma: { nodeId: '339:7524' }, docs: { story: { inline: false }, description: { component: 'Карта, участники и результаты. Только в Storybook запросы заменены тестовыми ответами API.' } } },
 } satisfies Meta<typeof MapScreen>;
 export default meta;
 type Story = StoryObj<typeof meta>;

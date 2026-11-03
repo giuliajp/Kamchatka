@@ -21,7 +21,7 @@ export function SupportAction({ raceId, entryId, number, photoUrl }: Participati
     });
   }} />
     {action.error && <p role="alert">{action.error}</p>}
-    <NotificationPrompt open={prompt} number={String(number)} photoUrl={photoUrl} onConfirm={() => { void action.run(() => user.setNotifications(true)).then(ok => { if (ok) setPrompt(false); }); }} onLater={() => setPrompt(false)} onClose={() => setPrompt(false)} />
+    <NotificationPrompt open={prompt} number={String(number)} photoUrl={photoUrl} loading={action.busy} onConfirm={() => { void action.run(() => user.setNotifications(true)).then(ok => { if (ok) setPrompt(false); }); }} onLater={() => setPrompt(false)} onClose={() => setPrompt(false)} />
   </div>;
 }
 export function NotificationToggle({ raceId, entryId }: Pick<ParticipationActionProps, 'raceId' | 'entryId'>) {
