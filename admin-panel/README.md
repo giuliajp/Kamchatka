@@ -70,5 +70,7 @@ Storybook: http://127.0.0.1:6007, отдельные истории входа, 
 в iframe, чтобы их HTTP-фикстуры не подменяли друг друга в Docs.
 
 `check`: lint, TypeScript, тесты, production и Storybook. Пороги всех рабочих TS/TSX-файлов:
-100% statements/branches/functions/lines. Текущий прогон: **105 тестов, 100%**;
-аудит без уязвимостей. Подробности — [отчёт поставки](../docs/frontend-admin-completion.md).
+100% statements/branches/functions/lines. Актуальные результаты —
+[исправления ревью F1–F10](../docs/review-fixes.md). Браузерные проверки production
+обоих приложений запускаются командой `npm run test:e2e` из `frontend`.
+PATCH отметки требует `expected_updated_at`: backend и админка обновляются совместно.

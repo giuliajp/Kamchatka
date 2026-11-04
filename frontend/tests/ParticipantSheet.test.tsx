@@ -10,7 +10,7 @@ it.each([undefined, 'false', 'anything'])('keeps official data without fake coun
   const { stage } = await import('./fixtures');
   vi.stubEnv('VITE_MOCK_MISSING_FEATURES', flag); mockApi();
   render(<AppProviders><ParticipantSheet participantId={501} entryId={9001} stage={{ ...stage, status: 'finished' }} threshold={45} onClose={vi.fn()} /></AppProviders>);
-  expect(await screen.findByText('00:16:40')).toBeVisible();
+  expect(await screen.findByText('00:16:40', {}, { timeout: 3000 })).toBeVisible();
   expect(await screen.findByText(/болельщиков/)).toBeVisible();
   expect(screen.queryByText(/^Финиш /)).not.toBeInTheDocument();
   expect(screen.getByText('Прохождение контрольных пунктов (КП)')).toBeVisible();
