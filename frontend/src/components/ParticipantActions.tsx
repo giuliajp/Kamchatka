@@ -7,17 +7,17 @@ import { useAction } from '../hooks/useAction';
 import { SupportButton } from './SupportButton';
 import { NotificationPrompt } from './NotificationPrompt';
 
-export interface ParticipationActionProps { raceId: number; entryId: number; number: number; photoUrl?: string }
-export function SupportAction({ raceId, entryId, number, photoUrl }: ParticipationActionProps) {
+export interface ParticipationActionProps { raceId: number; entryId: number; number: number; photoUrl?: string; compact?: boolean; onNotificationRequest?: (participant: {number:number;photoUrl?:string}) => void }
+export function SupportAction({ raceId, entryId, number, photoUrl, onNotificationRequest, compact }: ParticipationActionProps) {
   const user = useUser();
   const action = useAction();
   const [prompt, setPrompt] = useState(false);
   const selected = user.supports.data?.some(item => item.race_id === raceId && item.race_participant_id === entryId) ?? false;
-  return <div className="support-action"><SupportButton selected={selected} loading={action.busy} disabled={user.loading || (Boolean(user.id) && !user.supports.data)} onToggle={() => {
+  return <div className="support-action"><SupportButton compact={compact} selected={selected} loading={action.busy} disabled={user.loading || (Boolean(user.id) && !user.supports.data)} onToggle={() => {
     void action.run(async () => {
       if (!user.id) throw new Error('Откройте приложение во ВКонтакте, чтобы болеть за участника');
       await mutate(`/race-participants/${entryId}/support`, selected ? 'DELETE' : 'PUT');
-      if (!selected && !user.allowed) setPrompt(true);
+      if (!selected && !user.allowed) { if(onNotificationRequest) onNotificationRequest({number,photoUrl}); else setPrompt(true); }
     });
   }} />
     {action.error && <p role="alert">{action.error}</p>}

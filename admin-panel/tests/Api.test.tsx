@@ -1,7 +1,7 @@
 import {act,render,screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {afterEach,expect,it,vi} from 'vitest';
-import {api,save,storeToken,tokenKey,useAction,useResource,downloadStats} from '../src/api';
+import {api,save,storeToken,readToken,tokenKey,useAction,useResource,downloadStats} from '../src/api';
 import {Failure,LoadState} from '../src/ui';
 afterEach(()=>{vi.unstubAllGlobals();sessionStorage.clear();});
 it.each(['json','csv'])('does not expire a new session after an old %s request returns 401',async kind=>{
@@ -46,4 +46,11 @@ it('polls and cleans up when unmounted',async()=>{vi.useFakeTimers();vi.stubGlob
 
 it('ignores a rejected request after its view has been cancelled',async()=>{
  let reject!:(reason:Error)=>void;vi.stubGlobal('fetch',vi.fn(()=>new Promise((_resolve,fail)=>{reject=fail;})));const {rerender}=render(<Probe path="/admin/example"/>);rerender(<Probe path={null}/>);await act(async()=>reject(new Error('Cancelled transport')));expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+it('keeps a restored session in memory if storage becomes unavailable later',()=>{
+ storeToken(null);sessionStorage.setItem(tokenKey,'restored');expect(readToken()).toBe('restored');
+ const unavailable=vi.spyOn(Storage.prototype,'getItem').mockImplementation(()=>{throw new DOMException('Blocked','SecurityError');});
+ expect(readToken()).toBe('restored');
+ storeToken(null);expect(readToken()).toBeNull();unavailable.mockRestore();storeToken(null);
 });

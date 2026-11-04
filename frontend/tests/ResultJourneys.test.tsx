@@ -19,9 +19,20 @@ function api(overrides:Record<string,unknown>={}) {
  const fetcher=vi.fn(async(input:RequestInfo|URL)=>{const path=String(input).replace('/api','');const data=path in overrides?overrides[path]:path==='/me'?{vk_user_id:42,participant_id:501,race_entries:[{race_id:10,race_participant_id:9001,start_number:14}]}:path.includes('/checkpoint-passes')?[finish,{...finish,stage_checkpoint_id:299,order_index:1,role:'checkpoint',label:null,name:'КП-1'}]:path==='/photos/albums'?{items:[{id:55,title:'Авача 2026',size:2,url:'https://vk.com/album-1_55',cover_url:null},{id:56,title:null,size:0,url:'https://vk.com/album-1_56',cover_url:null}],stale:true}:path.startsWith('/photos?')?{days:[{date:'2026-11-03',photos:[{id:'-1_1',date:'2026-11-03T01:00Z',text:null,url:'https://example.org/photo.jpg',vk_url:'https://vk.com/photo-1_1'},{id:'-1_2',date:'2026-11-03T01:00Z',text:'Каюры',url:null,vk_url:'https://vk.com/photo-1_2'}]}],stale:true}:fixtureResponse(path);return new Response(JSON.stringify({data,error:null}));});vi.stubGlobal('fetch',fetcher);return fetcher;
 }
 const click=async(name:string|RegExp)=>userEvent.click(await screen.findByRole('button',{name}));
+it('labels the latest finish among stages in the overall standings and the selected stage finish',async()=>{
+ const first={...finish,stage_id:101,stage_number:1,stage_checkpoint_id:100,arrived_at:'2026-11-01T04:00Z'};
+ const later={...finish,stage_id:104,stage_number:4,stage_checkpoint_id:400,arrived_at:'2026-11-04T04:00Z'};
+ api({'/races/10/results':{...fixtureResponse('/races/10/results') as object,disciplines:[{discipline:race.disciplines[0],stages:[],rows:[{...standing,stages:[{...standing.stages[0],stage_number:1},...standing.stages]}]}]},'/race-participants/9001/checkpoint-passes':[first,finish,later],'/race-participants/9001/checkpoint-passes?stage_id=103':[first,finish,later]});
+ const {rerender}=render(<AppProviders><ResultsScreen race={race} raceId={10} stageId={undefined} stageNumber={undefined} discipline="" onSelect={vi.fn()}/></AppProviders>);
+ const own=(await screen.findByRole('heading',{name:'Мой результат'})).closest('section')!;
+ expect(await within(own).findByText(/Финиш этапа 3 · 03.11/)).toBeVisible();
+ expect(within(own).queryByText(/Финиш этапа 4/)).not.toBeInTheDocument();
+ rerender(<AppProviders><ResultsScreen race={race} raceId={10} stageId={103} stageNumber={3} discipline="" onSelect={vi.fn()}/></AppProviders>);
+ expect(await screen.findByText(/Финиш этапа 3 · 03.11/)).toBeVisible();
+});
 it('shows own published stage results, the athlete mark, checkpoint details and the own card',async()=>{
  api();const select=vi.fn();render(<AppProviders><ResultsScreen race={race} raceId={10} stageId={103} stageNumber={3} discipline="sled_8" onSelect={select}/></AppProviders>);
- const own=await screen.findByRole('heading',{name:'Мой результат'});expect(own).toBeVisible();expect(screen.getByText(/· Вы/)).toBeVisible();await userEvent.click(screen.getByText('Прохождение контрольных пунктов (КП)',{selector:'summary'}));expect(await screen.findByText(/Финиш: 03.11/)).toBeVisible();await click('Моя карточка');expect(select).toHaveBeenCalledWith(501,9001);await click(/2. Алиса Иванова/);expect(select).toHaveBeenCalledTimes(2);
+ const own=await screen.findByRole('heading',{name:'Мой результат'});expect(own).toBeVisible();expect(screen.getByText('Вы')).toBeVisible();await userEvent.click(screen.getByText('Прохождение контрольных пунктов (КП)',{selector:'summary'}));expect(await screen.findByText(/Финиш: 03.11/)).toBeVisible();await click('Моя карточка');expect(select).toHaveBeenCalledWith(501,9001);await click(/2. Алиса Иванова/);expect(select).toHaveBeenCalledTimes(2);
 });
 it('does not identify another season or person as the logged-in athlete',async()=>{
  api({'/me':{vk_user_id:42,participant_id:999,race_entries:[{race_id:10,race_participant_id:9001,start_number:14}]}});render(<AppProviders><ResultsScreen raceId={10} stageId={undefined} stageNumber={undefined} discipline="" onSelect={vi.fn()}/></AppProviders>);await screen.findByText(/Штрафы уже/);expect(screen.queryByRole('heading',{name:'Мой результат'})).not.toBeInTheDocument();

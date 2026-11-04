@@ -2,9 +2,9 @@ import { createContext, Fragment, useCallback, useContext, useEffect, useState, 
 import bridge from '@vkontakte/vk-bridge';
 import { ApiError, mutate } from '../api/client';
 import { useApi, type Resource } from '../hooks/useApi';
-import type { MySupport, NotificationSettings } from '../types/content';
+import type { Bookmark, Reminders, MySupport, NotificationSettings } from '../types/content';
 
-interface User { id?: number; allowed: boolean; loading: boolean; error?: string; supports: Resource<MySupport[]>; refresh: () => void; setNotifications: (allowed: boolean) => Promise<void> }
+interface User { id?: number; allowed: boolean; loading: boolean; error?: string; supports: Resource<MySupport[]>; bookmarks: Resource<Bookmark[]>; reminders: Resource<Reminders>; refresh: () => void; setNotifications: (allowed: boolean) => Promise<void> }
 const Context = createContext<User | null>(null);
 export function UserProvider({ children }: { children: ReactNode }) {
   const [launch, setLaunch] = useState(location.search);
@@ -24,6 +24,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const current = session?.launch === launch ? session : undefined;
   const settings = useApi<NotificationSettings>(current?.id ? '/me/notification-settings' : null, 0, false);
   const supports = useApi<MySupport[]>(current?.id ? '/me/supports' : null, 120000, false);
+  const bookmarks = useApi<Bookmark[]>(current?.id ? '/me/bookmarks' : null, 0, false);
+  const reminders = useApi<Reminders>(current?.id ? '/me/reminders' : null, 0, false);
   const setNotifications = async (allowed: boolean) => {
     if (!current?.id || !bridge.isEmbedded()) throw new Error('Откройте приложение во ВКонтакте');
     const result = await bridge.send(allowed ? 'VKWebAppAllowNotifications' : 'VKWebAppDenyNotifications');
@@ -32,7 +34,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const saved = await mutate<{ notifications_allowed: boolean }>('/me/notifications', 'PUT', { allowed });
     setSession(previous => previous?.launch === launch ? { ...previous, allowed: saved.notifications_allowed } : previous);
   };
-  return <Context.Provider value={{ id: current?.id, allowed: settings.data?.notifications_allowed ?? current?.allowed ?? false, loading: !current, error: current?.error, supports, refresh, setNotifications }}><Fragment key={launch}>{children}</Fragment></Context.Provider>;
+  return <Context.Provider value={{ id: current?.id, allowed: settings.data?.notifications_allowed ?? current?.allowed ?? false, loading: !current, error: current?.error, supports, bookmarks, reminders, refresh, setNotifications }}><Fragment key={launch}>{children}</Fragment></Context.Provider>;
 }
 export function useUser() {
   const user = useContext(Context);

@@ -10,7 +10,7 @@ it('loads the selected season and filters program by Kamchatka day and event typ
   const fetcher = vi.fn(async (url: string) => new Response(JSON.stringify({data:url.includes('/program?')?[event]:fixtureResponse(url),error:null})));
   vi.stubGlobal('fetch',fetcher);
   const {rerender}=render(<AppProviders><ProgramScreen raceId={10}/></AppProviders>);
-  expect(await screen.findByText('Встреча')).toBeVisible(); expect(screen.getByText('Культурная программа',{selector:'small'})).toBeVisible();
+  expect(await screen.findByText('Встреча',{selector:'.content-open strong'})).toBeVisible(); expect(screen.getByText('Культурная программа',{selector:'small'})).toBeVisible();
   fireEvent.change(screen.getByLabelText('День программы'),{target:{value:'2026-11-05'}});
   expect(await screen.findByText('Сегодня участники отдыхают')).toBeVisible();
   rerender(<AppProviders><ProgramScreen raceId={11}/></AppProviders>);

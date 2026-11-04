@@ -9,11 +9,12 @@ import { MonitoringPage } from './pages/Monitoring';
 import { PushPage } from './pages/Push';
 import { Supporters } from './pages/Supporters';
 import { Content } from './pages/Content';
-import { Icon20UsersOutline, Icon28FlagOutline, Icon24BroadcastOutline, Icon20DocumentOutline, Icon20SendOutline, Icon20LikeOutline, Icon20DocumentStatsOutline } from '@vkontakte/icons';
+import { Icon20UsersOutline, Icon28FlagOutline, Icon24ChevronDown, Icon20DocumentOutline, Icon20SendOutline, Icon20LikeOutline, Icon20DocumentStatsOutline } from '@vkontakte/icons';
+import { pages, updateAdminRoute, useAdminRoute } from './navigation';
 import { Status } from './ui';
 import './style.css';
-export const pages = {participants:'Участники',race:'Гонка',monitoring:'Мониторинг оборудования',results:'Результаты',content:'Контент',push:'Push-рассылки',supporters:'Статистика болельщиков'};
-const pageIcons = {participants:Icon20UsersOutline,race:Icon28FlagOutline,monitoring:Icon24BroadcastOutline,results:Icon20DocumentStatsOutline,content:Icon20DocumentOutline,push:Icon20SendOutline,supporters:Icon20LikeOutline};
+export { pages } from './navigation';
+const pageIcons = {participants:Icon20UsersOutline,race:Icon28FlagOutline,results:Icon20DocumentStatsOutline,content:Icon20DocumentOutline,push:Icon20SendOutline,supporters:Icon20LikeOutline};
 function Brand(){return <div className="brand"><span className="brand-logo" role="img" aria-label="Берингия. Авача"/><span>Центр управления гонкой</span></div>;}
 export function App() {
   const [theme,setTheme]=useState(()=>{try{return localStorage.getItem('avacha:admin-theme') || 'light';}catch{return 'light';}});
@@ -37,13 +38,24 @@ function Session({token,accept,logout}:{token:string;accept:(token:string,admin:
   return <main className="login"><LoadState resource={session}/><button onClick={logout}>Выйти</button></main>;
 }
 function Workspace({admin,onLogout,theme,setTheme}:{admin:Admin;onLogout:()=>void;theme:string;setTheme:(value:string)=>void}) {
-  const [page,setPage]=useState<keyof typeof pages>('monitoring');
-  const [raceId,setRaceId]=useState<number>();
+  const route=useAdminRoute();
+  const page=route.section, raceId=route.raceId;
+  const raceSection=page==='race'||page==='monitoring';
+  const [raceOpen,setRaceOpen]=useState(raceSection);
+  useEffect(()=>{if(raceSection)setRaceOpen(true);},[page,raceSection]);
+  const setPage=(section:keyof typeof pages)=>{if(section==='race'||section==='monitoring')setRaceOpen(true);updateAdminRoute({section});};
   const races=useResource<Race[]>('/admin/races');
   const race=races.data?.find(r=>r.id===raceId) ?? races.data?.find(r=>r.is_current) ?? races.data?.[0];
   const alerts=useResource<Alert[]>(race?`/admin/races/${race.id}/alerts?active=true`:null,30000);
-  return <div className="admin-shell"><aside className="sidebar"><Brand/><nav aria-label="Разделы админки">{Object.entries(pages).map(([key,title])=>{const Icon=pageIcons[key as keyof typeof pages];return <button key={key} aria-current={page===key?'page':undefined} onClick={()=>setPage(key as keyof typeof pages)}><Icon width={20} height={20} aria-hidden/><span>{title}</span></button>;})}</nav><p className="sidebar-note">Время по Камчатке<br/>UTC+12</p></aside>
-    <div className="workspace"><header className="topbar"><div className="breadcrumbs"><label><span className="sr-only">Сезон</span><select value={race?.id ?? ''} onChange={event=>setRaceId(Number(event.target.value))}>{races.data?.map(r=><option key={r.id} value={r.id}>{r.year} · {r.name}</option>)}</select></label><span>/ {pages[page]}</span></div>{race&&<Status value={race.status}/>}{Boolean(alerts.data?.length)&&<button className="header-sos" onClick={()=>setPage('monitoring')}>Активный SOS · {alerts.data!.length}</button>}<div className="operator"><span className="avatar" aria-hidden>{admin.full_name.slice(0,1)}</span><div><strong>{admin.full_name}</strong><small>Оператор гонки</small></div></div><label className="theme-picker"><span className="sr-only">Тема</span><select value={theme} onChange={e=>setTheme(e.target.value)}><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label><button className="link-button logout" onClick={onLogout}>Выйти</button></header>
+  return <div className="admin-shell"><aside className="sidebar"><Brand/><nav aria-label="Разделы админки">{Object.entries(pages).map(([key,title])=>{
+    if(key==='monitoring')return null;
+    if(key==='race')return <div className="sidebar-race" key={key}>
+      <button className="sidebar-race-toggle" data-active={raceSection} aria-expanded={raceOpen} aria-controls="race-navigation" onClick={()=>setRaceOpen(!raceOpen)}><Icon28FlagOutline width={20} height={20} aria-hidden/><span>Гонка</span><Icon24ChevronDown className="sidebar-chevron" aria-hidden/></button>
+      <div className="sidebar-subnav" id="race-navigation" hidden={!raceOpen}>{(['monitoring','race'] as const).map(child=><button key={child} aria-current={page===child?'page':undefined} onClick={()=>setPage(child)}>{pages[child]}</button>)}</div>
+    </div>;
+    const Icon=pageIcons[key as keyof typeof pageIcons];return <button key={key} aria-current={page===key?'page':undefined} onClick={()=>setPage(key as keyof typeof pages)}><Icon width={20} height={20} aria-hidden/><span>{title}</span></button>;
+  })}</nav><p className="sidebar-note">Время по Камчатке<br/>UTC+12</p></aside>
+    <div className="workspace"><header className="topbar"><div className="breadcrumbs"><label><span className="sr-only">Сезон</span><select value={race?.id ?? ''} onChange={event=>updateAdminRoute({raceId:Number(event.target.value),stageId:undefined})}>{races.data?.map(r=><option key={r.id} value={r.id}>{r.year} · {r.name}</option>)}</select></label><span>/ {raceSection&&'Гонка / '}{pages[page]}</span></div>{race&&<Status value={race.status}/>}{Boolean(alerts.data?.length)&&<button className="header-sos" onClick={()=>setPage('monitoring')}>Активный SOS · {alerts.data!.length}</button>}<div className="operator"><span className="avatar" aria-hidden>{admin.full_name.slice(0,1)}</span><div><strong>{admin.full_name}</strong><small>Оператор гонки</small></div></div><label className="theme-picker"><span className="sr-only">Тема</span><select value={theme} onChange={e=>setTheme(e.target.value)}><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label><button className="link-button logout" onClick={onLogout}>Выйти</button></header>
       <main>{page!=='monitoring'&&<div className="page-title"><h1>{pages[page]}</h1></div>}<LoadState resource={races}/>{!race && page!=='race' && <p>Создайте первый сезон в разделе «Гонка».</p>}<div key={race?.id}>{page==='race'&&<RaceSetup race={race}/>} {race&&<>{page==='monitoring'&&<MonitoringPage raceId={race.id}/>} {page==='participants'&&<Participants raceId={race.id}/>} {page==='results'&&<Results raceId={race.id}/>} {page==='push'&&<PushPage raceId={race.id}/>} {page==='supporters'&&<Supporters raceId={race.id}/>} {page==='content'&&<Content raceId={race.id}/>}</>}</div><footer className="workspace-footer"><span>{race?.name} · Только для организаторов</span><span>Время по Камчатке · UTC+12</span></footer></main>
     </div></div>;
 }

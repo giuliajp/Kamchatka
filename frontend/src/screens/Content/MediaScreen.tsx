@@ -13,7 +13,7 @@ import type { Bookmark, News, NewsItem, Photo, Photos } from '../../types/conten
 
 export function BookmarkButton({ item }: { item: Omit<Bookmark, 'created_at'> }) {
   const user = useUser();
-  const saved = useApi<Bookmark[]>(user.id ? '/me/bookmarks' : null, 0, false);
+  const saved = user.bookmarks;
   const selected = saved.data?.some(bookmark => bookmark.kind === item.kind && bookmark.item_id === item.item_id);
   const action = useAction();
   return <><Button mode="secondary" size="s" disabled={action.busy || user.loading || Boolean(user.id && !saved.data)} aria-pressed={selected ?? false} onClick={() => void action.run(async () => {

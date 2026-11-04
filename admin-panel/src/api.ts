@@ -8,7 +8,7 @@ let memoryToken: string | null = null;
 export let memorySession = false;
 export function readToken() {
   if (memorySession) return memoryToken;
-  try { return sessionStorage.getItem(tokenKey); }
+  try { memoryToken = sessionStorage.getItem(tokenKey); return memoryToken; }
   catch { memorySession = true; return memoryToken; }
 }
 export function storeToken(token: string | null) {

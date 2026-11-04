@@ -1,4 +1,6 @@
-import { useCallback } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
+import { Icon20CalendarOutline, Icon20ClockOutline, Icon20PlaceOutline } from '@vkontakte/icons';
+import { externalUrl } from '../../api/links';
 import { useApi } from '../../hooks/useApi';
 import { query } from '../../api/client';
 import { raceDate, raceTime } from '../../api/format';
@@ -34,6 +36,11 @@ export function ProgramScreen({ raceId, race, embedded = false }: { raceId: numb
   const today = dayKey(new Date().toISOString());
   const day = route.day || (days.includes(today) ? today : days[0]);
   const watch = route.view === 'watch';
+  const dayStrip = useRef<HTMLDivElement>(null);
+  useLayoutEffect(()=>{
+    const strip=dayStrip.current;const active=strip?.querySelector<HTMLElement>('[aria-pressed=true]');
+    if(strip && active) strip.scrollLeft=active.offsetLeft-strip.offsetLeft-(strip.clientWidth-active.offsetWidth)/2;
+  },[day,days.length,route.allEvents]);
   const dayEvents = program.data?.filter(event => dayKey(event.start_at) === day);
   const events = dayEvents?.filter(event => !route.category || event.event_type === route.category);
   const event = program.data?.find(item => item.id === route.eventId);
@@ -44,12 +51,17 @@ export function ProgramScreen({ raceId, race, embedded = false }: { raceId: numb
   const close = () => closeRoute({ eventId: undefined, locationId: undefined, expanded: undefined, reminders: undefined, allEvents: undefined });
   const openPlace = useCallback((id: number) => updateRoute({ locationId: id, eventId: undefined, expanded: undefined, reminders: undefined, allEvents: undefined }), []);
   const openEvent = (id: number) => updateRoute({ eventId: id, locationId: undefined, expanded: undefined, reminders: undefined, allEvents: undefined });
-  return <section className="race-content content-page program-page">{!embedded && <h2>Программа</h2>}<p className="supporting-text">Время по Камчатке · UTC+12</p>
-    <div className="program-days" role="group" aria-label="Дни программы">{days.map(date => <button aria-pressed={day === date} key={date} onClick={() => updateRoute({ day: date, eventId: undefined, locationId: undefined })}><strong>{Number(date.slice(-2))}</strong><small>{new Intl.DateTimeFormat('ru', { weekday: 'short', timeZone: 'UTC' }).format(new Date(date))}</small></button>)}</div>
-    <details className="program-date"><summary>Выбрать день</summary><label>Дата<input aria-label="День программы" type="date" value={day} onChange={e => updateRoute({ day: e.target.value, eventId: undefined, locationId: undefined })} /></label></details>
+  if(place && route.allEvents) return <section className="race-content content-page venue-events-page" aria-label="Все события на площадке">
+    {!embedded && <button className="text-action" onClick={()=>closeRoute({allEvents:undefined})}>← Назад к локации</button>}
+    {externalUrl(place.image_urls[0]) && <img className="venue-events-cover" src={externalUrl(place.image_urls[0])} alt=""/>}<h2>{place.name}</h2>
+    {Array.from(new Set(placeEvents.map(item=>dayKey(item.start_at)))).sort().map(date=><section className="venue-day" key={date}><h3>{raceDate(date)}</h3>{placeEvents.filter(item=>dayKey(item.start_at)===date).map(item=><article className="venue-event" key={item.id}><p className="event-detail"><Icon20ClockOutline aria-hidden/><EventTime event={item}/></p><button className="text-action" onClick={()=>openEvent(item.id)}>{item.title}</button>{route.reminders && <ReminderButton eventId={item.id} startAt={item.start_at}/>}</article>)}</section>)}
+    {placeEvents.length===0 && <p>Событий на площадке пока нет.</p>}
+    <button className="text-action" aria-pressed={Boolean(route.reminders)} onClick={()=>updateRoute({reminders:!route.reminders})}>Выбрать напоминания</button>
+  </section>;
+  return <section className="race-content content-page program-page">{!embedded && <h2>Программа</h2>}<span className="program-timezone">Время по Камчатке · UTC+12</span>
+    <div ref={dayStrip} className="program-days" role="group" aria-label="Дни программы">{days.map(date => <button aria-pressed={day === date} key={date} onClick={() => updateRoute({ day: date, eventId: undefined, locationId: undefined })}><strong>{Number(date.slice(-2))}</strong><small>{new Intl.DateTimeFormat('ru', { weekday: 'short', timeZone: 'UTC' }).format(new Date(date))}</small></button>)}</div>
     <div className="content-tabs" role="group" aria-label="Вид программы"><button aria-pressed={!watch} onClick={() => updateRoute({ view: 'schedule', eventId: undefined, locationId: undefined })}>Расписание</button><button aria-pressed={watch} onClick={() => updateRoute({ view: 'watch', eventId: undefined, locationId: undefined })}>Где смотреть</button></div>
-    {!watch && <label className="program-category">Категория<select value={route.category || ''} onChange={e => updateRoute({ category: e.target.value, eventId: undefined, locationId: undefined })}><option value="">Все события</option>{Object.entries(eventTypes).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>}
-    <h3>{raceDate(day)} · {new Intl.DateTimeFormat('ru', { weekday: 'long', timeZone: 'UTC' }).format(new Date(day))}</h3>
+    <details className="program-date" onKeyDown={event=>{if(event.key==='Escape')event.currentTarget.open=false;}}><summary aria-label="Выбрать день и категорию">{day===today?'Сегодня ':''}{new Intl.DateTimeFormat('ru', { day:'numeric',month:'long',timeZone:'UTC' }).format(new Date(day))}, {new Intl.DateTimeFormat('ru', { weekday:'long',timeZone:'UTC' }).format(new Date(day))}</summary><div className="program-options"><label>Дата<input aria-label="День программы" type="date" value={day} onChange={e => updateRoute({ day: e.target.value, eventId: undefined, locationId: undefined })}/></label>{!watch && <label className="program-category">Категория<select value={route.category || ''} onChange={e => updateRoute({ category: e.target.value, eventId: undefined, locationId: undefined })}><option value="">Все события</option>{Object.entries(eventTypes).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>}</div></details>
     <RequestState resource={program} /><RequestState resource={locations} />
     {!watch && <>{dayEvents?.length === 0 && <div className="program-empty"><img src="/figma/map-screen/5b9db.svg" width={115.006} height={50.0002} alt="Берингия. Авача"/><h3>Сегодня участники отдыхают</h3><p>Мероприятий нет. Выберите другой день.</p></div>}{Boolean(dayEvents?.length) && events?.length === 0 && <p role="status">В этот день нет событий выбранной категории.</p>}{events?.map(item => <article className="program-event" key={item.id}>
       <div className="program-event__time"><EventTime event={item} /></div><div><small className={`event-category event-category--${item.event_type}`}>{eventTypes[item.event_type]}</small>
@@ -66,13 +78,15 @@ export function ProgramScreen({ raceId, race, embedded = false }: { raceId: numb
     {route.eventId && !event && program.data && <p role="status">Событие не найдено.<button onClick={close}>Вернуться к программе</button></p>}
     {route.locationId && !place && locations.data && <p role="status">Локация не найдена.<button onClick={close}>Вернуться к программе</button></p>}
     {(event || place) && <ContentSheet title={event?.title || place!.name} expanded={Boolean(route.expanded)} onClose={close} onExpand={() => updateRoute({ expanded: !route.expanded })}>
-      <PhotoCarousel urls={(event || place)!.image_urls} title={event?.title || place!.name} />
+      {externalUrl((event || place)!.image_urls[0]) && <img className="content-sheet__cover" src={externalUrl((event || place)!.image_urls[0])} alt=""/>}
+      {event && <span className={`event-category event-category--${event.event_type}`}>{eventTypes[event.event_type]}</span>}
       <h2>{event?.title || place!.name}</h2>
-      {event && <><p>{eventTypes[event.event_type]} · {raceDate(event.start_at)}</p><p><EventTime event={event} /></p>{event.location && <button className="text-action" onClick={() => { updateRoute({ eventId: undefined, locationId: event.location!.id, expanded: undefined }); }}>{event.location.name}</button>}<ReminderButton eventId={event.id} startAt={event.start_at} /></>}
-      {(place || event?.location) && <a className="route-link" href={locationRoute((place || event!.location)!)} target="_blank" rel="noreferrer">Маршрут на Яндекс Картах</a>}
+      {event && <div className="event-details"><p className="event-detail"><Icon20CalendarOutline aria-hidden/>{raceDate(event.start_at)}</p><p className="event-detail"><Icon20ClockOutline aria-hidden/><EventTime event={event}/></p>{event.location && <button className="text-action event-detail" onClick={()=>updateRoute({eventId:undefined,locationId:event.location!.id,expanded:undefined})}><Icon20PlaceOutline aria-hidden/>{event.location.name}</button>}</div>}
+      <div className="sheet-actions">{(place || event?.location) && <a className="route-link" href={locationRoute((place || event!.location)!)} target="_blank" rel="noreferrer">Маршрут на Яндекс Картах</a>}{event && <ReminderButton compact eventId={event.id} startAt={event.start_at}/>}</div>
       {place?.location_type === 'finish' && place.stage_id && <ArrivalEstimate stageId={place.stage_id} />}
       <div className={route.expanded ? 'content-description' : 'content-description content-description--preview'}><h3>Описание</h3><p>{event?.description || place?.description || 'Описание пока не опубликовано.'}</p>{place?.address && <p>{place.address}</p>}{place?.how_to_get_there && <p>{place.how_to_get_there}</p>}</div>
-      {place && <><button className="text-action" aria-pressed={Boolean(route.allEvents)} onClick={() => updateRoute({ allEvents: !route.allEvents, expanded: true })}>{route.allEvents ? 'События выбранного дня' : 'Все события на площадке'}</button>
+      <PhotoCarousel urls={(event || place)!.image_urls.slice(1)} title={event?.title || place!.name}/>
+      {place && <><button className="text-action" onClick={() => updateRoute({ allEvents: true })}>Все события на площадке</button>
         <button className="text-action" aria-pressed={Boolean(route.reminders)} onClick={() => updateRoute({ reminders: !route.reminders, expanded: true })}>Выбрать напоминания</button>
         {placeEvents.length === 0 && <p>Событий на площадке в этот день нет.</p>}{placeEvents.map(item => <article className="venue-event" key={item.id}><button className="text-action" onClick={() => openEvent(item.id)}>{raceDate(item.start_at)} · {item.title}</button><p><EventTime event={item} /></p>{route.reminders && <ReminderButton eventId={item.id} startAt={item.start_at} />}</article>)}
       </>}

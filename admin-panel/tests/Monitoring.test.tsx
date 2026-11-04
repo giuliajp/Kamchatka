@@ -14,6 +14,6 @@ it('shows real SOS and stale telemetry, and requires a reason to close an alert'
  await userEvent.click(screen.getByRole('button',{name:'Урегулировать SOS'}));
  expect(screen.getByRole('dialog',{name:'Урегулировать SOS?'})).toBeVisible();
  const reason=await screen.findByLabelText('Причина закрытия SOS');expect(reason).toHaveFocus();expect(reason).toBeRequired();fireEvent.change(reason,{target:{value:'Связались, помощь оказана'}});
- await userEvent.click(screen.getByRole('button',{name:'Закрыть SOS'}));
+ await userEvent.click(screen.getByRole('button',{name:'Подтвердить решение'}));
  expect(fetcher).toHaveBeenCalledWith('/api/admin/alerts/2/acknowledge',expect.objectContaining({method:'POST',body:JSON.stringify({note:'Связались, помощь оказана'})}));
 });

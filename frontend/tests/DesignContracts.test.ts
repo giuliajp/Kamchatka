@@ -26,3 +26,8 @@ it('keeps signed launch parameters, validates calendar dates and restores nested
 it('ignores old public snapshots without touching persistent onboarding choices',()=>{
  localStorage.setItem('avacha:welcome','1');localStorage.setItem(`avacha-api-v1:${apiBase}/program`,JSON.stringify({data:[programEvent],savedAt:new Date().toISOString()}));expect(readCache('/program')).toBeUndefined();expect(localStorage.getItem('avacha:welcome')).toBe('1');
 });
+
+it('closes a direct venue-events link in two steps without inventing a previous browser entry',()=>{
+ history.replaceState(null,'','/?vk_user_id=42&sign=kept#section=program&location=3&allEvents=1');
+ const back=vi.spyOn(history,'back').mockImplementation(()=>{});closeRoute({allEvents:undefined});expect(readRaceLink().locationId).toBe(3);closeRoute({locationId:undefined});expect(readRaceLink().locationId).toBeUndefined();expect(back).not.toHaveBeenCalled();expect(location.search).toBe('?vk_user_id=42&sign=kept');
+});

@@ -11,16 +11,16 @@ import { RouteScreen } from './RouteScreen';
 import { MediaScreen } from './MediaScreen';
 import { ProfileScreen } from './ProfileScreen';
 
-export function MoreScreen({ race, season }: { race: RaceDetail; season?: ReactNode }) {
+export function MoreScreen({ race, season, embedded = false }: { race: RaceDetail; season?: ReactNode; embedded?:boolean }) {
   const { page } = useRoute();
   const faq = useApi<Faq[]>('/faq');
   const contacts = useApi<Contact[]>('/contacts');
   const guests = useApi<GuestInfo>('/guest-info');
   const open = (page: string | undefined) => updateRoute({ section: 'more', page });
-  if (page) return <><div className="race-content"><button className="text-action" onClick={() => open(undefined)}>← Ещё</button></div>
+  if (page) return <>{!embedded && <div className="race-content"><button className="text-action" onClick={() => open(undefined)}>← Ещё</button></div>}
     {page === 'locations' && <LocationsScreen raceId={race.id} />}{page === 'route' && <RouteScreen race={race} />}{page === 'media' && <MediaScreen />}{page === 'profile' && <ProfileScreen raceId={race.id} />}
   </>;
-  return <section className="race-content content-page more-page"><h2>Ещё</h2>
+  return <section className="race-content content-page more-page" aria-label="Ещё">
     <button className="profile-link venue-card" onClick={() => open('profile')}><strong>Мой профиль</strong><span>Перейти к настройкам →</span></button>
     <h3>Для гостей гонки</h3><RequestState resource={guests} />
     <details className="venue-card"><summary>Гостям <small>Как добраться, что взять с собой</small></summary>

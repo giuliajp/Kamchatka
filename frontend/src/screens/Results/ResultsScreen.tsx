@@ -1,3 +1,4 @@
+import { Icon16Chevron, Icon20LikeOutline } from '@vkontakte/icons';
 import { useRoute } from '../../hooks/useRoute';
 import { updateRoute } from '../../api/navigation';
 import { externalUrl } from '../../api/links';
@@ -48,35 +49,37 @@ export function ResultsScreen({ raceId, race, stageNumber, stageId, discipline, 
   return <section className="race-content results-page" aria-label="Результаты гонки">
     <nav className="content-tabs" aria-label="Вкладки результатов">{[['summaries','Итоги'],['protocol','Протокол'],['archive','Архив прошлых лет']].map(([key, label]) => <button key={key} aria-pressed={view === key} onClick={() => updateRoute({ view: key, albumId: undefined })}>{label}</button>)}</nav>
     {view === 'archive' ? <ArchiveScreen currentRaceId={raceId} /> : view === 'protocol' ? <><h2>Протокол результатов</h2><RequestState resource={stageDetail} />{externalUrl(pdf ?? null) ? <div className="venue-card"><a href={externalUrl(pdf!)} target="_blank" rel="noreferrer">Скачать протокол в формате .pdf</a><BookmarkButton item={{kind:'protocol',item_id:stageId ? `stage:${stageId}` : `race:${raceId}`,title:stageId ? `Протокол этапа ${stageNumber}` : 'Протокол гонки',url:pdf!,image_url:null}} /></div> : <p>PDF протокола пока не опубликован.</p>}<button className="text-action" onClick={() => updateRoute({ view: 'archive' })}>Архив протоколов прошлых лет</button></> : <>
-    <h2>{stageNumber === undefined ? 'Общий зачёт' : `Зачёт после этапа ${stageNumber}`}</h2>
+    <h2 className="results-context-title">{stageNumber === undefined ? 'Общий зачёт' : `Зачёт после этапа ${stageNumber}`}</h2>
     <RequestState resource={results} /><RequestState resource={protocols} />
     <RequestState resource={me} />
-    {ownRow && <OwnResult raceId={raceId} row={ownRow} stageId={stageId} onSelect={onSelect} />}
+    {ownRow && <OwnResult participant={participantById.get(ownRow.race_participant_id)} raceId={raceId} row={ownRow} stageId={stageId} onSelect={onSelect} />}
     {results.data && <>
-      <p className="supporting-text">Официальные результаты по опубликованным протоколам. {results.data.penalty_included_in_stage_times ? 'Штрафы уже включены во время этапов.' : 'Итоговое время рассчитано организаторами с учётом штрафов.'}</p>
+      <details className="results-explanation"><summary>Об официальных результатах</summary><p className="supporting-text">Официальные результаты по опубликованным протоколам. {results.data.penalty_included_in_stage_times ? 'Штрафы уже включены во время этапов.' : 'Итоговое время рассчитано организаторами с учётом штрафов.'}</p></details>
       {results.data.disciplines.length === 0 && <DataState status="empty" />}
       {results.data.disciplines.map(group => <section key={group.discipline.id} className="discipline-results">
-        <h3>{group.discipline.name}</h3>
+<h3>{results.data!.disciplines.length>1 ? group.discipline.name : stageId ? 'Итоги этапа' : 'Итоги гонки'}</h3><details className="protocol-details"><summary>Сведения о протоколе</summary>
         {group.stages.map(stage => <p key={stage.id}>Этап {stage.number}: {stage.is_final ? 'окончательный протокол' : 'предварительный протокол'}</p>)}
         {protocols.data?.protocols.filter(p => p.discipline.code === group.discipline.code).map(protocol => <div key={protocol.discipline.id} className="protocol-meta">
           {protocol.chief_judge && <p>Главный судья: {protocol.chief_judge}</p>}
           {protocol.chief_secretary && <p>Главный секретарь: {protocol.chief_secretary}</p>}
           {protocol.weather && <p>Погода: {protocol.weather}</p>}
         </div>)}
-        {group.rows.some(row => !mine || user.supports.data?.some(item => item.race_id === raceId && item.race_participant_id === row.race_participant_id)) ? <><ol className="results-cards">{group.rows.filter(row => !mine || user.supports.data?.some(item => item.race_id === raceId && item.race_participant_id === row.race_participant_id)).map(row => <li key={row.race_participant_id} className="venue-card" data-own={row.race_participant_id === ownRow?.race_participant_id}><button className="content-open" onClick={() => onSelect(row.participant_id, row.race_participant_id)}><img src={externalUrl(participantById.get(row.race_participant_id)?.photo_url ?? null) || '/participant-placeholder.svg'} alt=""/><span>{row.place ?? statusLabel(row.status)}. {row.full_name}</span><strong>{row.total_time ?? '—'}</strong><small>{group.discipline.name} · №{row.start_number}{row.race_participant_id === ownRow?.race_participant_id && ' · Вы'}</small></button></li>)}</ol><details><summary>Подробная таблица</summary><StandingTable rows={group.rows.filter(row => !mine || user.supports.data?.some(item => item.race_id === raceId && item.race_participant_id === row.race_participant_id))} onSelect={onSelect} /></details></> : group.rows.length > 0 ? <p role="status">Среди опубликованных результатов нет поддерживаемых вами участников.</p> : <DataState status="empty" />}
+        </details>
+        {group.rows.some(row => !mine || user.supports.data?.some(item => item.race_id === raceId && item.race_participant_id === row.race_participant_id)) ? <><ol className="results-cards">{group.rows.filter(row => !mine || user.supports.data?.some(item => item.race_id === raceId && item.race_participant_id === row.race_participant_id)).map(row => <li key={row.race_participant_id} className="venue-card" data-own={row.race_participant_id === ownRow?.race_participant_id}>{row.race_participant_id===ownRow?.race_participant_id && <span className="result-own-label">Вы</span>}<button className="result-row" aria-label={`${row.place ?? statusLabel(row.status)}. ${row.full_name}`} onClick={() => onSelect(row.participant_id, row.race_participant_id)}><span className="result-row__place">{row.place ?? '—'}.</span><img src={externalUrl(participantById.get(row.race_participant_id)?.photo_url ?? null) || '/participant-placeholder.svg'} alt=""/><span className="result-row__person"><strong>{row.full_name}</strong><small>{group.discipline.name}</small><small>№{row.start_number}</small></span><span className="result-row__time"><strong>{row.total_time ?? statusLabel(row.status)}</strong><Icon16Chevron aria-hidden/></span></button></li>)}</ol><details><summary>Подробная таблица</summary><StandingTable rows={group.rows.filter(row => !mine || user.supports.data?.some(item => item.race_id === raceId && item.race_participant_id === row.race_participant_id))} onSelect={onSelect} /></details></> : group.rows.length > 0 ? <p role="status">Среди опубликованных результатов нет поддерживаемых вами участников.</p> : <DataState status="empty" />}
       </section>)}
     </>}
     </>}
   </section>;
 }
 
-function OwnResult({ raceId, row, stageId, onSelect }: { raceId: number; row: Standing; stageId?: number; onSelect: (person: number, entry: number) => void }) {
+function OwnResult({ raceId, row, stageId, onSelect, participant }: { participant?:Participant; raceId: number; row: Standing; stageId?: number; onSelect: (person: number, entry: number) => void }) {
   const passes = useApi<CheckpointPass[]>(query(`/race-participants/${row.race_participant_id}/checkpoint-passes`, { stage_id: stageId }));
-  const finish = passes.data?.find(pass => pass.role === 'finish');
-  return <section className="own-result"><h3>Мой результат</h3><div className="venue-card"><h4>{row.full_name} · №{row.start_number}</h4><p>{row.place === null ? statusLabel(row.status) : `${row.place} место`}{finish && ` · ⚑ Финиш ${raceDate(finish.arrived_at)}, ${raceTime(finish.arrived_at)}`}</p>
-    <details><summary>Прохождение контрольных пунктов (КП)</summary><RequestState resource={passes} />{passes.data?.map(pass => <p key={pass.stage_checkpoint_id}>{pass.label || pass.name}: {raceDate(pass.arrived_at)} {raceTime(pass.arrived_at)}</p>)}{passes.data?.length === 0 && <p>Судейских отметок пока нет.</p>}</details>
-    <button className="route-link" onClick={() => onSelect(row.participant_id, row.race_participant_id)}>Моя карточка</button><button className="text-action" onClick={() => updateRoute({ raceId, section: 'results', view: 'track', stageId, participantId: row.participant_id, entryId: row.race_participant_id })}>Мой трек</button>
-  </div></section>;
+  const finish = passes.data?.filter(pass => pass.role === 'finish' && (stageId !== undefined ? pass.stage_id === stageId : row.stages.some(stage => stage.stage_number === pass.stage_number)))
+    .sort((a,b) => Date.parse(b.arrived_at) - Date.parse(a.arrived_at))[0];
+  return <section className="own-result"><h3>Мой результат</h3><div className="own-result__banner"><img src={externalUrl(participant?.photo_url ?? null) || '/participant-placeholder.svg'} alt=""/><div><strong>{row.full_name}</strong>{participant && <><small>{participant.discipline.name}</small><small className="own-result__fans"><Icon20LikeOutline width={16} height={16} aria-hidden/>{participant.supporters_count} болельщиков</small></>}</div><span>№{row.start_number}</span></div><div className="own-result__position"><span className="map-place">{row.place === null ? statusLabel(row.status) : `${row.place} место`}</span>{finish && <span className="own-result__finish">⚑ Финиш этапа {finish.stage_number} · {raceDate(finish.arrived_at)}, {raceTime(finish.arrived_at)}</span>}</div>
+    <details className="own-result__checkpoints"><summary>Прохождение контрольных пунктов (КП)</summary><RequestState resource={passes} />{passes.data?.map(pass => <p key={pass.stage_checkpoint_id}>{pass.label || pass.name}: {raceDate(pass.arrived_at)} {raceTime(pass.arrived_at)}</p>)}{passes.data?.length === 0 && <p>Судейских отметок пока нет.</p>}<button className="text-action" onClick={() => updateRoute({ raceId, section: 'results', view: 'track', stageId, participantId: row.participant_id, entryId: row.race_participant_id })}>Мой трек</button></details>
+    <button className="route-link" onClick={() => onSelect(row.participant_id, row.race_participant_id)}>Моя карточка</button>
+  </section>;
 }
 function ArchiveScreen({ currentRaceId }: { currentRaceId: number }) {
   const route = useRoute();

@@ -36,7 +36,10 @@ export async function request<T>(path: string, signal: AbortSignal, persist = tr
 }
 export async function mutate<T>(path: string, method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', data?: unknown, signal?: AbortSignal): Promise<T> {
   const result = await send<T>(path, { method, signal, ...(data === undefined ? {} : { body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }) });
-  if (!signal?.aborted) window.dispatchEvent(new Event('avacha:changed'));
+  if (!signal?.aborted) {
+    const resource = /^\/me\/bookmarks(?:\/|$)/.test(path) ? '/me/bookmarks' : /^\/program\/\d+\/reminder$/.test(path) ? '/me/reminders' : undefined;
+    window.dispatchEvent(new CustomEvent('avacha:changed', { detail: resource }));
+  }
   return result;
 }
 export function query(path: string, values: Record<string, string | number | undefined>): string {

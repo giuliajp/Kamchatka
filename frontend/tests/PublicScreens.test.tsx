@@ -12,7 +12,7 @@ it('searches and sorts real participants and opens a card with independent IDs',
   render(<AppProviders><ParticipantsScreen raceId={10} discipline="sled_8" onSelect={selected} /></AppProviders>);
   await user.click(await screen.findByRole('button', { name: 'Открыть карточку Алиса Иванова' }));
   expect(selected).toHaveBeenCalledWith(501, 9001);
-  await user.selectOptions(screen.getByRole('combobox', { name: 'Сортировка участников' }), 'name');
+  await user.click(screen.getByRole('button',{name:'Сортировать'}));await user.click(screen.getByRole('radio',{name:'По имени'}));
   await user.type(screen.getByRole('searchbox'), '14');
   expect(api).toHaveBeenCalledWith('/api/races/10/participants?discipline=sled_8&q=14&sort=name', expect.anything());
   await user.clear(screen.getByRole('searchbox')); await user.type(screen.getByRole('searchbox'), 'Нет такого');
@@ -21,7 +21,7 @@ it('searches and sorts real participants and opens a card with independent IDs',
 it('renders participant nullable fields and an open action without support', async () => {
   mockApi(() => [{ ...participant, photo_url: '/p.jpg', region: null, place: null, total_time: null }]);
   render(<AppProviders><ParticipantsScreen raceId={10} discipline="" onSelect={vi.fn()} /></AppProviders>);
-  expect(await screen.findByText('Регион не указан')).toBeVisible(); expect(screen.getByText(/Место в дисциплине: —/)).toBeVisible();
+  expect(await screen.findByRole('button',{name:'Открыть карточку Алиса Иванова'})).toBeVisible();expect(screen.getByText('Нарта, 8 собак')).toBeVisible();expect(screen.queryByText(/null|undefined/)).not.toBeInTheDocument();
 });
 it('retains optional card handlers for the UI kit', async () => {
   const open = vi.fn(); const support = vi.fn();
@@ -35,7 +35,7 @@ it('shows published protocols, penalty explanations and corrections without addi
   await userEvent.click(await screen.findByText('Подробная таблица',{selector:'summary'}));
   await userEvent.click(await screen.findByRole('button', { name: '№14 · Алиса Иванова' })); expect(select).toHaveBeenCalledWith(501, 9001);
   expect(screen.getAllByText('00:16:40').length).toBeGreaterThan(0); expect(screen.queryByText('00:18:40')).not.toBeInTheDocument();
-  expect(screen.getByText(/Главный судья: Иванов/)).toBeVisible(); expect(screen.getByText(/Главный секретарь: Петрова/)).toBeVisible(); expect(screen.getByText('Погода: Ясно')).toBeVisible();
+  await userEvent.click(screen.getByText('Сведения о протоколе',{selector:'summary'}));expect(screen.getByText(/Главный судья: Иванов/)).toBeVisible(); expect(screen.getByText(/Главный секретарь: Петрова/)).toBeVisible(); expect(screen.getByText('Погода: Ясно')).toBeVisible();
   expect(screen.getByText(/Исправлено после утверждения/)).toBeVisible();
   const table = within(screen.getByRole('table'));
   expect(table.getByRole('columnheader', { name: 'Регион' })).toBeVisible();
@@ -65,7 +65,7 @@ it('handles preliminary, empty and unpublished protocols without inventing resul
   mockApi(url => url.endsWith('/protocols') ? { ...protocols, protocols: [{ ...protocols.protocols[0], chief_judge: null, chief_secretary: null, weather: null }, { ...protocols.protocols[0], discipline: { id: 5, code: 'other', name: 'Другая' } }] }
     : url.includes('/results') ? { ...results, penalty_included_in_stage_times: false, disciplines: [{ ...results.disciplines[0], stages: [{ ...results.disciplines[0].stages[0], is_final: false }], rows: [] }] } : fixtureResponse(url));
   const { unmount } = render(<AppProviders><ResultsScreen raceId={10} stageId={103} stageNumber={3} discipline="" onSelect={vi.fn()} /></AppProviders>);
-  expect(await screen.findByText(/предварительный протокол/)).toBeVisible(); expect(screen.getByText(/Итоговое время рассчитано организаторами/)).toBeVisible();
+  await userEvent.click(await screen.findByText('Сведения о протоколе',{selector:'summary'}));await userEvent.click(screen.getByText('Об официальных результатах',{selector:'summary'}));expect(await screen.findByText(/предварительный протокол/)).toBeVisible(); expect(screen.getByText(/Итоговое время рассчитано организаторами/)).toBeVisible();
   expect(screen.getByText('Пока нет данных')).toBeVisible(); unmount(); localStorage.clear();
   mockApi(() => ({ ...results, disciplines: [] }));
   render(<AppProviders><ResultsScreen raceId={10} stageId={undefined} stageNumber={undefined} discipline="" onSelect={vi.fn()} /></AppProviders>);
@@ -83,7 +83,7 @@ it('uses server supporter sorting without rearranging the response locally', asy
   const api = mockApi(url => url.endsWith('/me/visit') ? { vk_user_id: 42 } : url.endsWith('/me/supports') ? [] : [participant, { ...participant, race_participant_id: 9002, participant_id: 502, full_name: 'Иван Петров' }]);
   render(<AppProviders><ParticipantsScreen raceId={10} discipline="" onSelect={vi.fn()} /></AppProviders>);
   await screen.findByText('Алиса Иванова');
-  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Сортировка участников' }), 'supporters');
+  await userEvent.click(screen.getByRole('button',{name:'Сортировать'}));await userEvent.click(screen.getByRole('radio',{name:'По количеству болельщиков'}));
   expect(screen.getAllByRole('button', { name: /Открыть карточку/ })[0]).toHaveAccessibleName('Открыть карточку Алиса Иванова');
   expect(api).toHaveBeenCalledWith('/api/races/10/participants?sort=supporters', expect.anything());
 });

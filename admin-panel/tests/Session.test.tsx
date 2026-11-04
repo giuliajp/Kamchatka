@@ -30,7 +30,7 @@ it('signs in, checks the token, sends Bearer headers and signs out',async()=>{
 it('preserves an unfinished form across token expiry and reauthentication by the same organizer',async()=>{
  const {fixtureData}=await import('../src/stories/fixtures');let expire=false;
  vi.stubGlobal('fetch',vi.fn(async(url:string,init?:RequestInit)=>{const path=url.replace('/api','');if(expire&&init?.method==='POST'&&path.includes('/stages'))return new Response(JSON.stringify({data:null,error:{message:'Сессия истекла'}}),{status:401});return new Response(JSON.stringify({data:fixtureData(path),error:null}));}));
- sessionStorage.setItem('avacha:admin-token','first');render(<App/>);await userEvent.click(await screen.findByRole('button',{name:'Гонка'}));await userEvent.type(await screen.findByLabelText('Название',{exact:true}),'Незавершённый этап');await userEvent.type(screen.getByLabelText('Номер этапа'),'2');expire=true;await userEvent.click(screen.getByRole('button',{name:'Сохранить этап'}));
+ sessionStorage.setItem('avacha:admin-token','first');render(<App/>);await userEvent.click(await screen.findByRole('button',{name:'Этапы и маршрут'}));await userEvent.type(await screen.findByLabelText('Название',{exact:true}),'Незавершённый этап');await userEvent.type(screen.getByLabelText('Номер этапа'),'2');expire=true;await userEvent.click(screen.getByRole('button',{name:'Сохранить этап'}));
  await screen.findByLabelText('Логин');await userEvent.type(screen.getByLabelText('Логин'),'ui-test');await userEvent.type(screen.getByLabelText('Пароль'),'local-ui-test-password');expire=false;await userEvent.click(screen.getByRole('button',{name:'Войти'}));
  expect(await screen.findByLabelText('Название',{exact:true})).toHaveValue('Незавершённый этап');
 });

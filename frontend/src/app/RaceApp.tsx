@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, ModalCard, SimpleCell } from '@vkontakte/vkui';
+import { Button, ModalCard, SimpleCell, Search } from '@vkontakte/vkui';
 import { RacePanelHeader } from '../components/RacePanelHeader';
 import { RaceHeader } from '../components/RaceHeader';
 import { RaceTabbar, type RaceDestination } from '../components/RaceTabbar';
@@ -14,9 +14,12 @@ import type { Participant, Position, Positions, Race, RaceDetail, Stage, StageDe
 import { ParticipantsScreen } from '../screens/Participants/ParticipantsScreen';
 import { ResultsScreen } from '../screens/Results/ResultsScreen';
 import { MapCanvas } from '../screens/Map/MapCanvas';
+import { StageMedia, type StageMediaViewModel } from '../screens/Map/StageMedia';
 import { StageContent } from '../screens/Map/StageContent';
 import { prepareMapData } from '../screens/Map/mapData';
 import '../screens/Map/map.css';
+import { NotificationPrompt } from '../components/NotificationPrompt';
+import { useAction } from '../hooks/useAction';
 import { Onboarding } from '../components/Onboarding';
 import { TrackScreen } from '../screens/Content/TrackScreen';
 import { MapLegend } from '../components/MapLegend';
@@ -31,7 +34,7 @@ export function currentStage(stages: Stage[], now = Date.now()) {
   const started = stages.filter(stage => stage.start_at !== null && Date.parse(stage.start_at) <= now);
   return live.at(-1) ?? started.at(-1) ?? stages[0];
 }
-export function RaceApp() {
+export function RaceApp({stageMedia}:{stageMedia?:Record<number,StageMediaViewModel>} = {}) {
   const [incoming, setIncoming] = useState(readRaceLink);
   const [resolved, setResolved] = useState<{ incoming: RaceLink; link?: RaceLink; error?: string }>();
   const needsLookup = Boolean(incoming.entryId && !incoming.raceId);
@@ -42,6 +45,7 @@ export function RaceApp() {
     return () => controller.abort();
   }, [incoming]);
   const link = useMemo(() => resolved?.incoming === incoming && resolved.link ? { ...incoming, ...resolved.link } : incoming, [incoming, resolved]);
+  const [notification,setNotification] = useState<{number:number;photoUrl?:string}>();
   const [welcome, setWelcome] = useState(() => { try { return !localStorage.getItem('avacha:welcome'); } catch { return true; } });
   const dismissWelcome = () => { try { localStorage.setItem('avacha:welcome', '1'); } catch { /* Storage may be disabled in the webview. */ } setWelcome(false); };
   useEffect(() => { const update = () => setIncoming(readRaceLink()); window.addEventListener('popstate', update); window.addEventListener('hashchange', update); return () => { window.removeEventListener('popstate', update); window.removeEventListener('hashchange', update); }; }, []);
@@ -51,12 +55,14 @@ export function RaceApp() {
   const seasons = useApi<Race[]>('/races');
   if (needsLookup && resolved?.incoming !== incoming) return <main className="race-screen race-content"><p role="status">Открываем участника…</p></main>;
   if (!race.data) return <main className="race-screen race-content"><h1>Авача</h1><RequestState resource={linkedStage} /><RequestState resource={race} /></main>;
-  return <><RaceView key={race.data.id} race={race.data} link={link} warning={<><RequestState resource={race} /><RequestState resource={linkedStage} />{resolved?.incoming === incoming && resolved.error && <p role="alert">{resolved.error}</p>}</>} season={<label className="season-select">Сезон<select value={race.data.id} onChange={event => navigateRace(`race=${event.target.value}`)}>{(seasons.data ?? [race.data]).map(season => <option key={season.id} value={season.id}>{season.year}</option>)}</select></label>} />
+  return <><RaceView notification={notification} onNotificationRequest={setNotification} stageMedia={stageMedia} key={race.data.id} race={race.data} link={link} warning={<><RequestState resource={race} /><RequestState resource={linkedStage} />{resolved?.incoming === incoming && resolved.error && <p role="alert">{resolved.error}</p>}</>} season={<label className="season-select">Сезон<select value={race.data.id} onChange={event => navigateRace(`race=${event.target.value}`)}>{(seasons.data ?? [race.data]).map(season => <option key={season.id} value={season.id}>{season.year}</option>)}</select></label>} />
     {welcome && <Onboarding onFinish={dismissWelcome} />}
   </>;
 }
-function RaceView({ race, link, warning, season }: { race: RaceDetail; link: RaceLink; warning: React.ReactNode; season: React.ReactNode }) {
+function RaceView({ race, link, warning, season, stageMedia, notification, onNotificationRequest }: { notification?:{number:number;photoUrl?:string}; onNotificationRequest:(value:{number:number;photoUrl?:string}|undefined)=>void; stageMedia?:Record<number,StageMediaViewModel>; race: RaceDetail; link: RaceLink; warning: React.ReactNode; season: React.ReactNode }) {
   const user = useUser();
+  const [search,setSearch] = useState('');
+  const notificationAction = useAction();
   const [tab, setTab] = useState<'all' | 'mine'>(link.mine ? 'mine' : 'all');
   const [legend, setLegend] = useState(false);
   const supported = useMemo(() => user.supports.data?.filter(support => support.race_id === race.id).map(support => support.race_participant_id) ?? [], [user.supports.data, race.id]);
@@ -106,10 +112,11 @@ function RaceView({ race, link, warning, season }: { race: RaceDetail; link: Rac
   const refresh = () => { positions.refresh(); detail.refresh(); track.refresh(); };
   const navigate = (value: RaceDestination) => { setSection(value); updateRoute({ raceId: race.id, section: value, allStages: false, stageId: stage?.id, discipline: value === 'map' ? mapDiscipline : value === 'participants' ? participantDiscipline : undefined, entryId: undefined, participantId: undefined, view: undefined, page: undefined, eventId: undefined, locationId: undefined, expanded: undefined, reminders: undefined, allEvents: undefined }); setSelected(undefined); setCluster([]); setLegend(false); };
   return <main data-section={section} className={stageScreen ? 'race-screen race-screen--stage' : 'race-screen'}>
-    <div className="race-screen__header">{section !== 'program' && section !== 'more' && season}{section === 'program' || section === 'more' ? <RacePanelHeader title={section === 'program' ? 'Программа' : race.name} onBack={() => navigate('map')}/> : <RaceHeader
+    <div className="race-screen__header">{section === 'program' || section === 'more' ? <RacePanelHeader title={section === 'program' ? (link.allEvents ? 'Назад' : 'Программа') : link.page ? 'Назад' : race.name} onBack={() => section==='program' && link.allEvents ? closeRoute({allEvents:undefined}) : section==='more' && link.page ? updateRoute({page:undefined}) : navigate('map')}/> : <RaceHeader
       header={{ title: race.name, onBack: section === 'map' ? undefined : () => navigate('map') }}
       stage={{ value: section === 'results' && allStages ? 'all' : String(stage?.id ?? ''),
         options: [...(section === 'results' ? [{ value: 'all', label: 'Общий зачёт', details: 'все опубликованные этапы' }] : []), ...race.stages.map(stageOption)], onChange: chooseStage, disabled: race.stages.length === 0 }}
+      beforeFilters={section === 'participants' && <Search className="participants-search" slotProps={{input:{'aria-label':'Поиск участника'}}} value={search} onChange={event=>setSearch(event.target.value)} placeholder="Поиск по имени" />}
       filters={stageScreen ? undefined : { tab, discipline, options: [...(section === 'participants' ? [] : [{ value: '', label: 'все' }]), ...race.disciplines.map(d => ({ value: d.code, label: d.name }))],
         mineCount: supported.length, onTabChange: selectedTab => { setTab(selectedTab); updateRoute({raceId:race.id,section,mine:selectedTab === 'mine',entryId:undefined,participantId:undefined}); setSelected(undefined); }, onDisciplineChange: value => { setDiscipline(value); setSelected(undefined); setCluster([]); setLegend(false); }, showMine: Boolean(user.id) }} />}
     </div>
@@ -122,6 +129,8 @@ function RaceView({ race, link, warning, season }: { race: RaceDetail; link: Rac
           onStage={id => chooseStage(String(id))} onResults={() => navigate('results')} />}
         <RequestState resource={detail} /><RequestState resource={positions} /><RequestState resource={track} />
         {detail.data && hasStageDetails && mapData && <>
+          {stage?.status === 'live' && mapData.bounds.isValid() && !mapData.hasRoute && <p className="race-content" role="status">Маршрут пока не опубликован.</p>}
+          {stage?.status === 'live' && positions.loading && !mapData.bounds.isValid() && detail.data.description && <p className="race-content">{detail.data.description}</p>}
           {stage?.status === 'live' && positions.data?.official_protocol_disciplines.length !== 0 && positions.data && <div className="race-content protocol-notice">
             <p>По дисциплинам {positions.data.official_protocol_disciplines.join(', ')} опубликован протокол. GPS-позиции скрыты.</p>
             <Button onClick={() => navigate('results')}>Открыть протокол</Button>
@@ -138,27 +147,24 @@ function RaceView({ race, link, warning, season }: { race: RaceDetail; link: Rac
             {tab === 'mine' && <p>У поддерживаемых участников пока нет подтверждённых координат.</p>}
             {positions.data.official_protocol_disciplines.length === 0 && <p>Положения отсутствуют. Координаты появятся после получения данных трекеров.</p>}
           </div>}
+          {stage.status==='finished' && stageMedia?.[stage.id] && <StageMedia media={stageMedia[stage.id]}/>}
           {stage.status === 'finished' && <section className="race-content stage-route" aria-label="Маршрут завершённого этапа"><h2>Маршрут {stage.number} этапа</h2>
             {detail.data.description && <p>{detail.data.description}</p>}
             {mapData.bounds.isValid() ? <div className="stage-route__map"><MapCanvas data={mapData} viewKey={`route:${stage.id}`} threshold={threshold} onSelect={selectMapPerson} onCluster={setCluster} onRefresh={refresh} refreshing={detail.loading} /></div> : <p>Маршрут пока не опубликован.</p>}
           </section>}
-          {stage.status === 'live' && (detail.data.description || mapData.bounds.isValid()) && <div className="race-content route-description">
-            {detail.data.description && <p>{detail.data.description}</p>}
-            {mapData.bounds.isValid() && <>
-              {!mapData.hasRoute && <p>Маршрут пока не опубликован.</p>}
-              <p>Время указано по Камчатке (UTC+12). Позиции GPS не являются официальными результатами.</p>
-            </>}
-          </div>}
+
         </>}
       </>}
       {section === 'program' && <ProgramScreen embedded key={race.id} raceId={race.id} race={race} />}
-      {section === 'more' && <MoreScreen key={race.id} race={race} season={season} />}
-      {section === 'participants' && <ParticipantsScreen raceId={race.id} discipline={discipline} mine={tab === 'mine'} onSelect={selectPerson} />}
+      {section === 'more' && <MoreScreen embedded key={race.id} race={race} season={season} />}
+      {section === 'participants' && <ParticipantsScreen search={search} raceId={race.id} discipline={discipline} mine={tab === 'mine'} onSelect={selectPerson} />}
       {section === 'results' && link.view === 'track' && link.entryId ? <TrackScreen race={race} stageId={stage?.id} entryId={link.entryId} /> : section === 'results' && <ResultsScreen race={race} raceId={race.id} discipline={discipline} mine={tab === 'mine'} stageId={allStages ? undefined : stage?.id} stageNumber={allStages ? undefined : stage?.number} onSelect={selectPerson} />}
     </div>
     <footer className="race-screen__footer"><RaceTabbar value={section} onChange={navigate} /></footer>
-    {selected && <ParticipantSheet raceId={race.id} key={selected.entryId} {...selected} position={selectedPosition} threshold={threshold} stage={section === 'results' && allStages ? undefined : detail.data ?? stage} showOfficial={section === 'results'} onClose={() => { setSelected(undefined); closeRoute({entryId:undefined,participantId:undefined}); }} />}
-    <MapLegend open={legend} onClose={() => setLegend(false)} />
+    {selected && <ParticipantSheet raceId={race.id} key={selected.entryId} {...selected} position={selectedPosition} threshold={threshold} stage={section === 'results' && allStages ? undefined : detail.data ?? stage} showOfficial={section === 'results'} onNotificationRequest={section === 'map' ? onNotificationRequest : undefined} onClose={() => { setSelected(undefined); closeRoute({entryId:undefined,participantId:undefined}); }} />}
+    <MapLegend open={legend} onClose={() => setLegend(false)} description={detail.data?.description ?? undefined} />
+    {notification && !selected && <NotificationPrompt open number={String(notification.number)} photoUrl={notification.photoUrl} loading={notificationAction.busy} onConfirm={()=>{void notificationAction.run(()=>user.setNotifications(true)).then(ok=>{if(ok)onNotificationRequest(undefined);});}} onLater={()=>onNotificationRequest(undefined)} onClose={()=>onNotificationRequest(undefined)} error={notificationAction.error}/>}
+
     <ModalCard dismissButtonMode="inside" open={cluster.length > 0} onClose={() => setCluster([])} title="Участники рядом" aria-label="Участники рядом" dismissLabel="Закрыть список">
       {cluster.map(p => <SimpleCell key={p.race_participant_id} Component="button" className="race-native-action" onClick={() => { setCluster([]); selectMapPerson(p); }}>{p.full_name} · №{p.start_number}</SimpleCell>)}
     </ModalCard>

@@ -15,9 +15,9 @@ import type { ParticipantDetail, Position, Results, Stage, StageDetail } from '.
 import './ParticipantSheet.css';
 
 export interface ParticipantSheetProps {
-  raceId?: number; participantId: number; entryId: number; position?: Position; threshold: number; onClose: () => void; stage?: Stage | StageDetail; showOfficial?: boolean;
+  raceId?: number; participantId: number; entryId: number; position?: Position; threshold: number; onClose: () => void; stage?: Stage | StageDetail; showOfficial?: boolean; onNotificationRequest?: (participant:{number:number;photoUrl?:string})=>void;
 }
-export function ParticipantSheet({ raceId, participantId, entryId, position, threshold, onClose, stage, showOfficial = false }: ParticipantSheetProps) {
+export function ParticipantSheet({ raceId, participantId, entryId, position, threshold, onClose, stage, showOfficial = false, onNotificationRequest }: ParticipantSheetProps) {
   const user = useUser();
   const me = useApi<Me>(user.id ? '/me' : null, 0, false);
   const own = me.data?.participant_id === participantId && me.data.race_entries.some(item => item.race_participant_id === entryId);
@@ -36,7 +36,7 @@ export function ParticipantSheet({ raceId, participantId, entryId, position, thr
   const rest = visits.filter(visit => visit.restMinutes > 0);
   const hasPosition = position?.position !== null && position !== undefined;
   const pointerStart = useRef(0);
-  return <ModalPage hideCloseButton className="participant-sheet" open onClose={onClose} aria-label="Карточка участника" height={expanded ? '92dvh' : '80dvh'} settlingHeight={100}>
+  return <ModalPage hideCloseButton className="participant-sheet" open onClose={onClose} aria-label="Карточка участника" height={expanded ? '92dvh' : 'calc(80dvh + 3px)'} settlingHeight={100}>
     <div className="map-participant" onPointerDown={event => { pointerStart.current = event.clientY; }}
       onPointerUp={event => { if (event.clientY - pointerStart.current > 100 && event.target === event.currentTarget) onClose(); }}>
       <button className="sheet-dismiss" aria-label="Свернуть" onClick={onClose}>×</button>
@@ -71,7 +71,7 @@ export function ParticipantSheet({ raceId, participantId, entryId, position, thr
         {entry && <section className="participant-penalties"><h3>Штрафы</h3>{entry.penalties.length === 0 ? <p>Без штрафов</p> : entry.penalties.map((penalty, i) => <p key={i}>+{penalty.time}{penalty.reason && ` · ${penalty.reason}`}{penalty.rule_reference && ` · п. ${penalty.rule_reference}`}</p>)}</section>}
         {entry && own && <button className="route-link" onClick={() => { updateRoute({section:'results',view:'track',raceId:entry.race.id,stageId:stage?.id,entryId,participantId}); }}>Трек на карте</button>}
         {entry && <div className="map-participant__actions">
-          {<SupportAction raceId={entry.race.id} entryId={entryId} number={entry.start_number} photoUrl={person.data.photo_url ?? undefined} />}
+          {<SupportAction onNotificationRequest={onNotificationRequest} raceId={entry.race.id} entryId={entryId} number={entry.start_number} photoUrl={person.data.photo_url ?? undefined} />}
           <IconButton label="Поделиться участником" onClick={async () => setFeedback(await shareRace(raceLink(entry.race.id, stage?.id, participantId, entryId), person.data!.full_name))}><Icon24ShareOutline /></IconButton>
           {<NotificationToggle raceId={entry.race.id} entryId={entryId} />}
         </div>}

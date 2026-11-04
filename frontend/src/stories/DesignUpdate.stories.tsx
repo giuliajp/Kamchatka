@@ -1,3 +1,5 @@
+import { RaceApp } from '../app/RaceApp';
+import { userEvent, within } from 'storybook/test';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ProgramScreen } from '../screens/Content/ProgramScreen';
@@ -19,7 +21,7 @@ const meta = { title:'Приложение/Обновление дизайна',
   globalThis.fetch=async(input,init)=>{
     const url=new URL(String(input),location.origin);const path=url.pathname.replace(/^\/api/,'');
     let data:unknown;
-    if(path==='/program') data=[event,{...event,id:2,event_type:'meeting',title:'Встреча с каюрами',start_at:'2026-11-03T03:00Z'}];
+    if(path==='/program') data=[event,{...event,id:2,event_type:'meeting',title:'Встреча с каюрами',start_at:'2026-11-03T03:00Z',end_at:'2026-11-03T04:00Z'}];
     else if(path==='/locations') data=[place];
     else if(path==='/me') data={vk_user_id:42,participant_id:501,race_entries:[{race_id:10,race_participant_id:9001,start_number:14}]};
     else if(path==='/me/bookmarks') data=[{kind:'protocol',item_id:'stage:103',title:'Протокол третьего этапа',url:'https://example.org/protocol.pdf',image_url:null,created_at:stage.start_at}];
@@ -50,3 +52,21 @@ export const Archive:Story={parameters:{route:'section=results&view=archive'},re
 export const OwnTrack:Story={render:()=> <TrackScreen race={race} stageId={103} entryId={9001}/>};
 function Welcome(){const [done,setDone]=useState(false);return done?<p>Знакомство завершено.</p>:<Onboarding onFinish={()=>setDone(true)}/>;}
 export const WelcomeAndSevenSteps:Story={render:()=> <Welcome/>};
+
+const media={description:'Третий этап гонки завершён. Участники прошли маршрут через природный парк Налычево и финишировали в Пиначево.',video:{title:'Видео с третьего этапа',poster:'/figma/map-screen/21228.png'},photos:['21228','efbd4','547f5','c053b','b1cb4','f31e1','d6d50'].map((id,index)=>({id,url:`/figma/map-screen/${id}.png`,caption:`Третий этап гонки · фото ${index+1}`}))};
+export const FinishedStageMedia:Story={parameters:{route:'race=10&section=map&stage=102',canvasPadding:0,fullScreen:true},render:()=> <RaceApp stageMedia={{102:media}}/>};
+export const StageGallery:Story={...FinishedStageMedia,parameters:{...FinishedStageMedia.parameters,route:'race=10&section=map&stage=102&view=stage-gallery&photo=21228'}};
+export const AllVenueEvents:Story={parameters:{route:'section=program&day=2026-11-03&location=1&allEvents=1'},render:Program.render};
+export const SelectDayAndReturn:Story={...Program,play:async({canvasElement})=>{const canvas=within(canvasElement);await userEvent.click(await canvas.findByRole('button',{name:/Мастер-класс для детей/}));await userEvent.click(await within(document.body).findByRole('button',{name:'Закрыть карточку'}));}};
+
+// Full app frames reuse production components. The decorative VK chrome exists only here.
+function AppFrame(){return <><RaceApp/><div aria-hidden style={{position:'fixed',top:40,right:12,zIndex:1000,width:70,height:28,display:'flex',alignItems:'center',justifyContent:'space-evenly',borderRadius:8,background:'#0002',color:'#fff',font:'18px Arial',pointerEvents:'none'}}>··· <span>×</span></div></>;}
+const frame={parameters:{canvasPadding:0,fullScreen:true},render:()=> <AppFrame/>};
+export const ProgramFrame:Story={...frame,parameters:{...frame.parameters,route:'race=10&section=program&day=2026-11-03'}};
+export const ParticipantsFrame:Story={...frame,parameters:{...frame.parameters,route:'race=10&section=participants&stage=103'}};
+export const ResultsFrame:Story={...frame,parameters:{...frame.parameters,route:'race=10&section=results&stage=103'}};
+export const MoreFrame:Story={...frame,parameters:{...frame.parameters,route:'race=10&section=more'}};
+export const ProfileFrame:Story={...frame,parameters:{...frame.parameters,route:'race=10&section=more&page=profile'}};
+export const VenueEventsFrame:Story={...frame,parameters:{...frame.parameters,route:'race=10&section=program&location=1&allEvents=1&day=2026-11-03'}};
+export const VenueCompact:Story={...frame,parameters:{...frame.parameters,route:'race=10&section=program&location=1&day=2026-11-03'}};
+export const VenueExpanded:Story={...frame,parameters:{...frame.parameters,route:'race=10&section=program&location=1&expanded=1&day=2026-11-03'}};

@@ -4,7 +4,7 @@ import { externalUrl } from '../api/links';
 
 export function ContentSheet({ title, expanded, onExpand, onClose, children }: { title: string; expanded: boolean; onExpand: () => void; onClose: () => void; children: ReactNode }) {
   const start = useRef(0);
-  return <ModalPage open hideCloseButton aria-label={title} height={expanded ? '92dvh' : '65dvh'} settlingHeight={100} onClose={onClose}>
+  return <ModalPage open hideCloseButton aria-label={title} height={expanded ? '92dvh' : 'min(491px, 90dvh)'} settlingHeight={100} onClose={onClose}>
     <div className="content-sheet">
       <div className="content-sheet__handle" aria-hidden onPointerDown={e => { start.current = e.clientY; e.currentTarget.setPointerCapture?.(e.pointerId); }} onPointerUp={e => { if (e.clientY - start.current > 80) onClose(); }} />
       <button className="sheet-dismiss" aria-label="Закрыть карточку" onClick={onClose}>×</button>
