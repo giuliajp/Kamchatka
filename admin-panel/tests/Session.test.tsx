@@ -2,7 +2,21 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, it, vi } from 'vitest';
 import { App } from '../src/App';
-afterEach(()=>{sessionStorage.clear();vi.unstubAllGlobals();});
+import {storeToken} from '../src/api';
+afterEach(()=>{vi.restoreAllMocks();storeToken(null);sessionStorage.clear();vi.unstubAllGlobals();});
+it('signs in and out in memory when browser storage is blocked',async()=>{
+ vi.spyOn(window,'localStorage','get').mockImplementation(()=>{throw new DOMException('Blocked','SecurityError');});
+ vi.spyOn(window,'sessionStorage','get').mockImplementation(()=>{throw new DOMException('Blocked','SecurityError');});
+ const fetcher=vi.fn(async(url:string)=>new Response(JSON.stringify({data:url.endsWith('/login')?{token:'memory',expires_at:'2026-11-04T00:00Z',admin:{id:1,login:'judge',full_name:'Судья'}}:url.endsWith('/me')?{id:1,login:'judge',full_name:'Судья'}:[],error:null})));
+ vi.stubGlobal('fetch',fetcher);render(<App/>);
+ expect(document.documentElement.dataset.theme).toBe('light');
+ await userEvent.type(screen.getByLabelText('Логин'),'judge');await userEvent.type(screen.getByLabelText('Пароль'),'secret');await userEvent.click(screen.getByRole('button',{name:'Войти'}));
+ expect(await screen.findByText('Судья')).toBeVisible();
+ expect(screen.getByText(/После обновления страницы потребуется войти снова/)).toBeVisible();
+ expect(fetcher).toHaveBeenCalledWith('/api/admin/me',expect.objectContaining({headers:expect.objectContaining({Authorization:'Bearer memory'})}));
+ await userEvent.selectOptions(screen.getByLabelText('Тема'),'dark');expect(document.documentElement.dataset.theme).toBe('dark');
+ await userEvent.click(screen.getByRole('button',{name:'Выйти'}));expect(screen.getByLabelText('Пароль')).toBeVisible();
+});
 it('signs in, checks the token, sends Bearer headers and signs out',async()=>{
  const fetcher=vi.fn(async(url:string)=>new Response(JSON.stringify({data:url.endsWith('/login')?{token:'t1',expires_at:'2026-11-04T00:00Z',admin:{id:1,login:'judge',full_name:'Судья'}}:url.endsWith('/me')?{id:1,login:'judge',full_name:'Судья'}:[],error:null})));
  vi.stubGlobal('fetch',fetcher); render(<App/>);

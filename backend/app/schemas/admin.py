@@ -38,6 +38,7 @@ class CheckpointPassIn(BaseModel):
 
 
 class CheckpointPassPatch(BaseModel):
+    expected_updated_at: AwareDatetime
     arrived_at: AwareDatetime | None = None
     departed_at: AwareDatetime | None = None
     note: str | None = Field(None, max_length=2000)

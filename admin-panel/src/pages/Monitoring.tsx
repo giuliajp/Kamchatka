@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon20Info, Icon20Search, Icon20WarningTriangleOutline } from '@vkontakte/icons';
-import { save, useAction, useResource } from '../api';
+import { ApiError, save, useAction, useResource } from '../api';
 import type { Alert, Entry, MonitorRow, Monitoring, Pass, Stage, Tracker } from '../types';
 import { ConfirmButton, Failure, Field, LoadState, SaveForm, Status, Table, kamchatkaInput, kamchatkaValue, numeric, optional, string, time } from '../ui';
 import { ChangeLog } from './Results';
+import { validResponse } from '../validate';
 export const rowState=(row:MonitorRow)=>row.active_alerts.length?'sos':!row.tracker?'no_tracker':row.is_overdue?'overdue':'ok';
 export function PositionMap({point}:{point:NonNullable<MonitorRow['last_position']>}) {
   const root=useRef<HTMLDivElement>(null);
@@ -20,11 +21,49 @@ export function PositionMap({point}:{point:NonNullable<MonitorRow['last_position
 function PassForm({row,checkpoints,initialCp=''}:{row:MonitorRow;checkpoints:Monitoring['checkpoints'];initialCp?:string}) {
   const [cpId,setCpId]=useState(initialCp);const pass=row.passes.find(pass=>pass.stage_checkpoint_id===Number(cpId));
   return <><p className="muted">Время отметки вводится по Камчатке · UTC+12.</p><label className="field">Контрольный пункт<select value={cpId} onChange={e=>setCpId(e.target.value)}><option value="">Выберите КП</option>{checkpoints.map(cp=><option key={cp.stage_checkpoint_id} value={cp.stage_checkpoint_id}>{cp.label || cp.name}</option>)}</select></label>
-    {cpId&&<SaveForm key={`${cpId}:${pass?.id}`} label={pass?'Исправить отметку':'Добавить отметку'} onSave={data=>save(pass?`/admin/checkpoint-passes/${pass.id}`:'/admin/checkpoint-passes',pass?'PATCH':'POST',{...(!pass?{race_participant_id:row.race_participant_id,stage_checkpoint_id:Number(cpId)}:{}),arrived_at:kamchatkaValue(data,'arrived_at'),departed_at:kamchatkaValue(data,'departed_at'),note:optional(data,'note')})}>
-      <Field label="Прибытие · Камчатка" name="arrived_at" type="datetime-local" required defaultValue={kamchatkaInput(pass?.arrived_at ?? null)}/><Field label="Отправление · Камчатка" name="departed_at" type="datetime-local" defaultValue={kamchatkaInput(pass?.departed_at ?? null)}/><Field label="Примечание судьи" name="note" maxLength={2000} defaultValue={pass?.note ?? ''}/>
-    </SaveForm>}{pass&&<ConfirmButton question="Удалить ошибочную отметку? Изменение сохранится в журнале." action={()=>save<Pass>(`/admin/checkpoint-passes/${pass.id}`,'DELETE')}>Удалить отметку</ConfirmButton>}
+    {cpId&&<PassEditor key={`${cpId}:${pass?.id}`} pass={pass} entryId={row.race_participant_id} checkpointId={Number(cpId)}/>}
+    {pass&&<ConfirmButton question="Удалить ошибочную отметку? Изменение сохранится в журнале." action={()=>save<Pass>(`/admin/checkpoint-passes/${pass.id}`,'DELETE')}>Удалить отметку</ConfirmButton>}
   </>;
 }
+const passFields = ['arrived_at', 'departed_at', 'note'] as const;
+const passDraft = (pass?: Pass) => ({ arrived_at: kamchatkaInput(pass?.arrived_at ?? null), departed_at: kamchatkaInput(pass?.departed_at ?? null), note: pass?.note ?? '' });
+function PassEditor({pass,entryId,checkpointId}:{pass?:Pass;entryId:number;checkpointId:number}) {
+  // This snapshot belongs to the draft. Polling must never silently advance its version.
+  const [base,setBase]=useState(pass);
+  const [draft,setDraft]=useState(()=>passDraft(pass));
+  const [conflict,setConflict]=useState<{current:Pass;changed:string[]}>();
+  const submit=async(data:FormData)=>{
+    const values={arrived_at:kamchatkaValue(data,'arrived_at',base?.arrived_at ?? null),departed_at:kamchatkaValue(data,'departed_at',base?.departed_at ?? null),note:optional(data,'note')};
+    const changes=Object.fromEntries(Object.entries(values).filter(([key,value])=>!base || value!==base[key as keyof typeof values]));
+    const path=base?`/admin/checkpoint-passes/${base.id}`:'/admin/checkpoint-passes';
+    try {
+      const saved=await save<Pass>(path,base?'PATCH':'POST',base?{expected_updated_at:base.updated_at,...changes}:{race_participant_id:entryId,stage_checkpoint_id:checkpointId,...values});
+      setBase(saved);setDraft(passDraft(saved));
+    } catch(error) {
+      if(error instanceof ApiError && error.status===409){
+        const current=(error.details as {current?:unknown}|null)?.current;
+        if(validResponse('/admin/checkpoint-passes',current,'POST'))setConflict({current:current as Pass,changed:Object.keys(changes)});
+      }
+      throw error;
+    }
+  };
+  const reapply=(conflict:{current:Pass;changed:string[]})=>{
+    const next=passDraft(conflict.current);
+    for(const field of passFields)if(conflict.changed.includes(field))next[field]=draft[field];
+    setBase(conflict.current);setDraft(next);setConflict(undefined);
+  };
+  return <><SaveForm label={base?'Исправить отметку':'Добавить отметку'} disabled={Boolean(conflict)} onSave={submit}>
+    <Field label="Прибытие · Камчатка" name="arrived_at" type="datetime-local" required value={draft.arrived_at} onChange={e=>setDraft({...draft,arrived_at:e.target.value})}/>
+    <Field label="Отправление · Камчатка" name="departed_at" type="datetime-local" value={draft.departed_at} onChange={e=>setDraft({...draft,departed_at:e.target.value})}/>
+    <Field label="Примечание судьи" name="note" maxLength={2000} value={draft.note} onChange={e=>setDraft({...draft,note:e.target.value})}/>
+  </SaveForm>{conflict&&<section className="notice warning" aria-label="Актуальная отметка">
+    <h3>Актуальная отметка другого организатора</h3>
+    <p>Прибытие: {kamchatkaInput(conflict.current.arrived_at)} · Отправление: {kamchatkaInput(conflict.current.departed_at) || '—'}</p><p>Примечание: {conflict.current.note || '—'}</p>
+    <button onClick={()=>reapply(conflict)}>Применить мой черновик к новой версии</button>
+    <button onClick={()=>{setBase(conflict.current);setDraft(passDraft(conflict.current));setConflict(undefined);}}>Принять актуальные значения</button>
+  </section>}</>;
+}
+
 function AlertForm({alert}:{alert:Alert}) {
   const [resolving,setResolving]=useState(false);
   return <article className="notice danger"><h3>SOS · {alert.full_name || alert.imei}</h3><p>{time(alert.occurred_at)} · {alert.latitude ?? '—'}, {alert.longitude ?? '—'}</p>

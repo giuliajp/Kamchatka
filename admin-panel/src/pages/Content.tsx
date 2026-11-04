@@ -24,7 +24,7 @@ function ContentForm({ tab, raceId, item, onSaved }: { tab: Tab; raceId: number;
       const urls = string(data, 'image_urls').split('\n').map(url => url.trim()).filter(Boolean);
       if (urls.length > 20 || urls.some(url => !externalUrl(url))) throw new Error('Укажите не более 20 ссылок на фотографии с http или https');
       const links = { stage_id: numeric(data, 'stage_id'), image_urls: urls, ...(!item ? { race_id: raceId } : {}) };
-      fields = tab === 'program' ? { ...links, event_type: string(data, 'event_type'), title: string(data, 'title'), description: optional(data, 'description'), start_at: kamchatkaValue(data, 'start_at'), end_at: kamchatkaValue(data, 'end_at'), location_id: numeric(data, 'location_id') }
+      fields = tab === 'program' ? { ...links, event_type: string(data, 'event_type'), title: string(data, 'title'), description: optional(data, 'description'), start_at: kamchatkaValue(data, 'start_at', item?.start_at ?? null), end_at: kamchatkaValue(data, 'end_at', item?.end_at ?? null), location_id: numeric(data, 'location_id') }
         : { ...links, location_type: string(data, 'location_type'), name: string(data, 'name'), description: optional(data, 'description'), latitude: numeric(data, 'latitude'), longitude: numeric(data, 'longitude'), address: optional(data, 'address'), how_to_get_there: optional(data, 'how_to_get_there') };
     } else if (tab === 'faq') fields = { question: string(data, 'question'), answer: string(data, 'answer') };
     else if (tab === 'contacts') fields = { title: string(data, 'title'), name: optional(data, 'name'), phone: optional(data, 'phone'), email: optional(data, 'email'), url: optional(data, 'url') };

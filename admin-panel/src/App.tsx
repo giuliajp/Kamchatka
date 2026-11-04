@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ResourceAccess, save, storeToken, tokenKey, useResource } from './api';
+import { ResourceAccess, save, storeToken, readToken, memorySession, useResource } from './api';
 import type { Admin, Alert, Login, Race } from './types';
 import { Field, LoadState, SaveForm, string } from './ui';
 import { RaceSetup } from './pages/RaceSetup';
@@ -16,15 +16,15 @@ export const pages = {participants:'Участники',race:'Гонка',monito
 const pageIcons = {participants:Icon20UsersOutline,race:Icon28FlagOutline,monitoring:Icon24BroadcastOutline,results:Icon20DocumentStatsOutline,content:Icon20DocumentOutline,push:Icon20SendOutline,supporters:Icon20LikeOutline};
 function Brand(){return <div className="brand"><span className="brand-logo" role="img" aria-label="Берингия. Авача"/><span>Центр управления гонкой</span></div>;}
 export function App() {
-  const [theme,setTheme]=useState(()=>localStorage.getItem('avacha:admin-theme') || 'light');
-  useEffect(()=>{document.documentElement.dataset.theme=theme;localStorage.setItem('avacha:admin-theme',theme);},[theme]);
-  const [token, setToken] = useState(() => sessionStorage.getItem(tokenKey));
+  const [theme,setTheme]=useState(()=>{try{return localStorage.getItem('avacha:admin-theme') || 'light';}catch{return 'light';}});
+  useEffect(()=>{document.documentElement.dataset.theme=theme;try{localStorage.setItem('avacha:admin-theme',theme);}catch{/* Theme remains available for this page. */}},[theme]);
+  const [token, setToken] = useState(readToken);
   const [verified, setVerified] = useState<{token:string;admin:Admin}>();
   const accept = useCallback((token:string,admin:Admin)=>setVerified({token,admin}),[]);
   const logout = () => {storeToken(null);setToken(null);setVerified(undefined);};
   const authenticated = Boolean(token && verified?.token === token);
   useEffect(() => { const expire = () => setToken(null); window.addEventListener('admin:expired',expire); return () => window.removeEventListener('admin:expired',expire); },[]);
-  return <>{!token && <main className="login"><Brand/><section className="card"><h1>Вход организатора</h1><SaveForm label="Войти" onSave={async data => {
+  return <>{token && memorySession && <p role="status" className="notice warning">Хранилище браузера недоступно. После обновления страницы потребуется войти снова.</p>}{!token && <main className="login"><Brand/><section className="card"><h1>Вход организатора</h1><SaveForm label="Войти" onSave={async data => {
     const login = await save<Login>('/admin/login','POST',{login:string(data,'login'),password:string(data,'password')}); storeToken(login.token); setToken(login.token);
   }}><Field label="Логин" name="login" required autoComplete="username"/><Field label="Пароль" name="password" type="password" required autoComplete="current-password"/></SaveForm></section></main>}
     {token && !authenticated && <Session key={token} token={token} accept={accept} logout={logout}/>}

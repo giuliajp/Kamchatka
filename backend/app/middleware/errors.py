@@ -61,6 +61,9 @@ def register_error_handlers(app: FastAPI) -> None:
             for err in exc.errors()
         ]
         code, message = ERRORS[422]
+        if any(err["loc"] == ("body", "expected_updated_at") and err["type"] == "missing"
+               for err in exc.errors()):
+            message = "Не указана версия отметки. Обновите страницу и повторите изменение."
         return error_response(422, code, message, details)
 
     @app.exception_handler(Exception)

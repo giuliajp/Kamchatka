@@ -4,11 +4,29 @@ export const tokenKey = 'avacha:admin-token';
 export class ApiError extends Error {
   constructor(message: string, public status = 0, public code?: string, public details?: unknown) { super(message); }
 }
-export function storeToken(token: string | null) { if (token) sessionStorage.setItem(tokenKey, token); else sessionStorage.removeItem(tokenKey); }
+let memoryToken: string | null = null;
+export let memorySession = false;
+export function readToken() {
+  if (memorySession) return memoryToken;
+  try { return sessionStorage.getItem(tokenKey); }
+  catch { memorySession = true; return memoryToken; }
+}
+export function storeToken(token: string | null) {
+  memoryToken = token;
+  try {
+    if (token) sessionStorage.setItem(tokenKey, token); else sessionStorage.removeItem(tokenKey);
+    memorySession = false;
+  } catch { memorySession = true; }
+}
+function expireSession(response: Response, token: string | null, signal?: AbortSignal | null) {
+  if (response.status === 401 && !signal?.aborted && readToken() === token) {
+    storeToken(null); window.dispatchEvent(new Event('admin:expired'));
+  }
+}
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = sessionStorage.getItem(tokenKey);
+  const token = readToken();
   const response = await fetch((import.meta.env.VITE_API_BASE_URL || '/api') + path, { ...options, headers: { Accept: 'application/json', ...(token ? {Authorization: `Bearer ${token}`} : {}), ...options.headers } });
-  if (response.status === 401 && path !== '/admin/login') { storeToken(null); window.dispatchEvent(new Event('admin:expired')); }
+  if (path !== '/admin/login') expireSession(response, token, options.signal);
   let body;
   try { body = await response.json(); } catch { throw new ApiError('Сервер вернул некорректный ответ', response.status); }
   if (!response.ok || body?.error) throw new ApiError(body?.error?.message || `Ошибка ${response.status}`, response.status, body?.error?.code, body?.error?.details);
@@ -48,8 +66,9 @@ export function useAction() {
   return { busy, error, done, run };
 }
 export async function downloadStats(raceId: number, days: number) {
-  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/admin/races/${raceId}/support-stats.csv?days=${days}`, { headers: { Authorization: `Bearer ${sessionStorage.getItem(tokenKey)}` } });
-  if (response.status === 401) { storeToken(null); window.dispatchEvent(new Event('admin:expired')); }
+  const token = readToken();
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/admin/races/${raceId}/support-stats.csv?days=${days}`, { headers: { Authorization: `Bearer ${token}` } });
+  expireSession(response, token);
   if (!response.ok) throw new ApiError(`Не удалось загрузить CSV (${response.status})`, response.status);
   const url = URL.createObjectURL(await response.blob()); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `support-${raceId}.csv`; anchor.click(); URL.revokeObjectURL(url);
 }
