@@ -66,6 +66,7 @@ for name in ['acceptance','matrix','final-probes','stress-results']:
  if (FIX/(name+'.json')).exists():
   r=read(FIX/(name+'.json'));verification[name]={'states':len(r['states']),'errors':r.get('errors',[]),'overflow':[s['name'] for s in r['states'] if s['document']['scrollWidth']>s['document']['clientWidth']+1],'flows':r.get('flows',[])}
   if 'geometry' in r:verification[name]['geometry']=r['geometry']
+  if 'rechecks' in r:verification[name]['rechecks']=r['rechecks']
 write(OUT/'verification.json',verification)
 def evidence_link(finding):
  name=Path(finding['final_evidence']).name

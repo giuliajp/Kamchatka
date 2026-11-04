@@ -1,12 +1,7 @@
 {
   "acceptance": {
-    "states": 60,
-    "errors": [
-      {
-        "figmaId": "339:7837",
-        "error": "TimeoutError: page.goto: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:5175/#race=10&section=map&stage=104\", waiting until \"load\"\u001b[22m\n"
-      }
-    ],
+    "states": 61,
+    "errors": [],
     "overflow": [],
     "flows": [
       {
@@ -65,6 +60,13 @@
             "height": 56
           }
         }
+      }
+    ],
+    "rechecks": [
+      {
+        "figmaId": "339:7837",
+        "result": "passed",
+        "reason": "Repeat navigation waiting for DOM and visible app instead of external resource load"
       }
     ]
   },
