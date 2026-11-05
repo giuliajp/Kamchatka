@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@vkontakte/vkui';
 import { useApi } from '../../hooks/useApi';
+import { StoryShareButton } from '../../components/StoryShareButton';
 import { RequestState } from '../../components/RequestState';
 import { query } from '../../api/client';
 import { metric } from '../../api/format';
@@ -28,6 +29,10 @@ export function TrackScreen({ race, stageId, entryId }: { race: RaceDetail; stag
       {track.data?.points.length === 0 && <p>Подтверждённых точек трека пока нет.</p>}
       <p className="supporting-text">Трек построен по подтверждённым GPS-точкам. Итоговое время и место взяты из судейских протоколов.</p>
       <Button size="l" stretched onClick={async () => setFeedback(await shareRace(viewLink({ raceId: race.id, stageId, participantId: entry.participant_id, entryId }), `Результаты: ${entry.full_name}`))}>Опубликовать результаты</Button>{feedback && <p role="status">{feedback}</p>}
+      <StoryShareButton link={viewLink({raceId: race.id, stageId, participantId: entry.participant_id, entryId})} card={{
+        heading: `${race.name} · ${race.year}`, title: `${entry.full_name} · №${entry.start_number}`,
+        lines: [entry.discipline.name, `Итоговое время за гонку: ${entry.total_time ?? '—'}`, `Место в дисциплине: ${entry.place ?? '—'}`], action: 'Смотреть результаты',
+      }} />
     </>}
   </section>;
 }

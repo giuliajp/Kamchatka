@@ -28,3 +28,7 @@
     justify-content: space-between;
   }
 }
+
+.story-share { margin-top: 12px; min-width: 0; }
+.story-share p { font-size: .8125rem; line-height: 1.125rem; overflow-wrap: anywhere; }
+.story-share button { max-width: 100%; }
