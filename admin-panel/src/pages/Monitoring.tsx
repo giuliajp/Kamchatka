@@ -1,11 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon20Info, Icon20Search, Icon20WarningTriangleOutline } from '@vkontakte/icons';
-import { save, useAction, useResource } from '../api';
+import { ApiError, save, useAction, useResource } from '../api';
 import type { Alert, Entry, MonitorRow, Monitoring, Pass, Stage, Tracker } from '../types';
 import { ConfirmButton, Failure, Field, LoadState, SaveForm, Status, Table, kamchatkaInput, kamchatkaValue, numeric, optional, string, time } from '../ui';
+import { MonitoringPresentationContext } from '../monitoringPresentation';
+import { BatteryHistory, CheckpointEvidence } from './MonitoringDetails';
 import { ChangeLog } from './Results';
+import { validResponse } from '../validate';
+import { updateAdminRoute, useAdminRoute } from '../navigation';
 export const rowState=(row:MonitorRow)=>row.active_alerts.length?'sos':!row.tracker?'no_tracker':row.is_overdue?'overdue':'ok';
 export function PositionMap({point}:{point:NonNullable<MonitorRow['last_position']>}) {
   const root=useRef<HTMLDivElement>(null);
@@ -20,11 +24,49 @@ export function PositionMap({point}:{point:NonNullable<MonitorRow['last_position
 function PassForm({row,checkpoints,initialCp=''}:{row:MonitorRow;checkpoints:Monitoring['checkpoints'];initialCp?:string}) {
   const [cpId,setCpId]=useState(initialCp);const pass=row.passes.find(pass=>pass.stage_checkpoint_id===Number(cpId));
   return <><p className="muted">Время отметки вводится по Камчатке · UTC+12.</p><label className="field">Контрольный пункт<select value={cpId} onChange={e=>setCpId(e.target.value)}><option value="">Выберите КП</option>{checkpoints.map(cp=><option key={cp.stage_checkpoint_id} value={cp.stage_checkpoint_id}>{cp.label || cp.name}</option>)}</select></label>
-    {cpId&&<SaveForm key={`${cpId}:${pass?.id}`} label={pass?'Исправить отметку':'Добавить отметку'} onSave={data=>save(pass?`/admin/checkpoint-passes/${pass.id}`:'/admin/checkpoint-passes',pass?'PATCH':'POST',{...(!pass?{race_participant_id:row.race_participant_id,stage_checkpoint_id:Number(cpId)}:{}),arrived_at:kamchatkaValue(data,'arrived_at'),departed_at:kamchatkaValue(data,'departed_at'),note:optional(data,'note')})}>
-      <Field label="Прибытие · Камчатка" name="arrived_at" type="datetime-local" required defaultValue={kamchatkaInput(pass?.arrived_at ?? null)}/><Field label="Отправление · Камчатка" name="departed_at" type="datetime-local" defaultValue={kamchatkaInput(pass?.departed_at ?? null)}/><Field label="Примечание судьи" name="note" maxLength={2000} defaultValue={pass?.note ?? ''}/>
-    </SaveForm>}{pass&&<ConfirmButton question="Удалить ошибочную отметку? Изменение сохранится в журнале." action={()=>save<Pass>(`/admin/checkpoint-passes/${pass.id}`,'DELETE')}>Удалить отметку</ConfirmButton>}
+    {cpId&&<PassEditor key={`${cpId}:${pass?.id}`} pass={pass} entryId={row.race_participant_id} checkpointId={Number(cpId)}/>}
+    {pass&&<ConfirmButton question="Удалить ошибочную отметку? Изменение сохранится в журнале." action={()=>save<Pass>(`/admin/checkpoint-passes/${pass.id}`,'DELETE')}>Удалить отметку</ConfirmButton>}
   </>;
 }
+const passFields = ['arrived_at', 'departed_at', 'note'] as const;
+const passDraft = (pass?: Pass) => ({ arrived_at: kamchatkaInput(pass?.arrived_at ?? null), departed_at: kamchatkaInput(pass?.departed_at ?? null), note: pass?.note ?? '' });
+function PassEditor({pass,entryId,checkpointId}:{pass?:Pass;entryId:number;checkpointId:number}) {
+  // This snapshot belongs to the draft. Polling must never silently advance its version.
+  const [base,setBase]=useState(pass);
+  const [draft,setDraft]=useState(()=>passDraft(pass));
+  const [conflict,setConflict]=useState<{current:Pass;changed:string[]}>();
+  const submit=async(data:FormData)=>{
+    const values={arrived_at:kamchatkaValue(data,'arrived_at',base?.arrived_at ?? null),departed_at:kamchatkaValue(data,'departed_at',base?.departed_at ?? null),note:optional(data,'note')};
+    const changes=Object.fromEntries(Object.entries(values).filter(([key,value])=>!base || value!==base[key as keyof typeof values]));
+    const path=base?`/admin/checkpoint-passes/${base.id}`:'/admin/checkpoint-passes';
+    try {
+      const saved=await save<Pass>(path,base?'PATCH':'POST',base?{expected_updated_at:base.updated_at,...changes}:{race_participant_id:entryId,stage_checkpoint_id:checkpointId,...values});
+      setBase(saved);setDraft(passDraft(saved));
+    } catch(error) {
+      if(error instanceof ApiError && error.status===409){
+        const current=(error.details as {current?:unknown}|null)?.current;
+        if(validResponse('/admin/checkpoint-passes',current,'POST'))setConflict({current:current as Pass,changed:Object.keys(changes)});
+      }
+      throw error;
+    }
+  };
+  const reapply=(conflict:{current:Pass;changed:string[]})=>{
+    const next=passDraft(conflict.current);
+    for(const field of passFields)if(conflict.changed.includes(field))next[field]=draft[field];
+    setBase(conflict.current);setDraft(next);setConflict(undefined);
+  };
+  return <><SaveForm label={base?'Исправить отметку':'Добавить отметку'} disabled={Boolean(conflict)} onSave={submit}>
+    <Field label="Прибытие · Камчатка" name="arrived_at" type="datetime-local" required value={draft.arrived_at} onChange={e=>setDraft({...draft,arrived_at:e.target.value})}/>
+    <Field label="Отправление · Камчатка" name="departed_at" type="datetime-local" value={draft.departed_at} onChange={e=>setDraft({...draft,departed_at:e.target.value})}/>
+    <Field label="Примечание судьи" name="note" maxLength={2000} value={draft.note} onChange={e=>setDraft({...draft,note:e.target.value})}/>
+  </SaveForm>{conflict&&<section className="notice warning" aria-label="Актуальная отметка">
+    <h3>Актуальная отметка другого организатора</h3>
+    <p>Прибытие: {kamchatkaInput(conflict.current.arrived_at)} · Отправление: {kamchatkaInput(conflict.current.departed_at) || '—'}</p><p>Примечание: {conflict.current.note || '—'}</p>
+    <button onClick={()=>reapply(conflict)}>Применить мой черновик к новой версии</button>
+    <button onClick={()=>{setBase(conflict.current);setDraft(passDraft(conflict.current));setConflict(undefined);}}>Принять актуальные значения</button>
+  </section>}</>;
+}
+
 function AlertForm({alert}:{alert:Alert}) {
   const [resolving,setResolving]=useState(false);
   return <article className="notice danger"><h3>SOS · {alert.full_name || alert.imei}</h3><p>{time(alert.occurred_at)} · {alert.latitude ?? '—'}, {alert.longitude ?? '—'}</p>
@@ -34,9 +76,12 @@ function AlertForm({alert}:{alert:Alert}) {
 }
 function AlertResolution({alert,onClose}:{alert:Alert;onClose:()=>void}) {
   const dialog=useRef<HTMLDialogElement>(null);
-  useEffect(()=>{const element=dialog.current!;element.showModal();element.querySelector('textarea')!.focus();return()=>element.close();},[]);
-  return <dialog ref={dialog} className="sos-dialog" aria-labelledby={`sos-title-${alert.id}`} onCancel={onClose}><div className="panel-heading"><h2 id={`sos-title-${alert.id}`}>Урегулировать SOS?</h2><button className="close-button" aria-label="Отменить закрытие SOS" onClick={onClose}>×</button></div><p><Status value="sos"/></p><p><strong>{alert.full_name || alert.imei}</strong><br/>Время сигнала: {time(alert.occurred_at)}</p>
-    <SaveForm label="Закрыть SOS" onSave={async data=>{await save(`/admin/alerts/${alert.id}/acknowledge`,'POST',{note:string(data,'note')});onClose();}}><label className="field">Причина закрытия SOS<textarea name="note" required minLength={3} maxLength={2000} placeholder="Опишите результат связи и оказанную помощь"/></label><div className="notice warning"><Icon20Info aria-hidden/><span>Закрывайте сигнал после проверки. Причина, автор и время сохранятся в журнале.</span></div><button type="button" onClick={onClose}>Отмена</button></SaveForm>
+  const presentation=useContext(MonitoringPresentationContext);
+  useEffect(()=>{const element=dialog.current!;element.showModal();element.querySelector<HTMLTextAreaElement>('textarea')!.focus();return()=>element.close();},[]);
+  return <dialog ref={dialog} className="sos-dialog" aria-labelledby={`sos-title-${alert.id}`} onCancel={onClose}><div className="panel-heading"><h2 id={`sos-title-${alert.id}`}>Урегулировать SOS?</h2><button className="close-button" aria-label="Отменить закрытие SOS" onClick={onClose}>×</button></div><p><span className="status status--ok">Подтверждение</span></p><p className="sos-context">{alert.start_number!==null && `№${alert.start_number} `}{alert.full_name || alert.imei}<br/>Последняя точка: {time(alert.occurred_at,true)}<br/>Координаты: {alert.latitude ?? '—'}, {alert.longitude ?? '—'}</p>
+    <SaveForm label="Подтвердить решение" onSave={async data=>{const reason=string(data,'note');if(presentation.resolveSos) await presentation.resolveSos(alert.id,{outcome:string(data,'outcome') as 'resolved'|'false_alarm',reason});else await save(`/admin/alerts/${alert.id}/acknowledge`,'POST',{note:reason});onClose();}}>
+      <fieldset className="sos-outcomes"><legend>Действие</legend><label><input type="radio" name="outcome" value="resolved" defaultChecked/>Урегулирован</label><label title={!presentation.resolveSos?'Классификация ложного сигнала пока недоступна в рабочем режиме':undefined}><input type="radio" name="outcome" value="false_alarm" disabled={!presentation.resolveSos}/>Ложный сигнал</label></fieldset>
+      <label className="field">Основание*<textarea name="note" aria-label="Причина закрытия SOS" required minLength={3} maxLength={2000} placeholder="Опишите результат связи и оказанную помощь"/></label><div className="notice warning"><Icon20Info aria-hidden/><span>Опасное действие. Автор, время, причина и до/после будут записаны в журнал.</span></div><button type="button" className="outline" onClick={onClose}>Отмена</button></SaveForm>
   </dialog>;
 }
 function Trackers({raceId,stages}:{raceId:number;stages:Stage[]}) {
@@ -52,9 +97,9 @@ function Trackers({raceId,stages}:{raceId:number;stages:Stage[]}) {
     </section></div>;
 }
 export function MonitoringPage({raceId}:{raceId:number}) {
-  const stages=useResource<Stage[]>(`/admin/races/${raceId}/stages`);const [stageId,setStageId]=useState<number>();const [tab,setTab]=useState('monitor');
+  const stages=useResource<Stage[]>(`/admin/races/${raceId}/stages`);const {stageId}=useAdminRoute();const [tab,setTab]=useState('monitor');
   const stage=stages.data?.find(s=>s.id===stageId) ?? stages.data?.find(s=>s.status==='live') ?? stages.data?.[0];
-  return <section className="monitor-page"><div className="page-title"><h1>Мониторинг оборудования</h1></div><details className="monitor-tools-menu"><summary>Инструменты этапа</summary><div className="monitor-tools"><div className="tabs">{[['monitor','Мониторинг этапа'],['trackers','Трекеры'],['alerts','Журнал SOS']].map(([value,label])=><button key={value} aria-pressed={tab===value} onClick={()=>setTab(value)}>{label}</button>)}</div>{tab==='monitor'&&<label className="stage-select">Этап мониторинга<select value={stage?.id ?? ''} onChange={e=>setStageId(Number(e.target.value))}>{stages.data?.map(s=><option key={s.id} value={s.id}>Этап {s.number} · {s.name}</option>)}</select></label>}</div></details><LoadState resource={stages}/>
+  return <section className="monitor-page"><div className="page-title"><h1>Мониторинг оборудования</h1></div><details className="monitor-tools-menu"><summary>Инструменты этапа</summary><div className="monitor-tools"><div className="tabs">{[['monitor','Мониторинг этапа'],['trackers','Трекеры'],['alerts','Журнал SOS']].map(([value,label])=><button key={value} aria-pressed={tab===value} onClick={()=>setTab(value)}>{label}</button>)}</div>{tab==='monitor'&&<label className="stage-select">Этап мониторинга<select value={stage?.id ?? ''} onChange={e=>updateAdminRoute({stageId:Number(e.target.value)})}>{stages.data?.map(s=><option key={s.id} value={s.id}>Этап {s.number} · {s.name}</option>)}</select></label>}</div></details><LoadState resource={stages}/>
     {tab==='trackers'?<Trackers raceId={raceId} stages={stages.data ?? []}/>:tab==='alerts'?<Alerts raceId={raceId}/>:<>{stage?<Monitor key={stage.id} stageId={stage.id}/>:<p>Этапы пока не созданы.</p>}</>}
   </section>;
 }
@@ -63,6 +108,7 @@ function Alerts({raceId}:{raceId:number}) {
   return <section className="card"><h2>Сигналы SOS</h2><LoadState resource={alerts}/>{alerts.data?.length===0&&<p>Сигналов нет.</p>}{alerts.data?.map(alert=><AlertForm key={alert.id} alert={alert}/>)}</section>;
 }
 function Monitor({stageId}:{stageId:number}) {
+  const presentation=useContext(MonitoringPresentationContext);
   const monitor=useResource<Monitoring>(`/admin/stages/${stageId}/monitoring`,30000);
   const [filter,setFilter]=useState('all');const [cp,setCp]=useState('');const [query,setQuery]=useState('');const [selected,setSelected]=useState<number>();const [mode,setMode]=useState<'pass'|'detail'>('pass');
   const action=useAction();const [poll,setPoll]=useState<{summary:string;errors:string[];points_saved:number;devices_seen:number;skipped:boolean}>();
@@ -82,10 +128,10 @@ function Monitor({stageId}:{stageId:number}) {
         <Table label="Мониторинг участников"><thead><tr><th>SOS</th><th>Участник</th><th>Трекер</th><th>Судейская отметка</th><th>Приоритет</th><th>Официальное</th><th>Действие</th></tr></thead><tbody>{rows?.map(r=>{const pass=passAt(r);return <tr key={r.race_participant_id} data-state={rowState(r)}><td>{r.active_alerts.length>0?<Icon20WarningTriangleOutline aria-label="Активный SOS"/>:<span className="muted">—</span>}</td><th><button className="participant-link" onClick={()=>openRow(r.race_participant_id,'detail')}>№{r.start_number} · {r.full_name}</button><small>{r.tracker?`IMEI: ${r.tracker.imei}`:'Трекер не назначен'}</small></th><td title={time(r.last_position?.position_at ?? null)}>{time(r.last_position?.position_at ?? null,true)}<small>{r.minutes_since_last===null?'Нет данных':`${r.minutes_since_last} мин назад`}{r.last_position?.battery_percent!=null&&` · ${r.last_position.battery_percent}%`}</small>{rowState(r)!=='ok'&&<Status value={rowState(r)}/>}</td><td className={pass?'success':undefined} title={pass?time(pass.arrived_at):undefined}>{pass?<>✓ {time(pass.arrived_at,true)}<small>Отправление: {time(pass.departed_at,true)}</small></>:'—'}</td><td className={pass?'success':undefined}>{pass?'Судья':'Нет отметки'}</td><td className={pass?'success':undefined}>{pass?`✓ ${time(pass.arrived_at,true)}`:'—'}</td><td><button className="outline" onClick={()=>openRow(r.race_participant_id,'pass')}>{pass?'Изменить':'Внести'}</button></td></tr>;})}</tbody></Table>{rows?.length===0&&<p className="empty">Участников по этим фильтрам нет.</p>}<p className="table-caption">Показано {rows?.length} из {data.summary.total} · просрочено {data.summary.overdue}</p>
       </section><section className="card operating-rules"><h2>Операционные правила</h2><p>Трекер не является источником официального времени. Прохождение КП подтверждает судейская отметка. При её отсутствии официальное время не заполняется. Сбой устройства не снимает участника с гонки.</p></section></div>
       <aside className={`monitor-detail ${mode==='pass'?'quick-entry':''}`} aria-label={mode==='pass'?'Ввод судейской отметки':'Карточка участника'}><section className="card">{mode==='detail'&&row?<><div className="panel-heading"><h2>№{row.start_number} · {row.full_name}</h2><button className="close-button" aria-label="Закрыть карточку" onClick={()=>{setSelected(undefined);setMode('pass');}}>×</button></div><div className="actions"><Status value={row.status}/><Status value={rowState(row)}/></div><p className="muted">{row.tracker?`IMEI: ${row.tracker.imei}`:'Не назначен'}</p>
-        {row.last_position?<><PositionMap point={row.last_position}/><p className="coordinates">{row.last_position.latitude}, {row.last_position.longitude}<small>{time(row.last_position.position_at)}</small></p><p>Батарея: {row.last_position.battery_percent ?? '—'}%</p><p className="muted">История батареи пока недоступна.</p></>:<p>Нет точек с начала этапа</p>}{row.active_alerts.map(alert=><AlertForm key={alert.id} alert={alert}/>)}
+        {row.last_position?<><PositionMap point={row.last_position}/><p className="coordinates">{row.last_position.latitude}, {row.last_position.longitude}<small>{time(row.last_position.position_at)}</small></p><p>Батарея: {row.last_position.battery_percent ?? '—'}%</p><BatteryHistory samples={presentation.battery?.[row.race_participant_id] ?? []}/></>:<p>Нет точек с начала этапа</p>}{row.active_alerts.map(alert=><AlertForm key={alert.id} alert={alert}/>)}
         <h3>Судейские отметки</h3><PassForm key={row.race_participant_id} row={row} checkpoints={data.checkpoints}/>
-      </>:<><h2>Быстрый ввод отметки</h2><label className="field">Участник для отметки<select value={editRow?.race_participant_id ?? ''} onChange={e=>setSelected(Number(e.target.value))}>{data.rows.map(r=><option key={r.race_participant_id} value={r.race_participant_id}>№{r.start_number} · {r.full_name}</option>)}</select></label>{editRow?<PassForm key={`${editRow.race_participant_id}:${cpId}`} row={editRow} checkpoints={data.checkpoints} initialCp={Number.isFinite(cpId)?String(cpId):''}/>:<p className="empty">Участников пока нет.</p>}<div className="notice warning"><Icon20Info aria-hidden/><span>Изменение отметки сохраняется в журнале вместе с автором и временем.</span></div><p className="muted">Вложения и черновики отметок пока недоступны.</p></>}
-      </section></aside></div><ChangeLog path={`/admin/stages/${stageId}/checkpoint-passes/log`}/>
+      </>:<><h2>Быстрый ввод отметки</h2><label className="field">Участник для отметки<select value={editRow?.race_participant_id ?? ''} onChange={e=>setSelected(Number(e.target.value))}>{data.rows.map(r=><option key={r.race_participant_id} value={r.race_participant_id}>№{r.start_number} · {r.full_name}</option>)}</select></label>{editRow?(presentation.checkpointEvidence ? <CheckpointEvidence key={editRow.race_participant_id} model={presentation.checkpointEvidence} checkpoints={data.checkpoints} history={presentation.history}/> : <PassForm key={`${editRow.race_participant_id}:${cpId}`} row={editRow} checkpoints={data.checkpoints} initialCp={Number.isFinite(cpId)?String(cpId):''}/>):<p className="empty">Участников пока нет.</p>}{!presentation.checkpointEvidence && <><div className="notice warning"><Icon20Info aria-hidden/><span>Изменение отметки сохраняется в журнале вместе с автором и временем.</span></div><p className="muted">Вложения и черновики отметок пока недоступны.</p></>}</>}
+      </section>{mode==='detail' && presentation.history && <section className="card"><h2>История изменений</h2>{presentation.history.map(item=><article key={item.id}><small>{item.time} · {item.author}</small><p>{item.description}</p></article>)}</section>}</aside></div><ChangeLog path={`/admin/stages/${stageId}/checkpoint-passes/log`}/>
     </>}
   </>;
 }

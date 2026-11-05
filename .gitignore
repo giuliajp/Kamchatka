@@ -48,3 +48,10 @@ __pycache__/
 # UI verification artifacts
 **/coverage/
 **/storybook-static/
+
+# Browser regression reports (uploaded by CI)
+**/playwright-report/
+**/test-results/
+
+# Full UI audit captures stay local; final comparisons and ledgers are tracked.
+/output/ui-review/fixes/

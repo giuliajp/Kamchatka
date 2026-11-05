@@ -13,9 +13,10 @@ it('opens program and More, switches seasons without changing launch parameters,
  if(screen.queryByRole('button',{name:'Начать'})) await userEvent.click(screen.getByRole('button',{name:'Начать'}));
  await userEvent.click(screen.getByRole('button',{name:'Программа'}));
  expect(await screen.findByRole('heading',{name:'Программа'})).toBeVisible();
+ await userEvent.click(screen.getByRole('button',{name:'Назад'}));expect(document.querySelector('[data-section=map]')).toBeInTheDocument();
  await userEvent.click(screen.getByRole('button',{name:'Ещё'}));
- expect(await screen.findByRole('button',{name:'Профиль и сохранённое'})).toBeVisible();
- await userEvent.selectOptions(screen.getByLabelText('Сезон'),'11');
+ expect(await screen.findByRole('button',{name:/Мой профиль/})).toBeVisible();
+ await userEvent.click(screen.getByText('Выбрать сезон',{selector:'summary'}));await userEvent.selectOptions(screen.getByLabelText('Сезон'),'11');
  expect(location.search).toBe('?vk_user_id=7&sign=a%2Bb');
  history.replaceState(null,'','/?vk_user_id=7&sign=a%2Bb#results&race=11'); fireEvent(window,new HashChangeEvent('hashchange'));
  expect(await screen.findByRole('heading',{name:'Общий зачёт'})).toBeVisible();

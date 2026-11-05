@@ -221,17 +221,28 @@ async def create_pass(body: CheckpointPassIn, session: SessionDep, admin: AdminD
 @router.patch("/checkpoint-passes/{pass_id}", response_model=ApiResponse[CheckpointPassOut],
               summary="Исправить отметку (с записью в журнал)")
 async def update_pass(pass_id: int, body: CheckpointPassPatch, session: SessionDep, admin: AdminDep):
-    item = await get_pass_or_404(session, pass_id)
+    item = (await session.execute(
+        select(CheckpointPass).where(CheckpointPass.id == pass_id).with_for_update()
+    )).scalar_one_or_none()
+    if item is None:
+        raise HTTPException(status_code=404, detail="Отметка не найдена")
+    if item.updated_at != body.expected_updated_at:
+        raise HTTPException(status_code=409, detail={
+            "message": "Отметка уже изменена другим организатором. Сравните актуальные данные с черновиком.",
+            "details": {"current": CheckpointPassOut(**pass_out(item)).model_dump(mode="json")},
+        })
     before = pass_snapshot(item)
-    changes = body.model_dump(exclude_unset=True)
+    changes = body.model_dump(exclude_unset=True, exclude={"expected_updated_at"})
     if "arrived_at" in changes and changes["arrived_at"] is None:
         raise HTTPException(status_code=422, detail="Время прихода обязательно")
+    changed = any(getattr(item, field) != value for field, value in changes.items())
     for field, value in changes.items():
         setattr(item, field, value)
     check_times(item.arrived_at, item.departed_at)
-    item.entered_by = admin.full_name
     after = pass_snapshot(item)
-    if after != before:
+    if changed:
+        item.entered_by = admin.full_name
+        item.updated_at = max(utcnow(), item.updated_at + timedelta(microseconds=1))
         session.add(CheckpointPassLog(
             checkpoint_pass_id=item.id, race_participant_id=item.race_participant_id,
             stage_checkpoint_id=item.stage_checkpoint_id, action=ChangeAction.UPDATE,

@@ -25,19 +25,20 @@ export function useApi<T>(path: string | null, poll = 0, persist = true): Resour
   }, [path, revision, persist]);
   useEffect(() => {
     const visible = () => { if (document.visibilityState === 'visible') refresh(); };
+    const changed = (event: Event) => { const resource = (event as CustomEvent<string | undefined>).detail; if (!resource || resource === path) refresh(); };
     window.addEventListener('online', refresh);
     window.addEventListener('offline', refresh);
     document.addEventListener('visibilitychange', visible);
-    window.addEventListener('avacha:changed', refresh);
+    window.addEventListener('avacha:changed', changed);
     const timer = poll > 0 ? window.setInterval(visible, poll) : undefined;
     return () => {
       window.removeEventListener('online', refresh);
       window.removeEventListener('offline', refresh);
       document.removeEventListener('visibilitychange', visible);
-      window.removeEventListener('avacha:changed', refresh);
+      window.removeEventListener('avacha:changed', changed);
       window.clearInterval(timer);
     };
-  }, [poll, refresh]);
+  }, [poll, refresh, path]);
   if (path === null) return { loading: false, refresh };
   if (state.path !== path) return { loading: true, refresh };
   return { ...state.snapshot, error: state.error, loading: state.loading, refresh };

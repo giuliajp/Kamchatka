@@ -6,7 +6,7 @@ afterEach(cleanup);
 // VKUI's press highlight schedules a 600 ms reset without cancelling it on unmount.
 // Let that library timer finish before Vitest removes the browser environment.
 afterAll(() => new Promise(resolve => setTimeout(resolve, 650)));
-beforeEach(() => localStorage.setItem('avacha:welcome', '1'));
+beforeEach(() => { history.replaceState(null, '', '/'); localStorage.setItem('avacha:welcome', '1'); });
 
 // jsdom has no layout engine; provide browser APIs used by the real VKUI.
 Object.defineProperty(window, 'matchMedia', {

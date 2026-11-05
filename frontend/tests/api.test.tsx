@@ -16,7 +16,7 @@ it('uses configured bases, canonical query parameters and validates cached envel
   expect(query('/test', {})).toBe('/test');
   expect(readCache('/test')).toBeUndefined();
   for (const invalid of ['bad json', 'null', '{}', '{"data":[],"savedAt":"bad"}']) {
-    localStorage.setItem(`avacha-api-v1:${apiBase}/test`, invalid);
+    localStorage.setItem(`avacha-api-v2:${apiBase}/test`, invalid);
     expect(readCache('/test')).toBeUndefined();
   }
   respond({ data: [1], error: null });

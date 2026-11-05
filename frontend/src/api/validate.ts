@@ -26,7 +26,7 @@ const checkpoint = object({ id: number, order_index: number, role: oneOf('start'
 const pointFields = { latitude: number, longitude: number, altitude_m: nullable(number), position_at: date };
 const point = object(pointFields);
 const participationFields = { race_participant_id: number, start_number: number, region: nullable(text),
-  discipline, dogs_count: nullable(number), status: text, place: nullable(number),
+  discipline, dogs_count: nullable(number), dog_breed: nullable(text), status: text, place: nullable(number),
   total_time_seconds: nullable(number), total_time: nullable(text) };
 const participant = object({ ...participationFields, participant_id: number, full_name: text,
   last_name: text, first_name: text, photo_url: nullable(text), supporters_count: number, supporters_change_24h: number });
@@ -49,14 +49,14 @@ const position = object({ race_participant_id: number, participant_id: number, s
 const endpoints: [RegExp, Check][] = [
   [/^\/races$/, list(race)],
   [/^\/races\/(current|\d+)$/, object({ ...raceFields,
-    disciplines: list(object({ ...disciplineFields, participants_count: number })), stages: list(stage) })],
-  [/^\/stages\/\d+$/, object({ ...stageFields, race_id: number, description: nullable(text),
+    disciplines: list(object({ ...disciplineFields, participants_count: number })), stages: list(stage), protocol_pdf_url: nullable(text) })],
+  [/^\/stages\/\d+$/, object({ ...stageFields, race_id: number, protocol_pdf_url: nullable(text), description: nullable(text),
     checkpoints: list(checkpoint), route_geojson: nullable(object({ type: text })), route_updated_at: nullable(date),
     elevation_profile: list(object({ km: number, elevation_m: number })) })],
   [/^\/races\/\d+\/participants$/, list(participant)],
   [/^\/participants\/\d+$/, object({ id: number, full_name: text, last_name: text, first_name: text,
     middle_name: nullable(text), photo_url: nullable(text), bio: nullable(text),
-    races: list(object({ ...participationFields, race, gap_to_leader_seconds: nullable(number), penalty_total_seconds: number })) })],
+    races: list(object({ ...participationFields, race, gap_to_leader_seconds: nullable(number), penalty_total_seconds: number, penalties: list(penalty) })) })],
   [/^\/races\/\d+\/positions$/, object({ stage, generated_at: date, tracking_interval_minutes: number,
     stale_after_minutes: number, route_length_km: nullable(number), official_protocol_disciplines: list(text), participants: list(position) })],
   [/^\/races\/\d+\/results$/, object({ race, up_to_stage: nullable(number), penalty_included_in_stage_times: boolean,
@@ -69,8 +69,8 @@ const endpoints: [RegExp, Check][] = [
 ];
 
 const support = object({ race_participant_id: number, supporters_count: number, change_24h: number, is_supported: nullable(boolean), notifications_enabled: nullable(boolean) });
-const locationFields = { id: number, race_id: number, stage_id: nullable(number), location_type: oneOf('start', 'finish', 'festival', 'viewpoint'), name: text, description: nullable(text), latitude: number, longitude: number, address: nullable(text), how_to_get_there: nullable(text), sort_order: number };
-const bookmark = object({ kind: oneOf('news', 'photo'), item_id: text, title: nullable(text), url: nullable(text), image_url: nullable(text), created_at: date });
+const locationFields = { id: number, race_id: number, stage_id: nullable(number), location_type: oneOf('start', 'finish', 'festival', 'viewpoint', 'checkpoint'), name: text, description: nullable(text), latitude: number, longitude: number, address: nullable(text), how_to_get_there: nullable(text), image_urls: list(text), sort_order: number };
+const bookmark = object({ kind: oneOf('news', 'photo', 'protocol'), item_id: text, title: nullable(text), url: nullable(text), image_url: nullable(text), created_at: date });
 endpoints.push(
   [/^\/race-participants\/\d+\/support$/, support],
   [/^\/me\/visit$/, object({ vk_user_id: number })],
@@ -80,12 +80,25 @@ endpoints.push(
   [/^\/races\/\d+\/support-rating$/, list(object({ rank: number, race_participant_id: number, start_number: number, full_name: text, photo_url: nullable(text), discipline, supporters_count: number, change_24h: number }))],
   [/^\/race-participants\/\d+\/checkpoint-passes$/, list(object({ stage_id: number, stage_number: number, stage_checkpoint_id: number, order_index: number, role: oneOf('start', 'checkpoint', 'finish'), label: nullable(text), name: text, km_from_start: nullable(number), required_rest_minutes: number, arrived_at: date, departed_at: nullable(date) }))],
   [/^\/locations$/, list(object(locationFields))],
-  [/^\/program$/, list(object({ id: number, race_id: number, stage_id: nullable(number), event_type: oneOf('stage_start', 'stage_finish', 'festival'), title: text, description: nullable(text), start_at: date, end_at: nullable(date), location: nullable(object(locationFields)), sort_order: number }))],
+  [/^\/program$/, list(object({ id: number, race_id: number, stage_id: nullable(number), event_type: oneOf('stage_start', 'stage_finish', 'festival', 'master_class', 'meeting'), title: text, description: nullable(text), start_at: date, end_at: nullable(date), location: nullable(object(locationFields)), image_urls: list(text), sort_order: number }))],
   [/^\/faq$/, list(object({ id: number, question: text, answer: text, sort_order: number }))],
   [/^\/contacts$/, list(object({ id: number, title: text, name: nullable(text), phone: nullable(text), email: nullable(text), url: nullable(text), sort_order: number }))],
   [/^\/news$/, object({ items: list(object({ id: text, owner_id: number, post_id: number, date, title: text, preview: text, cover_url: nullable(text), url: text })), total: number, stale: boolean })],
   [/^\/photos$/, object({ days: list(object({ date, photos: list(object({ id: text, date, text: nullable(text), url: nullable(text), vk_url: text })) })), stale: boolean })],
   [/^\/me\/bookmarks$/, list(bookmark)],
+);
+
+const windowFields = { from: date, to: date };
+const notificationSettings = object({ notifications_allowed: boolean, checkpoints: boolean, results: boolean, news: boolean });
+endpoints.push(
+  [/^\/me$/, object({ vk_user_id: number, participant_id: nullable(number), race_entries: list(object({ race_participant_id: number, race_id: number, start_number: number })) })],
+  [/^\/me\/notification-settings$/, notificationSettings],
+  [/^\/me\/reminders$/, object({ program_event_ids: list(number) })],
+  [/^\/program\/\d+\/reminder$/, object({ program_event_id: number, reminder: boolean })],
+  [/^\/guest-info$/, object(Object.fromEntries(['how_to_get_there', 'what_to_bring', 'safety'].map(key => [key, list(object({ id: number, title: nullable(text), text }))])))],
+  [/^\/photos\/albums$/, object({ items: list(object({ id: number, title: nullable(text), size: number, cover_url: nullable(text), url: text })), stale: boolean })],
+  [/^\/stages\/\d+\/arrival-estimate$/, object({ stage_id: number, generated_at: date, tracking_interval_minutes: number, first: nullable(object(windowFields)), note: text,
+    leaders: list(object({ discipline, race_participant_id: number, start_number: number, full_name: text, remaining_km: number, position_at: date, expected_at: date, ...windowFields })) })],
 );
 
 export function validApiData(path: string, value: unknown, method = 'GET'): boolean {

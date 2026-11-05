@@ -1,5 +1,6 @@
 """Админка: вход (3.2), мониторинг трекеров, отметки КП с журналом, SOS (3.6)."""
 
+import asyncio
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -155,7 +156,7 @@ async def test_create_edit_delete_pass_with_log(client, auth, race):
 
     departed = (NOW - timedelta(minutes=1)).isoformat()
     edited = await client.patch(f"/api/admin/checkpoint-passes/{item['id']}", headers=auth,
-                                json={"departed_at": departed})
+                                json={"departed_at": departed, "expected_updated_at": item["updated_at"]})
     assert edited.status_code == 200 and edited.json()["data"]["departed_at"] is not None
 
     monitoring = (await client.get(f"/api/admin/stages/{race['stage'].id}/monitoring", headers=auth)).json()
@@ -183,7 +184,8 @@ async def test_pass_validation(client, auth, race):
     naive = await client.post("/api/admin/checkpoint-passes", headers=auth,
                               json=pass_body(race, arrived_at="2027-02-18T14:58:00"))
     assert naive.status_code == 422           # время обязательно с часовым поясом
-    assert (await client.patch("/api/admin/checkpoint-passes/999999", headers=auth, json={})).status_code == 404
+    assert (await client.patch("/api/admin/checkpoint-passes/999999", headers=auth,
+                              json={"expected_updated_at": NOW.isoformat()})).status_code == 404
 
 
 async def test_kamchatka_time_is_stored_as_utc(client, auth, race):
@@ -201,6 +203,45 @@ async def test_public_passes_have_no_internal_fields(client, auth, race):
     item = response.json()["data"][0]
     assert (item["label"], item["stage_number"], item["required_rest_minutes"]) == ("КП-2", 2, 60)
     assert "note" not in item and "entered_by" not in item
+
+
+async def test_concurrent_pass_edit_preserves_winner_and_audit(client, auth, race):
+    arrival = (NOW - timedelta(minutes=5)).replace(microsecond=123456).isoformat()
+    item = (await client.post("/api/admin/checkpoint-passes", headers=auth,
+                             json=pass_body(race, arrived_at=arrival, note="original"))).json()["data"]
+    path = f"/api/admin/checkpoint-passes/{item['id']}"
+    # The client fixture opens an independent database session for each request.
+    responses = await asyncio.gather(*(
+        client.patch(path, headers=auth, json={"expected_updated_at": item["updated_at"], "note": note})
+        for note in ("judge one", "judge two")
+    ))
+    assert sorted(r.status_code for r in responses) == [200, 409]
+    winner = next(r.json()["data"] for r in responses if r.status_code == 200)
+    conflict = next(r.json()["error"] for r in responses if r.status_code == 409)
+    assert conflict["code"] == "conflict"
+    assert conflict["details"]["current"] == winner
+    assert winner["arrived_at"] == item["arrived_at"]
+    assert winner["departed_at"] is None
+    assert datetime.fromisoformat(winner["updated_at"]) > datetime.fromisoformat(item["updated_at"])
+    unchanged = await client.patch(path, headers=auth,
+                                   json={"expected_updated_at": winner["updated_at"], "note": winner["note"]})
+    assert unchanged.json()["data"] == winner
+    monitoring = (await client.get(f"/api/admin/stages/{race['stage'].id}/monitoring", headers=auth)).json()["data"]
+    row = next(row for row in monitoring["rows"] if row["race_participant_id"] == item["race_participant_id"])
+    assert row["passes"] == [winner]
+    logs = (await client.get(f"/api/admin/stages/{race['stage'].id}/checkpoint-passes/log", headers=auth)).json()["data"]
+    assert [entry["action"] for entry in logs] == ["update", "create"]
+    assert logs[0]["before"]["note"] == "original"
+    assert logs[0]["after"]["note"] == winner["note"]
+
+
+async def test_legacy_pass_edit_requires_refresh(client, auth, race):
+    item = (await client.post("/api/admin/checkpoint-passes", headers=auth,
+                             json=pass_body(race))).json()["data"]
+    response = await client.patch(f"/api/admin/checkpoint-passes/{item['id']}", headers=auth,
+                                  json={"note": "unsafe"})
+    assert response.status_code == 422
+    assert "Обновите страницу" in response.json()["error"]["message"]
 
 
 # ── SOS ────────────────────────────────────────────────────────────────

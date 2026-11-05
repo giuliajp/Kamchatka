@@ -1,5 +1,5 @@
 // Captured from a dedicated local test database. Never imported by the production app.
-import captured from './api-fixtures.json';
+import captured from './api-fixtures.json' with { type: 'json' };
 import type { Entry, Monitoring, ProtocolDetail, Race, Stage, Tracker } from '../types';
 export const race = captured['/admin/races'][0] as Race;
 export const stage = captured['/admin/races/1/stages'][0] as Stage;

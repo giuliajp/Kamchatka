@@ -1,9 +1,29 @@
 import {act,render,screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {afterEach,expect,it,vi} from 'vitest';
-import {api,save,storeToken,tokenKey,useAction,useResource,downloadStats} from '../src/api';
+import {api,save,storeToken,readToken,tokenKey,useAction,useResource,downloadStats} from '../src/api';
 import {Failure,LoadState} from '../src/ui';
 afterEach(()=>{vi.unstubAllGlobals();sessionStorage.clear();});
+it.each(['json','csv'])('does not expire a new session after an old %s request returns 401',async kind=>{
+ let finish!:(response:Response)=>void;
+ vi.stubGlobal('fetch',vi.fn(()=>new Promise<Response>(resolve=>{finish=resolve;})));
+ const expired=vi.fn();window.addEventListener('admin:expired',expired);
+ storeToken('old');
+ const pending=(kind==='json'?api('/admin/me'):downloadStats(1,14)).catch(error=>error);
+ storeToken('new');
+ finish(new Response(JSON.stringify({data:null,error:{message:'Expired'}}),{status:401}));
+ expect(await pending).toMatchObject({status:401});
+ expect(sessionStorage.getItem(tokenKey)).toBe('new');expect(expired).not.toHaveBeenCalled();
+ window.removeEventListener('admin:expired',expired);
+});
+it('does not expire a session for a cancelled request whose transport still responds',async()=>{
+ let finish!:(response:Response)=>void;
+ vi.stubGlobal('fetch',vi.fn(()=>new Promise<Response>(resolve=>{finish=resolve;})));
+ storeToken('current');const controller=new AbortController();
+ const pending=api('/admin/me',{signal:controller.signal}).catch(error=>error);controller.abort();
+ finish(new Response(JSON.stringify({error:{message:'Expired'}}),{status:401}));await pending;
+ expect(sessionStorage.getItem(tokenKey)).toBe('current');
+});
 it('rejects malformed envelopes and preserves structured server error details',async()=>{
  const fetcher=vi.fn().mockResolvedValueOnce(new Response('not-json')).mockResolvedValueOnce(new Response('null')).mockResolvedValueOnce(new Response(JSON.stringify({data:3,error:null}))).mockResolvedValueOnce(new Response(JSON.stringify({data:null,error:{code:'validation_error',message:'Ошибка строки',details:['Строка 3: неизвестный участник']}}),{status:422}));vi.stubGlobal('fetch',fetcher);
  await expect(api('/admin/me')).rejects.toThrow('Сервер вернул некорректный ответ');await expect(api('/admin/me')).rejects.toThrow('Ответ сервера не соответствует формату');await expect(api('/admin/me')).rejects.toThrow('Ответ сервера не соответствует формату');await expect(save('/admin/races/1/protocol-import','POST',new FormData())).rejects.toMatchObject({status:422,code:'validation_error',details:['Строка 3: неизвестный участник']});
@@ -26,4 +46,11 @@ it('polls and cleans up when unmounted',async()=>{vi.useFakeTimers();vi.stubGlob
 
 it('ignores a rejected request after its view has been cancelled',async()=>{
  let reject!:(reason:Error)=>void;vi.stubGlobal('fetch',vi.fn(()=>new Promise((_resolve,fail)=>{reject=fail;})));const {rerender}=render(<Probe path="/admin/example"/>);rerender(<Probe path={null}/>);await act(async()=>reject(new Error('Cancelled transport')));expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+it('keeps a restored session in memory if storage becomes unavailable later',()=>{
+ storeToken(null);sessionStorage.setItem(tokenKey,'restored');expect(readToken()).toBe('restored');
+ const unavailable=vi.spyOn(Storage.prototype,'getItem').mockImplementation(()=>{throw new DOMException('Blocked','SecurityError');});
+ expect(readToken()).toBe('restored');
+ storeToken(null);expect(readToken()).toBeNull();unavailable.mockRestore();storeToken(null);
 });

@@ -1,9 +1,41 @@
-# Карта функций макета Авача
+# Карта функций макета Авача — 4 ноября 2026
 
-> Актуальный срез на 3 ноября 2026: [завершение frontend и админки](frontend-admin-completion.md).
-> Ниже сохранён исторический аудит. Его отметки о заготовках, моках и отсутствующих API
-> не описывают ветку `codex/complete-frontend-admin`; функции этой ветки ещё не слиты в `main`.
+Текущий источник — [u3ZUZKR1AWhc7cNFAzwd9o, «Для разработки», 339:7522](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=339-7522).
+Переходы сняты с **нарисованных стрелок и пояснений на холсте**.
+Рабочая реализация: `codex/backend-design-update`, основа `b8e19ad` из `origin/main`.
+[Готовность, миграции и проверки](backend-design-update.md).
 
+Все адреса в таблице указаны после префикса `/api`.
+
+| Экран / узел Figma | Действие | Переход / результат | API |
+|---|---|---|---|
+| [Заставка и обучение, 565:16654](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=565-16654) | Начать → семь шагов / пропустить | Карта → фильтры → спортсмен → участники → программа → Ещё → результаты; возврат к входящей ссылке | Локальный `avacha:welcome`; экраны используют свои API |
+| [Карта, 339:7523](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=339-7523) | Этап, дисциплина, участник, легенда | Реальные точки, отдельные будущий и завершённый этап, карточка | `/races/{id}/positions`, `/stages/{id}`, `/race-participants/{id}/track` |
+| [Список, 572:25982](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=572-25982) | Дисциплина, сортировка, Мои, спортсмен | Первая доступная дисциплина при первом открытии; карточка; карта хранит собственный фильтр | `/races/{id}/participants`, `/me/supports` |
+| [Карточки, 565:18035 / 565:17966](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=565-18035) | Раскрыть / КП / поддержка / колокольчик | Полная карточка, биография, порода, отдых, причины штрафов; возврат к источнику | `/participants/{id}`, `/race-participants/{id}/checkpoint-passes`, `/support`, `/me/supports` |
+| [Программа, 564:17789](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=564-17789) | День, категория, Расписание / Где смотреть | Фильтр событий дня или карта/список локаций; пустой день | `/program?race_id=`, `/locations?race_id=`, `/stages/{id}` |
+| [События и локации, 564:15556](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=564-15556) | Карточка → Подробнее → локация → все события | Компактная/полная шторки, фотокарусель; дата сохраняется | Те же `/program`, `/locations`; `image_urls` |
+| Площадка | Маршрут | Внешний маршрут по опубликованным координатам | Яндекс Карты, без расчёта собственного маршрута |
+| Финишная площадка / событие | Ожидаемое время лидеров | Серверное окно времени с предупреждением об изменении | `/stages/{id}/arrival-estimate` |
+| Событие / площадка | Колокольчик | У события — включение/отмена; у площадки — **выбор событий** | `/me/reminders`, `PUT/DELETE /program/{id}/reminder` |
+| [Результаты, 565:17135](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=565-17135) | Итоги / выбор этапа / участник | Официальные опубликованные этапы во время гонки; финальные PDF гонки после завершения | `/races/{id}/results`, `/stages/{id}/protocols` |
+| [Мой результат, 565:17746 / 565:17849](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=565-17746) | Раскрыть КП / Моя карточка / Мой трек | Своя заявка выбранного сезона, метка «Вы»; переход к карточке/карте трека | `/me`, результаты, `/race-participants/{id}/checkpoint-passes` |
+| [Мой трек, 565:17567](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=565-17567) | Опубликовать результаты / Назад | Отдельная карта, пользовательский VK Share; возврат к источнику | `/stages/{id}`, `/race-participants/{id}/track?stage=`, VK Bridge |
+| [Протокол, 565:17597](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=565-17597) | Скачать / Сохранить | Открытие существующего `protocol_pdf_url`; bookmark или честное пустое состояние | `/stages/{id}`, `/races/{id}`, `PUT /me/bookmarks` (`protocol`) |
+| [Архив, 565:17633](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=565-17633) | Сезон / альбом / фото | PDF и результаты прошлого сезона, фотографии альбома | `/races`, `/races/{id}`, `/photos/albums`, `/photos?album_id=` |
+| [Ещё, 576:27890](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=576-27890) | Гостям / безопасность / FAQ / контакты | Раскрытие реального контента; карта локаций из проезда | `/guest-info`, `/faq`, `/contacts` |
+| [Профиль, 576:28010 / 576:28046](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=576-28010) | Участник / три push / сохранённый PDF | Карточка, подтверждённые серверные настройки, открытие URL | `/me/supports`, `/me/notification-settings`, `/me/bookmarks`, VK Bridge |
+| [Админка, 525:14756](https://www.figma.com/design/u3ZUZKR1AWhc7cNFAzwd9o/?node-id=525-14756) | Контент → материал → публикация/изменение/удаление | Обновлённый список; опубликованный материал в приложении; предупреждение перед удалением площадки | `/admin/races/{id}/program`, `/locations`, `/admin/program`, `/admin/locations`, `/admin/faq`, `/admin/contacts`, `/admin/guest-info` |
+
+Удаление локации оставляет события без места. FAQ, контакты и «Гостям» общие для
+сезонов; этапы, места и события сезонные. Фотографии редактируются как URL.
+Разрешение VK и серверные категории уведомлений хранятся отдельно; отказ VK или
+ошибка записи не изображаются успешным включением.
+
+## Исторический аудит 1–3 ноября
+
+Следующие сведения относятся к прежнему файлу и прежним веткам. Их статусы
+не описывают текущую поставку.
 
 Срез на 1 ноября 2026 года. [Исходный макет](https://www.figma.com/design/dZcOxRfG88AY1tWW1s7HKH/?node-id=339-7522).
 

@@ -1,0 +1,49 @@
+{
+  "frontend": {
+    "command": "npm run check",
+    "result": "passed",
+    "tests": 308,
+    "coverage": {
+      "statements": 100,
+      "branches": 100,
+      "functions": 100,
+      "lines": 100
+    },
+    "production": "passed",
+    "storybook": "passed"
+  },
+  "admin": {
+    "command": "npm run check",
+    "result": "passed",
+    "tests": 122,
+    "coverage": {
+      "statements": 100,
+      "branches": 100,
+      "functions": 100,
+      "lines": 100
+    },
+    "production": "passed",
+    "storybook": "passed"
+  },
+  "audit": {
+    "frontend_vulnerabilities": 0,
+    "admin_vulnerabilities": 0
+  },
+  "backend": {
+    "command": "pytest -q",
+    "passed": 291,
+    "database": "PostgreSQL, isolated schema per test"
+  },
+  "production_browser": {
+    "command": "PLAYWRIGHT_CHANNEL=chrome npm run test:e2e",
+    "passed": 48,
+    "contrast": "Accepted exception: retain exact Figma colors"
+  },
+  "manual_mutations": {
+    "behavioral_failures": 3,
+    "probes": 3,
+    "aggregate_mutation_score": null
+  },
+  "source_commit": "66c78f8",
+  "note": "Final CI is checked against the PR head SHA. Local full checks include the bounded wait correction in ParticipantSheet.test.tsx."
+}

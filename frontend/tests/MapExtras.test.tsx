@@ -20,15 +20,19 @@ it('synchronises support from sheet to map, list and My filter without replacing
   await user.click(await screen.findByRole('radio', { name: 'все' }));
   await user.click(await screen.findByRole('button', { name: 'Точка 14' }));
   await user.click(await screen.findByRole('button', { name: 'Болею за' }));
-  await user.click(await screen.findByRole('button', { name: 'Позже' }));
-  await user.click(screen.getByRole('button', { name: 'Свернуть' }));
+  await screen.findByRole('button',{name:'Вы болеете'});
+  expect(screen.queryByRole('button',{name:'Позже'})).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button',{name:'Свернуть'}));
+  await user.click(await screen.findByRole('button',{name:'Позже'}));
   await user.click(await screen.findByRole('tab', { name: /Мои/ }));
   expect(await screen.findByRole('button', { name: 'Точка 14 — мой' })).toBeVisible();
   expect(screen.queryByRole('button', { name: 'Точка 22' })).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Участники' }));
-  await user.click(await screen.findByRole('button', { name: 'Вы болеете' }));
+  await user.click(await screen.findByRole('button',{name:'Открыть карточку Алиса Иванова'}));
+  await user.click(await screen.findByRole('button',{name:'Вы болеете'}));
+  await user.click(screen.getByRole('button',{name:'Свернуть'}));
   expect(await screen.findByText(/В вашем списке нет участников/)).toBeVisible();
-  expect(api).toHaveBeenCalledWith('/api/races/10/participants?sort=start_number', expect.anything());
+  expect(api).toHaveBeenCalledWith('/api/races/10/participants?discipline=sled_8&sort=start_number', expect.anything());
 });
 it('opens the legend and closes the top surface with Escape', async () => {
   mockApi(); const user = userEvent.setup(); show();
@@ -87,12 +91,16 @@ it('does not attach another person’s GPS or track to a mixed share URL', async
   expect(screen.queryByLabelText(/Позиция по GPS-трекеру/)).not.toBeInTheDocument();
   expect(api.mock.calls.some(([input]) => String(input).includes('/race-participants/9002/track'))).toBe(false);
 });
-it('closes only the notification prompt when Escape bubbles through a participant sheet', async () => {
+it('defers notification permission until the card closes and Escape returns to the map', async () => {
   const user = userEvent.setup(); mockApi(); show();
   await user.click(await screen.findByRole('button', { name: 'Точка 14' }));
   await user.click(await screen.findByRole('button', { name: 'Болею за' }));
+  await screen.findByRole('button',{name:'Вы болеете'});
+  expect(screen.queryByRole('button',{name:'Позже'})).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button',{name:'Свернуть'}));
   const later = await screen.findByRole('button', { name: 'Позже' });
   later.focus(); await user.keyboard('{Escape}');
   await waitFor(() => expect(screen.queryByRole('button', { name: 'Позже' })).not.toBeInTheDocument());
-  expect(screen.getByRole('dialog', { name: 'Карточка участника' })).toBeVisible();
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(document.querySelector('[data-section=map]')).toBeInTheDocument();
 });

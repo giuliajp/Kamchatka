@@ -35,10 +35,12 @@ def upgrade() -> None:
     op.create_index(op.f('ix_event_reminders_vk_user_id'), 'event_reminders', ['vk_user_id'], unique=False)
     op.add_column('participants', sa.Column('vk_user_id', sa.BigInteger(), nullable=True))
     op.create_unique_constraint(op.f('uq_participants_vk_user_id'), 'participants', ['vk_user_id'])
-    op.add_column('program_events', sa.Column('image_urls', sa.JSON(), nullable=False))
+    op.add_column('program_events', sa.Column('image_urls', sa.JSON(), server_default=sa.text("'[]'"), nullable=False))
+    op.alter_column('program_events', 'image_urls', server_default=None)
     op.add_column('race_participants', sa.Column('dog_breed', sa.String(length=100), nullable=True))
     op.add_column('races', sa.Column('protocol_pdf_url', sa.String(length=1000), nullable=True))
-    op.add_column('spectator_locations', sa.Column('image_urls', sa.JSON(), nullable=False))
+    op.add_column('spectator_locations', sa.Column('image_urls', sa.JSON(), server_default=sa.text("'[]'"), nullable=False))
+    op.alter_column('spectator_locations', 'image_urls', server_default=None)
     # ### end Alembic commands ###
 
 

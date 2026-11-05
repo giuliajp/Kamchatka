@@ -53,6 +53,7 @@ it('hides GPS independently for every published discipline and opens official re
   expect(screen.queryByRole('button', { name: 'Точка 14' })).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Открыть протокол' }));
   expect(await screen.findByText('Зачёт после этапа 3')).toBeVisible();
+  await userEvent.click(await screen.findByText('Подробная таблица',{selector:'summary'}));
   await user.click(await screen.findByRole('button', { name: '№14 · Алиса Иванова' }));
   expect(await screen.findByRole('dialog', { name: 'Карточка участника' })).toBeVisible();
   expect(screen.queryByText('Позиция по GPS-трекеру: 1')).not.toBeInTheDocument();
@@ -75,6 +76,7 @@ it('supports cancelled, planned and finished stages and the overall standings se
   await user.click(screen.getByRole('option', { name: /Общий зачёт/ }));
   expect(await screen.findByRole('heading', { name: 'Общий зачёт' })).toBeVisible();
   expect(api).toHaveBeenCalledWith('/api/races/10/results', expect.anything());
+  await userEvent.click(await screen.findByText('Подробная таблица',{selector:'summary'}));
   await user.click(screen.getByRole('button', { name: '№14 · Алиса Иванова' }));
   expect(await screen.findByText(/Официальное место в дисциплине за гонку: 2/)).toBeVisible();
   expect(api).toHaveBeenCalledWith('/api/races/10/results?discipline=sled_8', expect.anything());
