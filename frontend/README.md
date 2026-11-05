@@ -4,7 +4,7 @@ React, TypeScript, VKUI, официальный VK Bridge и Leaflet. Пять �
 участники, результаты, программа и «Ещё». Рабочее приложение использует backend API;
 фикстуры остаются только в тестах и Storybook.
 
-Актуальное обновление API, экранов и переходов: [карта готовности](../docs/backend-design-update.md).
+Описание API: [docs/api.md](../docs/api.md).
 
 ## Запуск
 
@@ -81,10 +81,8 @@ npm run storybook
 
 Storybook по умолчанию: http://127.0.0.1:6006. `check` выполняет lint, TypeScript,
 тесты с порогами **100% каждого рабочего TS/TSX-файла**, production и Storybook.
-CI проверяет оба приложения и backend; актуальные результаты —
-[исправления ревью F1–F10](../docs/review-fixes.md).
-Полный объём, проверка реального backend и ограничения —
-[карта готовности](../docs/frontend-admin-completion.md).
+CI проверяет оба приложения и backend. Проверка связки с реальным backend —
+`scripts/verify-ui-api.py`.
 
 Production-проверки браузера запускаются из `frontend`:
 

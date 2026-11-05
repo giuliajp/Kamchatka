@@ -19,6 +19,7 @@ from app.config import get_settings
 from app.db import SessionLocal, engine
 from app.middleware.errors import register_error_handlers
 from app.services.iridium360.poller import polling_enabled, run_poller
+from app.services.leader import POLLER_LOCK, REMINDERS_LOCK, run_as_leader
 from app.services.reminders import reminders_enabled, run_reminders
 
 
@@ -26,9 +27,12 @@ from app.services.reminders import reminders_enabled, run_reminders
 async def lifespan(app: FastAPI):
     # Фоновый опрос Iridium360 (задача 2.6). Без ключа в .env не запускается.
     stop = asyncio.Event()
-    poller = asyncio.create_task(run_poller(stop)) if polling_enabled() else None
+    # Несколько процессов uvicorn: задачу выполняет только один (app/services/leader.py).
+    poller = asyncio.create_task(run_as_leader(engine, POLLER_LOCK, stop, run_poller)) \
+        if polling_enabled() else None
     # Напоминания о событиях программы — раз в минуту.
-    reminders = asyncio.create_task(run_reminders(stop, SessionLocal)) if reminders_enabled() else None
+    reminders = asyncio.create_task(run_as_leader(
+        engine, REMINDERS_LOCK, stop, lambda s: run_reminders(s, SessionLocal))) if reminders_enabled() else None
     yield
     stop.set()
     for task in (poller, reminders):
@@ -44,8 +48,12 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Авача API",
         description="Бэкенд мини-приложения гонки «Авача» и фестиваля «Берингия».",
-        version="0.1.0",
+        version="1.0.0",
         lifespan=lifespan,
+        # В production описание API (/docs) не публикуем: в нём все адреса админки.
+        docs_url=None if settings.is_production else "/docs",
+        redoc_url=None if settings.is_production else "/redoc",
+        openapi_url=None if settings.is_production else "/openapi.json",
     )
 
     # TODO перед продакшеном: добавить в CORS_ORIGINS реальный домен VK Mini App

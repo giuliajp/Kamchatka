@@ -98,4 +98,4 @@ API скрывает вложенную локацию другого сезон
 `url VARCHAR(2000)`. Общие поля: `sort_order >= 0` (ORM default 0), `is_published`
 (ORM default false), `created_at`, `updated_at`. Контакты и FAQ не зависят от сезона.
 
-Порядок миграции и отката: [описание и проверки](season-content-migration.md).
+Откат — `python -m alembic -c backend/alembic.ini downgrade 0005`.

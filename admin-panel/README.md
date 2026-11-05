@@ -2,9 +2,8 @@
 
 Отдельное приложение React + TypeScript + Vite. Версии согласованы с мини-приложением;
 используются нативные формы, таблицы, VK Icons и Leaflet, без универсального CRUD-конструктора.
-Backend и миграции не изменены.
 
-Актуальные поля и миграции: [обновление API и дизайна](../docs/backend-design-update.md).
+Описание API: [docs/api.md](../docs/api.md).
 
 ## Запуск
 
@@ -70,7 +69,6 @@ Storybook: http://127.0.0.1:6007, отдельные истории входа, 
 в iframe, чтобы их HTTP-фикстуры не подменяли друг друга в Docs.
 
 `check`: lint, TypeScript, тесты, production и Storybook. Пороги всех рабочих TS/TSX-файлов:
-100% statements/branches/functions/lines. Актуальные результаты —
-[исправления ревью F1–F10](../docs/review-fixes.md). Браузерные проверки production
+100% statements/branches/functions/lines. Браузерные проверки production
 обоих приложений запускаются командой `npm run test:e2e` из `frontend`.
 PATCH отметки требует `expected_updated_at`: backend и админка обновляются совместно.

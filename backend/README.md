@@ -1,8 +1,8 @@
 # Backend — API «Авача»
 
-Обновление дизайна использует миграции **0008–0010**. Перед запуском новых клиентов
-выполните `python -m alembic -c backend/alembic.ini upgrade head` из корня проекта.
-[Изменения, безопасный откат и проверки](../docs/backend-design-update.md#обновление-базы).
+После каждого обновления кода выполните из корня проекта
+`python -m alembic -c backend/alembic.ini upgrade head`. Миграции — в `backend/migrations/versions/`,
+у каждой есть откат (`downgrade`).
 
 
 Python, **FastAPI**, асинхронный стек. Собственный API, база данных, хранение истории треков.
@@ -337,7 +337,7 @@ python backend/scripts/create_admin.py --login ivanov --name "Иван Иван�
 
 Для нового seed нужна миграция `0006` (после `0005`) и хотя бы одна гонка.
 При upgrade до `0006` демонстрационные программа и локации очищаются; FAQ
-и другие данные сохраняются. См. [описание миграции](../docs/season-content-migration.md).
+и другие данные сохраняются.
 
 После применения этой схемы из корня репозитория с активированной `.venv`:
 
@@ -505,12 +505,23 @@ python -m alembic -c backend/alembic.ini upgrade head
 - Штрафы относятся к участию в гонке (`Penalty.race_participant_id` → `RaceParticipant.id`).
   Их общая сумма вычисляется за гонку и показывается отдельно; к времени из протокола штрафы повторно не прибавляются.
 
-## Запуск на сервере (позже)
+## Запуск на сервере
 
 ```
-python -m uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000 --workers 4
+python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 4
 ```
-Перед сервером ставится nginx; статика фронтенда отдаётся им, а не Python.
+Перед сервером ставится nginx с HTTPS: он отдаёт собранные `frontend/dist` и `admin-panel/dist`,
+а запросы `/api/` передаёт в uvicorn.
+
+Обязательно в `backend/.env` на сервере: `ENVIRONMENT=production`, свой длинный `SECRET_KEY`,
+`CORS_ORIGINS` с адресами мини-приложения и админки, ключи Iridium360 и VK.
+В production описание API (`/docs`) не публикуется, а `VK_DEV_USER_ID` не действует.
+
+Опрос Iridium360 и напоминания о событиях выполняет только один из процессов uvicorn
+(замок в PostgreSQL, `app/services/leader.py`), поэтому `--workers` можно ставить любое.
+
+Перед обновлением версии: резервная копия базы (`pg_dump`), затем
+`python -m alembic -c backend/alembic.ini upgrade head`.
 
 ## Правила команды
 
