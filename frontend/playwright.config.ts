@@ -12,6 +12,7 @@ export default defineConfig({
   use:{browserName:'chromium',channel:process.env.PLAYWRIGHT_CHANNEL,trace:'retain-on-failure',screenshot:'only-on-failure'},
   webServer:[
     {command:'npm run build && npm run preview -- --port 5185 --strictPort',url:'http://127.0.0.1:5185',timeout:120000},
+    {command:'npm run build-storybook && python3 -m http.server 5187 --bind 127.0.0.1 --directory storybook-static',url:'http://127.0.0.1:5187',timeout:120000},
     {command:'npm --prefix ../admin-panel run build && npm --prefix ../admin-panel run preview -- --port 5186 --strictPort',url:'http://127.0.0.1:5186',timeout:120000},
   ],
 });

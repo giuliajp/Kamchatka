@@ -1,6 +1,10 @@
 export interface StoryCard { heading: string; title: string; lines: string[]; action: string }
 export interface StoryImages { background: string; sticker: string }
 
+export function raceStoryHeading(name: string, year: number): string {
+  return name.includes(String(year)) ? name : `${name} · ${year}`;
+}
+
 export function wrapStoryText(text: string, measure: (text: string) => number, width: number, maxLines: number): string[] {
   const lines: string[] = [];
   let line = '';
@@ -42,9 +46,11 @@ export async function createStoryImages(card: StoryCard): Promise<StoryImages> {
   const {element, context: ctx} = canvas(1080, 1920);
   ctx.fillStyle = '#0c4388'; ctx.fillRect(0, 0, 1080, 1920);
   if (cover) {
-    const scale = Math.max(1080 / cover.naturalWidth, 1920 / cover.naturalHeight);
-    const width = cover.naturalWidth * scale, height = cover.naturalHeight * scale;
-    ctx.drawImage(cover, (1080 - width) / 2, (1920 - height) / 2, width, height);
+    // The source photo has a baked-in 2025 caption and partner logos at its foot.
+    const sourceHeight = Math.floor(cover.naturalHeight * 0.82);
+    const scale = Math.max(1080 / cover.naturalWidth, 1920 / sourceHeight);
+    const width = cover.naturalWidth * scale, height = sourceHeight * scale;
+    ctx.drawImage(cover, 0, 0, cover.naturalWidth, sourceHeight, (1080 - width) / 2, (1920 - height) / 2, width, height);
   }
   ctx.fillStyle = 'rgba(8, 32, 62, 0.86)'; ctx.fillRect(0, 0, 1080, 1920);
   ctx.textBaseline = 'top'; ctx.fillStyle = '#ffffff';

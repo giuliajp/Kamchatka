@@ -1,5 +1,5 @@
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
-import {createStoryImages,wrapStoryText} from '../src/api/storyImage';
+import {createStoryImages,wrapStoryText,raceStoryHeading} from '../src/api/storyImage';
 const card={heading:'Авача · 2026',title:'Алиса Иванова',lines:['Нарта, 8 собак','Итоговое время за гонку: —','Место в дисциплине: —','Не выводить'],action:'Открыть участника'};
 const ctx={fillStyle:'',font:'',textAlign:'',textBaseline:'',fillRect:vi.fn(),drawImage:vi.fn(),fillText:vi.fn(),beginPath:vi.fn(),roundRect:vi.fn(),fill:vi.fn(),measureText:vi.fn((text:string)=>({width:Array.from(text).length*20}))};
 let decode=vi.fn().mockResolvedValue(undefined);const load=vi.fn().mockResolvedValue([]);
@@ -29,4 +29,8 @@ it('falls back to a solid background, text logo and system font when optional re
 });
 it('reports unavailable Canvas instead of returning an empty image',async()=>{
  vi.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValue(null);await expect(createStoryImages(card)).rejects.toThrow('Не удалось подготовить изображение');
+});
+
+it('includes the season once even when the API race name already contains its year',()=>{
+ expect(raceStoryHeading('Авача',2026)).toBe('Авача · 2026');expect(raceStoryHeading('Гонка Авача 2026',2026)).toBe('Гонка Авача 2026');
 });

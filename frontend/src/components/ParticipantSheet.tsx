@@ -1,3 +1,4 @@
+import {raceStoryHeading} from '../api/storyImage';
 import { useRef, useState } from 'react';
 import { IconButton, ModalPage } from '@vkontakte/vkui';
 import { Icon24ShareOutline, Icon20LikeOutline } from '@vkontakte/icons';
@@ -77,7 +78,7 @@ export function ParticipantSheet({ raceId, participantId, entryId, position, thr
           {<NotificationToggle raceId={entry.race.id} entryId={entryId} />}
         </div>}
         {entry && <StoryShareButton link={raceLink(entry.race.id, stage?.id, participantId, entryId)} card={{
-          heading: `${entry.race.name} · ${entry.race.year}`, title: person.data.full_name,
+          heading: raceStoryHeading(entry.race.name, entry.race.year), title: person.data.full_name,
           lines: ['Болею за участника', `№${entry.start_number} · ${entry.discipline.name}`], action: 'Открыть участника',
         }} />}
         {officialEntry && <p className="participant-official">{statusLabel(officialEntry.status)} · Официальное место в дисциплине{result && stage ? ` после этапа ${stage.number}` : ' за гонку'}: {officialEntry.place ?? '—'}</p>}

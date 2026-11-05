@@ -9,7 +9,7 @@ import {MediaScreen} from '../src/screens/Content/MediaScreen';
 import {createStoryImages} from '../src/api/storyImage';
 import {fixtureResponse,mockApi,participant,race} from './fixtures';
 import {news} from '../src/stories/contentFixtures';
-vi.mock('../src/api/storyImage',()=>({createStoryImages:vi.fn(async()=>({background:'data:image/png;base64,YQ==',sticker:'data:image/png;base64,Yg=='}))}));
+vi.mock('../src/api/storyImage',async importOriginal=>({...await importOriginal<typeof import('../src/api/storyImage')>(),createStoryImages:vi.fn(async()=>({background:'data:image/png;base64,YQ==',sticker:'data:image/png;base64,Yg=='}))}));
 vi.mock('../src/screens/Map/MapCanvas',()=>({MapCanvas:()=> <div>Карта трека</div>}));
 beforeEach(()=>{
  history.replaceState(null,'','/?vk_app_id=12345&vk_user_id=42&sign=private');
