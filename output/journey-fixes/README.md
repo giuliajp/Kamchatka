@@ -14,16 +14,18 @@
 | BUG-06 | Штатный focus trap включается без ожидания анимации открытия | Browser 320/360/390/768/1280 px × 2 темы, Tab/Shift+Tab, повторное открытие с текстом 200%, Escape/возврат фокуса; реальное UI-перечитывание |
 | BUG-07 | Попап ограничен viewport и прокручивается; подписи действий переносятся | Browser 5 ширин × 2 темы, фактические fontSize/lineHeight ×2; `notification-320-text200-*.png` (прокручено к действиям) |
 | BUG-08 | Границы карты устанавливаются перед путями, слои маршрута создаются отдельно для каждого эффекта | Настоящий GPX, клики по площадкам на линии, refresh/navigation/reload; real Leaflet StrictMode unit; `watch-real-gpx.png` |
-| BUILD-01 | Проверены default/custom API base, пороги не снижены | Frontend `npm run check`: 333 passed, 100% по всем четырём метрикам покрытия |
+| BUILD-01 | Проверены default/custom API base, пороги не снижены | Frontend `npm run check`: 338 passed, 100% по всем четырём метрикам покрытия |
 | BUILD-02 | Проверены default/custom base в JSON и CSV | Admin `npm run check`: 126 passed, 100% по всем четырём метрикам покрытия |
 
 Изображения и JSON находятся в [evidence](evidence/). Журнал действий и причин — [WORKLOG.md](WORKLOG.md).
 
+Перед финальной проверкой в ветку объединён актуальный `main` (`2baf7a8`). Новые решения карточки и демо-сезона сохранены; глобальная подмена названий дисциплин удалена, чтобы полные названия по BUG-01/02 оставались доступными. Добавленная параллельно миграция принадлежит этому коммиту main, исправления аудита миграций не добавляют.
+
 ## Результаты проверки
 
-- Frontend: lint, TypeScript, 333 теста, 100% per-file coverage, production и Storybook — успешно.
+- Frontend: lint, TypeScript, 338 теста, 100% per-file coverage, production и Storybook — успешно.
 - Admin: lint, TypeScript, 126 тестов, 100% per-file coverage, production и Storybook — успешно.
-- Backend: 298 тестов в отдельной PostgreSQL-БД — успешно, включая миграции и сохранность данных.
+- Backend: 300 тестов в отдельной PostgreSQL-БД — успешно, включая миграции и сохранность данных.
 - Playwright: **85 passed**, включая 23 новых браузерных случая; прежние 62 также прошли.
 - Реальный контур frontend/admin → API → audit PostgreSQL: **9 проверок**, **0 pageerror**, без подмены API и создания GPS/SOS.
 - БД: **22/22 read-only assertions**, в том числе протокол 04:02:00, штраф без повторного начисления, судейский журнал, закладки и настройки.

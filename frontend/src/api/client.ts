@@ -5,9 +5,7 @@ export class ApiError extends Error {
   constructor(message: string, public status: number, public code?: string, public details?: unknown) { super(message); }
 }
 export interface Snapshot<T> { data: T; savedAt: string }
-// Подписи как в макетах: «Нарта, 8 собак», «Алиса Иванова». API отдаёт официальные формы
-// (полное название дисциплины, «Фамилия Имя Отчество»); меняем только отображение, копию данных.
-const SHORT_DISCIPLINES: Record<string, string> = { ski_2: 'Лыжи, 2 собаки', sled_8: 'Нарта, 8 собак', sled_8plus: 'Нарта, 8+ собак' };
+// Имя участника отображается как в макете; названия дисциплин сохраняются из справочника.
 export function displayName(fullName: string): string {
   const words = fullName.trim().split(/\s+/);
   return words.length >= 2 ? `${words[1]} ${words[0]}` : fullName;
@@ -17,7 +15,6 @@ export function present<T>(value: T): T {
   if (!value || typeof value !== 'object') return value;
   const copy: Record<string, unknown> = {};
   for (const [key, item] of Object.entries(value)) copy[key] = key === 'full_name' && typeof item === 'string' ? displayName(item) : present(item);
-  if (typeof copy.code === 'string' && typeof copy.name === 'string' && SHORT_DISCIPLINES[copy.code]) copy.name = SHORT_DISCIPLINES[copy.code];
   return copy as T;
 }
 const cacheKey = (path: string) => `avacha-api-v2:${apiBase}${path}`;

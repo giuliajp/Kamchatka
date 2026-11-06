@@ -1,6 +1,6 @@
 import {test,expect,type Page} from '@playwright/test';
 import {front,publicApi,ready,noOverflow} from './fixtures';
-import {race,participant,positions} from '../src/stories/fixtures';
+import {race,participant,person,positions} from '../src/stories/fixtures';
 
 // Unlike root font-size scaling, this doubles every rendered text size once.
 async function actualTextScale(page:Page,selector:string){
@@ -40,7 +40,7 @@ test('BUG-02: protocol notice resolves discipline names and hides unknown codes'
 test('BUG-01: long discipline keeps Mine alongside the filter and compact rows',async({page})=>{
  await page.setViewportSize({width:360,height:800});
  const discipline={...participant.discipline,name:'Лыжи — длинная дистанция, 2 собаки'};
- await publicApi(page,{intercept:async(_r,path)=>path==='/races/10'?{data:{...race,disciplines:[{...discipline,participants_count:1}]}}:path==='/races/10/participants'?{data:[{...participant,discipline}]}:undefined});
+ await publicApi(page,{intercept:async(_r,path)=>path==='/races/10'?{data:{...race,disciplines:[{...discipline,participants_count:1}]}}:path==='/races/10/participants'?{data:[{...participant,discipline}]}:path==='/participants/501'?{data:{...person,races:person.races.map(entry=>({...entry,discipline}))}}:undefined});
  await ready(page,front+'/#race=10&section=participants');
  const row=page.locator('.participant-row').first();await expect(row).toBeVisible();
  const tabs=page.getByRole('tablist',{name:'Фильтр участников'}).getByRole('tab');
@@ -48,6 +48,7 @@ test('BUG-01: long discipline keeps Mine alongside the filter and compact rows',
  expect(Math.abs(a!.y-b!.y)).toBeLessThanOrEqual(4);expect((await row.boundingBox())!.height).toBeLessThanOrEqual(82);
  await tabs.first().click();await expect(page.getByRole('radio',{name:discipline.name})).toBeVisible();
  await page.keyboard.press('Escape');await actualTextScale(page,'.race-screen');await noOverflow(page);
+ await row.click();await expect(page.locator('.map-participant__tags')).toContainText(discipline.name);
 });
 
 for(const width of [320,360,390,768,1280])for(const theme of ['light','dark'] as const){
@@ -58,7 +59,10 @@ for(const width of [320,360,390,768,1280])for(const theme of ['light','dark'] as
  for(let attempt=0;attempt<2;attempt++){
   await opener.click();await page.getByRole('dialog',{name:'Карточка участника'}).waitFor();
   expect(await page.locator('[data-focus-guard]').count()).toBe(2);
-  await page.getByText('История выступлений',{exact:true}).waitFor();
+  for(const key of ['Tab','Shift+Tab']){
+   await page.keyboard.press(key);expect(await page.evaluate(()=>Boolean(document.activeElement?.closest('[role=dialog]')))).toBe(true);
+  }
+  await page.getByRole('region',{name:'История контрольных пунктов'}).waitFor();
   if(attempt===1)await actualTextScale(page,'[role=dialog]');
   await page.getByRole('button',{name:'Свернуть',exact:true}).focus();
   for(const key of ['Tab','Shift+Tab'])for(let i=0;i<18;i++){

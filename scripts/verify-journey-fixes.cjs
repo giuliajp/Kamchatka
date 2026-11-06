@@ -18,7 +18,7 @@ const out=path.resolve(__dirname,'../output/journey-fixes/evidence');
   const p=await context.newPage();await p.goto(front);
   await p.getByRole('button',{name:'Начать',exact:true}).click();await p.getByRole('button',{name:'Пропустить',exact:true}).click();
   await p.goto(front+'/#race=1&section=participants&stage=1&discipline=ski_2');
-  const opener=p.getByRole('button',{name:'Открыть карточку Иванов Алексей',exact:true});await opener.waitFor();
+  const opener=p.getByRole('button',{name:'Открыть карточку Алексей Иванов',exact:true});await opener.waitFor();
   const tabs=p.getByRole('tablist',{name:'Фильтр участников'}).getByRole('tab');
   const a=await tabs.nth(0).boundingBox(),b=await tabs.nth(1).boundingBox();
   assert(Math.abs(a.y-b.y)<=4);assert((await opener.boundingBox()).height<=82);
