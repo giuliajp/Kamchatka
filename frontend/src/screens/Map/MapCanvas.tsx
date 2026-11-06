@@ -43,7 +43,7 @@ export function MapCanvas({ data, viewKey, threshold, track, refreshing, onSelec
   }, []);
   useEffect(() => {
     const instance = map.current!;
-    const route = data.route.addTo(instance);
+    const route = L.geoJSON(data.route.toGeoJSON(), data.route.options).addTo(instance);
     const checkpoints = L.layerGroup().addTo(instance);
     for (const cp of data.checkpoints) {
       const node = document.createElement('span');

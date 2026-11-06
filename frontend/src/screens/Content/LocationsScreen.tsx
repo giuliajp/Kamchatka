@@ -17,16 +17,15 @@ export function LocationsScreen({ raceId, items, route, onSelect }: { raceId: nu
     const map = L.map(container.current, { scrollWheelZoom: false });
     setMapError(false);
     try {
+    map.fitBounds(L.latLngBounds(places.map(place => [place.latitude, place.longitude])), { padding: [24, 24], maxZoom: 13 });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
     // The route is a backdrop: venue markers must receive clicks even on the line.
-    if (prepared?.hasRoute) prepared.route.setStyle({interactive:false}).addTo(map);
-    const points = places.map(location => {
+    if (prepared?.hasRoute) L.geoJSON(prepared.route.toGeoJSON(), { ...prepared.route.options, interactive: false }).addTo(map);
+    for (const location of places) {
       const label = document.createElement('span'); label.textContent = location.name;
       const marker = L.circleMarker([location.latitude, location.longitude], { radius: 8, color: '#183451' }).bindPopup(label).addTo(map);
       if (onSelect) marker.on('click', () => onSelect(location.id));
-      return marker;
-    });
-    map.fitBounds(L.featureGroup(points).getBounds(), { padding: [24, 24], maxZoom: 13 });
+    }
     } catch { setMapError(true); map.remove(); return; }
     return () => { map.remove(); };
   }, [places, prepared, onSelect]);
