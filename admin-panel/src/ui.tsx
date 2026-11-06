@@ -27,7 +27,7 @@ export const kamchatkaValue = (data: FormData, key: string, original: string | n
 export const time = (iso: string | null, compact = false) => iso ? new Intl.DateTimeFormat('ru-RU',{timeZone:'Asia/Kamchatka',dateStyle:compact?undefined:'short',timeStyle:'short'}).format(new Date(iso)) : '—';
 export function Table({ children, label }: { children: ReactNode; label: string }) { return <div className="table-scroll" tabIndex={0} role="region" aria-label={label}><table>{children}</table></div>; }
 export function Status({ value }: { value: string }) {
-  const labels: Record<string,string> = { upcoming:'Ожидается',planned:'Запланирован',live:'Идёт',finished:'Завершён',cancelled:'Отменён',registered:'Заявлен',active:'На дистанции',dnf:'DNF',dns:'DNS',dsq:'DSQ',out_of_competition:'Вне зачёта',draft:'Черновик',preliminary:'Опубликован',final:'Окончательный',sos:'SOS',overdue:'Просрочка',ok:'На связи',no_tracker:'Без трекера' };
+  const labels: Record<string,string> = { upcoming:'Ожидается',planned:'Запланирован',live:'Идёт',finished:'Завершён',cancelled:'Отменён',registered:'Заявлен',active:'На дистанции',dnf:'DNF',dns:'DNS',dsq:'DSQ',out_of_competition:'Вне зачёта',draft:'Черновик',preliminary:'Опубликован',final:'Окончательный',sos:'SOS',overdue:'Просрочка',ok:'На связи',no_tracker:'Без трекера',no_data:'Нет данных' };
   return <span className={`status status--${value}`}>{labels[value] || value}</span>;
 }
 export function ConfirmButton({ children, question, action: operation, disabled = false }: {children:ReactNode;question:string;action:()=>Promise<unknown>;disabled?:boolean}) {

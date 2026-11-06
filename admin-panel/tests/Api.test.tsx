@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import {afterEach,expect,it,vi} from 'vitest';
 import {api,save,storeToken,readToken,tokenKey,useAction,useResource,downloadStats} from '../src/api';
 import {Failure,LoadState} from '../src/ui';
-afterEach(()=>{vi.unstubAllGlobals();sessionStorage.clear();});
+afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();sessionStorage.clear();});
 it.each(['json','csv'])('does not expire a new session after an old %s request returns 401',async kind=>{
  let finish!:(response:Response)=>void;
  vi.stubGlobal('fetch',vi.fn(()=>new Promise<Response>(resolve=>{finish=resolve;})));
@@ -53,4 +53,14 @@ it('keeps a restored session in memory if storage becomes unavailable later',()=
  const unavailable=vi.spyOn(Storage.prototype,'getItem').mockImplementation(()=>{throw new DOMException('Blocked','SecurityError');});
  expect(readToken()).toBe('restored');
  storeToken(null);expect(readToken()).toBeNull();unavailable.mockRestore();storeToken(null);
+});
+
+it.each(['', 'https://example.test/api'])('uses the configured or default base for JSON and CSV: %s', async base => {
+ vi.stubEnv('VITE_API_BASE_URL', base);
+ vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({data:[],error:null}))));
+ vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});
+ URL.createObjectURL=vi.fn().mockReturnValue('blob:test');URL.revokeObjectURL=vi.fn();
+ await api('/admin/example'); await downloadStats(1,14);
+ expect(fetch).toHaveBeenCalledWith((base || '/api')+'/admin/example',expect.anything());
+ expect(fetch).toHaveBeenCalledWith((base || '/api')+'/admin/races/1/support-stats.csv?days=14',expect.anything());
 });
