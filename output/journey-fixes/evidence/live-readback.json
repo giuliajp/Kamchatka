@@ -1,0 +1,46 @@
+{
+  "results": [
+    {
+      "id": "BUG-01",
+      "passed": true,
+      "filterY": [
+        177,
+        177
+      ],
+      "rowHeight": 80
+    },
+    {
+      "id": "BUG-06",
+      "passed": true
+    },
+    {
+      "id": "BUG-08",
+      "passed": true
+    },
+    {
+      "id": "results",
+      "passed": true
+    },
+    {
+      "id": "profile",
+      "passed": true
+    },
+    {
+      "id": "empty-day",
+      "passed": true
+    },
+    {
+      "id": "BUG-03",
+      "passed": true
+    },
+    {
+      "id": "BUG-04",
+      "passed": true
+    },
+    {
+      "id": "BUG-05",
+      "passed": true
+    }
+  ],
+  "errors": []
+}
