@@ -77,7 +77,6 @@
 
 .onboarding-tip{box-sizing:border-box}
 
-.stage-gallery-dialog .stage-photo{display:block;width:100%;height:auto;max-height:60dvh;object-fit:contain}.stage-gallery-dialog .content-actions button{min-width:0;overflow-wrap:anywhere}.stage-gallery-dialog p{font-size:.8125rem;line-height:1.125rem}
 
 .program-page{padding-top:0}.program-timezone{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden}.program-page>.program-date{margin:24px 0 12px;font-size:.875rem;line-height:1.5rem;color:var(--vkui--color_text_primary)}.program-date>summary{font-weight:500}.program-options{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:12px;border-radius:8px;background:var(--vkui--color_background_secondary);margin:12px 0}.program-options label{margin:0}.program-page>.content-tabs{padding:12px 0 0;gap:8px}.program-page>.content-tabs button{flex:1;min-height:36px;padding:4px 8px;font-size:.75rem}.program-days strong{font-size:.875rem;line-height:1.25rem}.program-days small{font-size:.625rem;line-height:.875rem}.program-event__time{padding-left:12px}.program-event>div:last-child{padding-left:0}
 

@@ -67,19 +67,6 @@
 @media (min-width: 769px) { .race-screen { border-inline: 1px solid var(--vkui--color_separator_primary); } }
 /* Authored surfaces measured against the development page at 360 × 800. */
 .race-screen__header h1 { font-size: 0.875rem; line-height: 1.125rem; font-weight: 500; }
-.stage-report { padding: 16px; font-size: 0.8125rem; line-height: 1rem; }
-.stage-report > p { margin: 12px 0 24px; }
-.stage-report section { margin: 0 0 24px; }
-.stage-report h2 { font-size: 0.9375rem; line-height: 1.25rem; margin: 0 0 12px; }
-.stage-video, .stage-gallery__main { display: block; border: 0; background: transparent; padding: 0; width: 100%; position: relative; cursor: pointer; }
-.stage-video > img:first-child { width: 100%; height: auto; display: block; border-radius: 4px; }
-.stage-video__play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
-.stage-gallery__main img { width: 100%; height: auto; display: block; }
-.stage-gallery__grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 4px; }
-.stage-gallery__grid button { border: 0; background: none; padding: 0; min-width: 0; cursor: pointer; }
-.stage-gallery__grid button img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
-.stage-gallery__grid > button:last-child { grid-column: 1 / -1; justify-self: end; }
-.stage-photo { display: block; width: 100%; max-height: 65dvh; object-fit: contain; }
 .race-checkpoint--start, .race-checkpoint--finish { gap: 4px; background: var(--vkui--color_background_content); color: var(--vkui--color_text_accent); border: 0; border-radius: 4px; padding: 0 4px; }
 
 
@@ -119,7 +106,6 @@
 @media(max-width:359px){.participant-row{grid-template-columns:20px 40px minmax(0,1fr) auto;gap:6px;padding:10px 8px;}}
 
 .participants-sort{width:169px;}.participant-row{grid-template-columns:22px 44px minmax(0,1fr) auto;}.participant-row__body{padding-left:4px;gap:2px;font-size:.75rem;line-height:1.125rem;}.participant-row__body strong{font-size:.875rem;line-height:1.125rem;}.participant-row__body small{font-size:.75rem;line-height:1rem;}
-.stage-video-unavailable{margin:0;position:relative;}.stage-video-unavailable img{width:100%;display:block;border-radius:4px;}.stage-video-unavailable figcaption{position:absolute;inset:auto 0 0;background:#0009;color:#fff;padding:12px;text-align:center;}.stage-gallery-dialog .content-actions{justify-content:space-between;gap:8px;}.stage-gallery-dialog .content-actions button{font:inherit;border:1px solid var(--vkui--color_separator_primary);padding:8px;background:var(--vkui--color_background_content);color:var(--vkui--color_text_accent);border-radius:6px;}.stage-photo{touch-action:pan-y;}
 
 /* Live map uses the actual space left by the header and navigation.
    If text/controls need more height, the page scrolls with navigation in flow. */

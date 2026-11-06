@@ -1,6 +1,8 @@
+import {raceStoryHeading} from '../api/storyImage';
 import { useRef, useState } from 'react';
 import { IconButton, ModalPage } from '@vkontakte/vkui';
 import { Icon24ShareOutline, Icon20LikeOutline } from '@vkontakte/icons';
+import { StoryShareButton } from './StoryShareButton';
 import { ParticipantBanner } from './ParticipantBanner';
 import { TimeBadge } from './TimeBadge';
 import { RequestState } from './RequestState';
@@ -75,6 +77,10 @@ export function ParticipantSheet({ raceId, participantId, entryId, position, thr
           <IconButton label="Поделиться участником" onClick={async () => setFeedback(await shareRace(raceLink(entry.race.id, stage?.id, participantId, entryId), person.data!.full_name))}><Icon24ShareOutline /></IconButton>
           {<NotificationToggle raceId={entry.race.id} entryId={entryId} />}
         </div>}
+        {entry && <StoryShareButton link={raceLink(entry.race.id, stage?.id, participantId, entryId)} card={{
+          heading: raceStoryHeading(entry.race.name, entry.race.year), title: person.data.full_name,
+          lines: ['Болею за участника', `№${entry.start_number} · ${entry.discipline.name}`], action: 'Открыть участника',
+        }} />}
         {officialEntry && <p className="participant-official">{statusLabel(officialEntry.status)} · Официальное место в дисциплине{result && stage ? ` после этапа ${stage.number}` : ' за гонку'}: {officialEntry.place ?? '—'}</p>}
         {official.data && !result && <p>Результат участника для выбранного этапа пока не опубликован.</p>}
         {feedback && <p role="status" className="share-feedback">{feedback}</p>}

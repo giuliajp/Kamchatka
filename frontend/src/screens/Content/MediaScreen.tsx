@@ -8,6 +8,7 @@ import { shareRace } from '../../api/navigation';
 import { useUser } from '../../app/UserProvider';
 import { useAction } from '../../hooks/useAction';
 import { useApi } from '../../hooks/useApi';
+import { StoryShareButton } from '../../components/StoryShareButton';
 import { RequestState } from '../../components/RequestState';
 import type { Bookmark, News, NewsItem, Photo, Photos } from '../../types/content';
 
@@ -30,6 +31,7 @@ function NewsCard({ item }: { item: NewsItem }) {
         if (bridge.isEmbedded()) { await bridge.send('VKWebAppShowWallPostBox', { attachments: `wall${item.owner_id}_${item.post_id}` }); setMessage('Запись отправлена в VK'); }
         else setMessage(await shareRace(item.url, item.title));
       })}>Репост</Button><BookmarkButton item={{kind:'news',item_id:item.id,title:item.title,url:item.url,image_url:item.cover_url}} /></div>
+    <StoryShareButton link={item.url} card={{heading: 'Новости Авачи', title: item.title, lines: [raceDate(item.date), item.preview], action: 'Читать новость'}} />
     {message && <p role="status">{message}</p>}{action.error && <p role="alert">{action.error}</p>}
   </article>;
 }

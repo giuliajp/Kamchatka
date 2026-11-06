@@ -14,7 +14,6 @@ import type { Participant, Position, Positions, Race, RaceDetail, Stage, StageDe
 import { ParticipantsScreen } from '../screens/Participants/ParticipantsScreen';
 import { ResultsScreen } from '../screens/Results/ResultsScreen';
 import { MapCanvas } from '../screens/Map/MapCanvas';
-import { StageMedia, type StageMediaViewModel } from '../screens/Map/StageMedia';
 import { StageContent } from '../screens/Map/StageContent';
 import { prepareMapData } from '../screens/Map/mapData';
 import '../screens/Map/map.css';
@@ -34,7 +33,7 @@ export function currentStage(stages: Stage[], now = Date.now()) {
   const started = stages.filter(stage => stage.start_at !== null && Date.parse(stage.start_at) <= now);
   return live.at(-1) ?? started.at(-1) ?? stages[0];
 }
-export function RaceApp({stageMedia}:{stageMedia?:Record<number,StageMediaViewModel>} = {}) {
+export function RaceApp() {
   const [incoming, setIncoming] = useState(readRaceLink);
   const [resolved, setResolved] = useState<{ incoming: RaceLink; link?: RaceLink; error?: string }>();
   const needsLookup = Boolean(incoming.entryId && !incoming.raceId);
@@ -55,11 +54,11 @@ export function RaceApp({stageMedia}:{stageMedia?:Record<number,StageMediaViewMo
   const seasons = useApi<Race[]>('/races');
   if (needsLookup && resolved?.incoming !== incoming) return <main className="race-screen race-content"><p role="status">Открываем участника…</p></main>;
   if (!race.data) return <main className="race-screen race-content"><h1>Авача</h1><RequestState resource={linkedStage} /><RequestState resource={race} /></main>;
-  return <><RaceView notification={notification} onNotificationRequest={setNotification} stageMedia={stageMedia} key={race.data.id} race={race.data} link={link} warning={<><RequestState resource={race} /><RequestState resource={linkedStage} />{resolved?.incoming === incoming && resolved.error && <p role="alert">{resolved.error}</p>}</>} season={<label className="season-select">Сезон<select value={race.data.id} onChange={event => navigateRace(`race=${event.target.value}`)}>{(seasons.data ?? [race.data]).map(season => <option key={season.id} value={season.id}>{season.year}</option>)}</select></label>} />
+  return <><RaceView notification={notification} onNotificationRequest={setNotification} key={race.data.id} race={race.data} link={link} warning={<><RequestState resource={race} /><RequestState resource={linkedStage} />{resolved?.incoming === incoming && resolved.error && <p role="alert">{resolved.error}</p>}</>} season={<label className="season-select">Сезон<select value={race.data.id} onChange={event => navigateRace(`race=${event.target.value}`)}>{(seasons.data ?? [race.data]).map(season => <option key={season.id} value={season.id}>{season.year}</option>)}</select></label>} />
     {welcome && <Onboarding onFinish={dismissWelcome} />}
   </>;
 }
-function RaceView({ race, link, warning, season, stageMedia, notification, onNotificationRequest }: { notification?:{number:number;photoUrl?:string}; onNotificationRequest:(value:{number:number;photoUrl?:string}|undefined)=>void; stageMedia?:Record<number,StageMediaViewModel>; race: RaceDetail; link: RaceLink; warning: React.ReactNode; season: React.ReactNode }) {
+function RaceView({ race, link, warning, season, notification, onNotificationRequest }: { notification?:{number:number;photoUrl?:string}; onNotificationRequest:(value:{number:number;photoUrl?:string}|undefined)=>void; race: RaceDetail; link: RaceLink; warning: React.ReactNode; season: React.ReactNode }) {
   const user = useUser();
   const [search,setSearch] = useState('');
   const notificationAction = useAction();
@@ -147,7 +146,6 @@ function RaceView({ race, link, warning, season, stageMedia, notification, onNot
             {tab === 'mine' && <p>У поддерживаемых участников пока нет подтверждённых координат.</p>}
             {positions.data.official_protocol_disciplines.length === 0 && <p>Положения отсутствуют. Координаты появятся после получения данных трекеров.</p>}
           </div>}
-          {stage.status==='finished' && stageMedia?.[stage.id] && <StageMedia media={stageMedia[stage.id]}/>}
           {stage.status === 'finished' && <section className="race-content stage-route" aria-label="Маршрут завершённого этапа"><h2>Маршрут {stage.number} этапа</h2>
             {detail.data.description && <p>{detail.data.description}</p>}
             {mapData.bounds.isValid() ? <div className="stage-route__map"><MapCanvas data={mapData} viewKey={`route:${stage.id}`} threshold={threshold} onSelect={selectMapPerson} onCluster={setCluster} onRefresh={refresh} refreshing={detail.loading} /></div> : <p>Маршрут пока не опубликован.</p>}

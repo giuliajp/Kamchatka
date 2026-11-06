@@ -53,9 +53,6 @@ export const OwnTrack:Story={render:()=> <TrackScreen race={race} stageId={103} 
 function Welcome(){const [done,setDone]=useState(false);return done?<p>Знакомство завершено.</p>:<Onboarding onFinish={()=>setDone(true)}/>;}
 export const WelcomeAndSevenSteps:Story={render:()=> <Welcome/>};
 
-const media={description:'Третий этап гонки завершён. Участники прошли маршрут через природный парк Налычево и финишировали в Пиначево.',video:{title:'Видео с третьего этапа',poster:'/figma/map-screen/21228.png'},photos:['21228','efbd4','547f5','c053b','b1cb4','f31e1','d6d50'].map((id,index)=>({id,url:`/figma/map-screen/${id}.png`,caption:`Третий этап гонки · фото ${index+1}`}))};
-export const FinishedStageMedia:Story={parameters:{route:'race=10&section=map&stage=102',canvasPadding:0,fullScreen:true},render:()=> <RaceApp stageMedia={{102:media}}/>};
-export const StageGallery:Story={...FinishedStageMedia,parameters:{...FinishedStageMedia.parameters,route:'race=10&section=map&stage=102&view=stage-gallery&photo=21228'}};
 export const AllVenueEvents:Story={parameters:{route:'section=program&day=2026-11-03&location=1&allEvents=1'},render:Program.render};
 export const SelectDayAndReturn:Story={...Program,play:async({canvasElement})=>{const canvas=within(canvasElement);await userEvent.click(await canvas.findByRole('button',{name:/Мастер-класс для детей/}));await userEvent.click(await within(document.body).findByRole('button',{name:'Закрыть карточку'}));}};
 
