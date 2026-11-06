@@ -128,3 +128,11 @@ it('formats server units, statuses, stage dates and freshness without invented v
   expect(stale(positions.participants[0], 45, Date.parse(positions.participants[0].position!.position_at) + 46 * 60000)).toBe(true);
   expect(stale(positions.participants[1], 45)).toBe(true); expect(stale({ ...positions.participants[0], position: null }, 45)).toBe(false);
 });
+
+ it.each(['', 'https://example.test/api/'])('requests data using the configured or default base: %s', async base => {
+  vi.resetModules(); vi.stubEnv('VITE_API_BASE_URL', base);
+  const client = await import('../src/api/client');
+  respond({data: [], error: null});
+  await client.request('/test', signal());
+  expect(fetch).toHaveBeenCalledWith((base ? base.slice(0, -1) : '/api') + '/test', expect.anything());
+ });

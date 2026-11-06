@@ -23,8 +23,23 @@ it('creates, edits, assigns and takes back trackers using Kamchatka times',async
 });
 it('switches stages and displays empty and acknowledged SOS history without asking to close again',async()=>{
  const alert={id:1,race_participant_id:null,start_number:null,full_name:null,imei:'111222333444555',type:'sos',occurred_at:'2026-11-03T00:00Z',latitude:null,longitude:null,acknowledged_at:'2026-11-03T01:00Z',acknowledged_by:'Судья',note:'Помощь оказана'};
- const overrides:Record<string,unknown>={'/admin/races/1/stages':[{...stage,id:2,status:'planned'},stage],'/admin/stages/2/monitoring':{...monitoring,rows:[]},'/admin/races/1/alerts?active=false':[alert]};backend(overrides);render(<MonitoringPage raceId={1}/>);await userEvent.click(screen.getByText('Инструменты этапа'));await screen.findAllByRole('option',{name:/Этап 1/});await userEvent.selectOptions(screen.getByLabelText('Этап мониторинга'),'2');expect(await screen.findByText('Участников по этим фильтрам нет.')).toBeVisible();await click('Журнал SOS');expect(await screen.findByText(/Помощь оказана/)).toBeVisible();expect(screen.queryByRole('button',{name:'Подтвердить решение'})).not.toBeInTheDocument();
+ const overrides:Record<string,unknown>={'/admin/races/1/stages':[{...stage,id:2,status:'planned'},stage],'/admin/stages/2/monitoring':{...monitoring,rows:[]},'/admin/races/1/alerts?active=false':[alert]};backend(overrides);render(<MonitoringPage raceId={1}/>);await userEvent.click(screen.getByText('Инструменты этапа'));await screen.findAllByRole('option',{name:/Этап 1/});await userEvent.selectOptions(screen.getByLabelText('Этап мониторинга'),'2');expect(await screen.findByText('Участников по этим фильтрам нет.')).toBeVisible();await userEvent.click(screen.getByText('Инструменты этапа'));await click('Журнал SOS');expect(await screen.findByText(/Помощь оказана/)).toBeVisible();expect(screen.queryByRole('button',{name:'Подтвердить решение'})).not.toBeInTheDocument();
 });
 it('shows missing stages, free disabled trackers and an empty SOS journal',async()=>{
- backend({'/admin/races/1/stages':[],'/admin/trackers':[{...tracker,assigned_to:null,is_active:false,name:null}]});render(<MonitoringPage raceId={1}/>);await userEvent.click(screen.getByText('Инструменты этапа'));expect(await screen.findByText('Этапы пока не созданы.')).toBeVisible();await click('Трекеры');expect(await screen.findByText('Свободен')).toBeVisible();expect(screen.getByText('Выключен')).toBeVisible();await click(tracker.imei);expect(screen.queryByRole('button',{name:'Забрать трекер'})).not.toBeInTheDocument();await click('Журнал SOS');expect(await screen.findByText('Сигналов нет.')).toBeVisible();
+ backend({'/admin/races/1/stages':[],'/admin/trackers':[{...tracker,assigned_to:null,is_active:false,name:null}]});render(<MonitoringPage raceId={1}/>);await userEvent.click(screen.getByText('Инструменты этапа'));expect(await screen.findByText('Этапы пока не созданы.')).toBeVisible();await click('Трекеры');expect(await screen.findByText('Свободен')).toBeVisible();expect(screen.getByText('Выключен')).toBeVisible();await click(tracker.imei);expect(screen.queryByRole('button',{name:'Забрать трекер'})).not.toBeInTheDocument();await userEvent.click(screen.getByText('Инструменты этапа'));await click('Журнал SOS');expect(await screen.findByText('Сигналов нет.')).toBeVisible();
+});
+
+it('closes the tools menu after choosing a tool',async()=>{
+ backend();render(<MonitoringPage raceId={1}/>);
+ await userEvent.click(screen.getByText('Инструменты этапа'));await click('Трекеры');
+ expect(screen.getByText('Инструменты этапа').closest('details')).not.toHaveAttribute('open');
+ expect(await screen.findByLabelText('IMEI')).toBeVisible();
+});
+it('does not display an assigned tracker without points as online',async()=>{
+ const row={...monitoring.rows[0],last_position:null,minutes_since_last:null,is_overdue:false,active_alerts:[]};
+ backend({'/admin/stages/1/monitoring':{...monitoring,summary:{...monitoring.summary,ok:0},rows:[row]}});
+ render(<MonitoringPage raceId={1}/>);
+ const button=await screen.findByRole('button',{name:/№14/});
+ expect(button.closest('tr')).toHaveAttribute('data-state','no_data');
+ await click('На связи');expect(screen.queryByRole('button',{name:/№14/})).not.toBeInTheDocument();
 });

@@ -1,0 +1,112 @@
+[
+  {
+    "check": "two published venues",
+    "passed": true,
+    "sql": "SELECT count(*)=2 FROM spectator_locations WHERE is_published"
+  },
+  {
+    "check": "two seasons",
+    "passed": true,
+    "sql": "SELECT count(*)=2 FROM races"
+  },
+  {
+    "check": "one current season",
+    "passed": true,
+    "sql": "SELECT count(*)=1 FROM races WHERE is_current"
+  },
+  {
+    "check": "four people and entries",
+    "passed": true,
+    "sql": "SELECT (SELECT count(*) FROM participants)=4 AND (SELECT count(*) FROM race_participants)=4"
+  },
+  {
+    "check": "stage states",
+    "passed": true,
+    "sql": "SELECT array_agg(status ORDER BY id)::text = '{finished,planned,cancelled}' FROM stages"
+  },
+  {
+    "check": "routes saved",
+    "passed": true,
+    "sql": "SELECT count(*)=2 FROM stages WHERE route_source_filename IN ('route.gpx','route.kml') AND route_geojson IS NOT NULL"
+  },
+  {
+    "check": "three linked checkpoints",
+    "passed": true,
+    "sql": "SELECT count(*)=3 FROM stage_checkpoints WHERE stage_id=1"
+  },
+  {
+    "check": "judge time UTC",
+    "passed": true,
+    "sql": "SELECT arrived_at='2026-11-06T00:00:00Z'::timestamptz AND departed_at='2026-11-06T00:30:00Z'::timestamptz AND note='Правка Б: уточнение времени отдыха' FROM checkpoint_passes WHERE id=1"
+  },
+  {
+    "check": "checkpoint history",
+    "passed": true,
+    "sql": "SELECT count(*)=3 FROM checkpoint_pass_log"
+  },
+  {
+    "check": "published final protocol",
+    "passed": true,
+    "sql": "SELECT status='final' AND published_at IS NOT NULL AND finalized_at IS NOT NULL FROM protocols WHERE id=4"
+  },
+  {
+    "check": "two draft protocols",
+    "passed": true,
+    "sql": "SELECT count(*)=2 FROM protocols WHERE published_at IS NULL"
+  },
+  {
+    "check": "official time not overwritten or double penalized",
+    "passed": true,
+    "sql": "SELECT final_time_seconds=14520 AND is_corrected_after_final FROM stage_results WHERE id=5"
+  },
+  {
+    "check": "penalty",
+    "passed": true,
+    "sql": "SELECT seconds=120 FROM penalties WHERE id=1"
+  },
+  {
+    "check": "disabled reserve discipline",
+    "passed": true,
+    "sql": "SELECT NOT is_active AND dogs_min=2 AND dogs_max=4 FROM disciplines WHERE code='qa_reserve'"
+  },
+  {
+    "check": "event preserved after failed save",
+    "passed": true,
+    "sql": "SELECT title='Мастер-класс по ездовому спорту' AND is_published AND location_id=1 AND jsonb_array_length(image_urls::jsonb)=2 FROM program_events WHERE id=1"
+  },
+  {
+    "check": "event deleted",
+    "passed": true,
+    "sql": "SELECT NOT EXISTS(SELECT 1 FROM program_events WHERE id=2)"
+  },
+  {
+    "check": "content counts",
+    "passed": true,
+    "sql": "SELECT (SELECT count(*) FROM faq_items)=1 AND (SELECT count(*) FROM organizer_contacts)=1 AND (SELECT count(*) FROM guest_info_items)=3"
+  },
+  {
+    "check": "single active support pair",
+    "passed": true,
+    "sql": "SELECT count(*)=1 FROM support_subscriptions WHERE vk_user_id=900001 AND race_participant_id=1 AND cancelled_at IS NULL"
+  },
+  {
+    "check": "preference persisted",
+    "passed": true,
+    "sql": "SELECT NOT notify_news AND NOT notifications_allowed FROM app_users WHERE vk_user_id=900001"
+  },
+  {
+    "check": "protocol bookmark",
+    "passed": true,
+    "sql": "SELECT count(*)=1 FROM bookmarks WHERE kind='protocol' AND item_id='stage:1'"
+  },
+  {
+    "check": "no fake telemetry",
+    "passed": true,
+    "sql": "SELECT (SELECT count(*) FROM tracker_positions)=0 AND (SELECT count(*) FROM tracker_alerts)=0"
+  },
+  {
+    "check": "no false reminder",
+    "passed": true,
+    "sql": "SELECT count(*)=0 FROM event_reminders"
+  }
+]

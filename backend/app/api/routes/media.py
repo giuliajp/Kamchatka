@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import time
 from datetime import datetime, timedelta, timezone
@@ -27,6 +28,8 @@ from app.models import AppUser, Bookmark, EventReminder, Participant, ProgramEve
 from app.models.base import utcnow
 from app.schemas.common import ok
 from app.services import vk_api
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Новости, фото, профиль"])
 KAMCHATKA = timezone(timedelta(hours=12))
@@ -95,7 +98,8 @@ def group_owner() -> int:
         return DEMO_OWNER
     group_id = get_settings().vk_group_id
     if not group_id:
-        raise HTTPException(status_code=503, detail="Не задан VK_GROUP_ID в backend/.env")
+        logger.warning("VK media unavailable: VK_GROUP_ID is not configured")
+        raise HTTPException(status_code=503, detail="Материалы VK временно недоступны. Попробуйте позже")
     return -abs(group_id)
 
 

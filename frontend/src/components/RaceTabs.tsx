@@ -17,7 +17,7 @@ export function RaceTabs({ tab, discipline, options, mineCount, onTabChange, onD
   const id = useId();
   const selected = options.find((option) => option.value === discipline);
   return (
-    <Tabs mode="secondary" aria-label="Фильтр участников">
+    <Tabs className="race-filters" mode="secondary" aria-label="Фильтр участников">
       <Popover aria-label="Выбор дисциплины" trigger="click" shown={shown} onShownChange={setShown} placement="bottom-start" restoreFocus autoFocus
         content={(
           <div>

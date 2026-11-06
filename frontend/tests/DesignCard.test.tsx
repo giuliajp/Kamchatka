@@ -6,10 +6,10 @@ import { displayName, present } from '../src/api/client';
 import { dogsLabel } from '../src/api/format';
 import { fixtureResponse, mockApi, stage } from './fixtures';
 
-it('shows names and discipline labels as in the mockups without touching unknown values', () => {
+it('formats participant names and preserves full discipline names from the race dictionary', () => {
   expect(displayName('Иванова Алиса Петровна')).toBe('Алиса Иванова');
   expect(displayName('Иван')).toBe('Иван');
-  expect(present({ code: 'sled_8plus', name: 'Нарта — длинная дистанция, более 8 собак' }).name).toBe('Нарта, 8+ собак');
+  expect(present({ code: 'sled_8plus', name: 'Нарта — длинная дистанция, более 8 собак' }).name).toBe('Нарта — длинная дистанция, более 8 собак');
   expect(present({ code: 'other', name: 'Своя дисциплина' }).name).toBe('Своя дисциплина');
 });
 

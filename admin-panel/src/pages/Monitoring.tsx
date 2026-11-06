@@ -10,7 +10,7 @@ import { BatteryHistory, CheckpointEvidence } from './MonitoringDetails';
 import { ChangeLog } from './Results';
 import { validResponse } from '../validate';
 import { updateAdminRoute, useAdminRoute } from '../navigation';
-export const rowState=(row:MonitorRow)=>row.active_alerts.length?'sos':!row.tracker?'no_tracker':row.is_overdue?'overdue':'ok';
+export const rowState=(row:MonitorRow)=>row.active_alerts.length?'sos':!row.tracker?'no_tracker':row.is_overdue?'overdue':!row.last_position?'no_data':'ok';
 export function PositionMap({point}:{point:NonNullable<MonitorRow['last_position']>}) {
   const root=useRef<HTMLDivElement>(null);
   useEffect(()=>{
@@ -99,7 +99,7 @@ function Trackers({raceId,stages}:{raceId:number;stages:Stage[]}) {
 export function MonitoringPage({raceId}:{raceId:number}) {
   const stages=useResource<Stage[]>(`/admin/races/${raceId}/stages`);const {stageId}=useAdminRoute();const [tab,setTab]=useState('monitor');
   const stage=stages.data?.find(s=>s.id===stageId) ?? stages.data?.find(s=>s.status==='live') ?? stages.data?.[0];
-  return <section className="monitor-page"><div className="page-title"><h1>Мониторинг оборудования</h1></div><details className="monitor-tools-menu"><summary>Инструменты этапа</summary><div className="monitor-tools"><div className="tabs">{[['monitor','Мониторинг этапа'],['trackers','Трекеры'],['alerts','Журнал SOS']].map(([value,label])=><button key={value} aria-pressed={tab===value} onClick={()=>setTab(value)}>{label}</button>)}</div>{tab==='monitor'&&<label className="stage-select">Этап мониторинга<select value={stage?.id ?? ''} onChange={e=>updateAdminRoute({stageId:Number(e.target.value)})}>{stages.data?.map(s=><option key={s.id} value={s.id}>Этап {s.number} · {s.name}</option>)}</select></label>}</div></details><LoadState resource={stages}/>
+  return <section className="monitor-page"><div className="page-title"><h1>Мониторинг оборудования</h1></div><details className="monitor-tools-menu"><summary>Инструменты этапа</summary><div className="monitor-tools"><div className="tabs">{[['monitor','Мониторинг этапа'],['trackers','Трекеры'],['alerts','Журнал SOS']].map(([value,label])=><button key={value} aria-pressed={tab===value} onClick={event=>{setTab(value);event.currentTarget.closest('details')!.open=false;}}>{label}</button>)}</div>{tab==='monitor'&&<label className="stage-select">Этап мониторинга<select value={stage?.id ?? ''} onChange={e=>updateAdminRoute({stageId:Number(e.target.value)})}>{stages.data?.map(s=><option key={s.id} value={s.id}>Этап {s.number} · {s.name}</option>)}</select></label>}</div></details><LoadState resource={stages}/>
     {tab==='trackers'?<Trackers raceId={raceId} stages={stages.data ?? []}/>:tab==='alerts'?<Alerts raceId={raceId}/>:<>{stage?<Monitor key={stage.id} stageId={stage.id}/>:<p>Этапы пока не созданы.</p>}</>}
   </section>;
 }

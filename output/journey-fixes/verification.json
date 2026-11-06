@@ -1,0 +1,15 @@
+{
+  "baseline": "742d916807c7eb23726d57c327ca91a3d26e6276",
+  "date": "2026-11-06",
+  "frontend_tests": 338,
+  "admin_tests": 126,
+  "backend_tests": 300,
+  "browser_tests": 85,
+  "frontend_coverage_percent": 100,
+  "admin_coverage_percent": 100,
+  "live_readback_checks": 9,
+  "database_readonly_checks": 22,
+  "npm_audit_vulnerabilities": 0,
+  "production_deployed": false,
+  "integrated_main": "2baf7a86b4a2bfa107523628fe9c7dfebdac620f"
+}

@@ -131,7 +131,7 @@ function RaceView({ race, link, warning, season, notification, onNotificationReq
           {stage?.status === 'live' && mapData.bounds.isValid() && !mapData.hasRoute && <p className="race-content" role="status">Маршрут пока не опубликован.</p>}
           {stage?.status === 'live' && positions.loading && !mapData.bounds.isValid() && detail.data.description && <p className="race-content">{detail.data.description}</p>}
           {stage?.status === 'live' && positions.data?.official_protocol_disciplines.length !== 0 && positions.data && <div className="race-content protocol-notice">
-            <p>По дисциплинам {positions.data.official_protocol_disciplines.join(', ')} опубликован протокол. GPS-позиции скрыты.</p>
+            <p>По дисциплинам {positions.data.official_protocol_disciplines.map(code => race.disciplines.find(item => item.code === code)?.name ?? 'дисциплина без названия').join(', ')} опубликован протокол. GPS-позиции скрыты.</p>
             <Button onClick={() => navigate('results')}>Открыть протокол</Button>
           </div>}
           {stage.status === 'live' && mapData.bounds.isValid() ? <section className="race-screen__map" aria-label="Маршрут и позиции участников">

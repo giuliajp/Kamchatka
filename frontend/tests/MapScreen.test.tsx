@@ -47,10 +47,12 @@ it('uses backend stage IDs, numbers and discipline codes; connects map, track an
   expect(await screen.findByRole('button', { name: 'Точка 14' })).toBeVisible();
 }, 15000); // Full keyboard/map/dialog journey with real VKUI transitions under coverage.
 it('hides GPS independently for every published discipline and opens official results', async () => {
-  mockApi(url => url.includes('/positions') ? { ...positions, official_protocol_disciplines: ['sled_8'] } : fixtureResponse(url));
+  mockApi(url => url.includes('/positions') ? { ...positions, official_protocol_disciplines: ['sled_8', 'unknown_internal'] } : fixtureResponse(url));
   const user = userEvent.setup(); show();
   await screen.findByRole('button', { name: 'Точка 22' });
   expect(screen.queryByRole('button', { name: 'Точка 14' })).not.toBeInTheDocument();
+  expect(screen.getByText(/По дисциплинам/)).toHaveTextContent('Нарта, 8 собак, дисциплина без названия');
+  expect(screen.getByText(/По дисциплинам/)).not.toHaveTextContent('unknown_internal');
   await user.click(screen.getByRole('button', { name: 'Открыть протокол' }));
   expect(await screen.findByText('Зачёт после этапа 3')).toBeVisible();
   await userEvent.click(await screen.findByText('Подробная таблица',{selector:'summary'}));

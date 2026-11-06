@@ -27,6 +27,7 @@ vi.mock('leaflet', () => {
       const tiles = { ...layer(), url, options, events, on: (name: string, callback: () => void) => { events[name] = callback; } };
       mock.tiles.push(tiles); return tiles;
     }),
+    geoJSON: layer,
     layerGroup: layer,
     divIcon: vi.fn(options => options),
     marker: vi.fn((coords, options) => {
@@ -48,7 +49,7 @@ vi.mock('leaflet.markercluster', () => ({}));
 beforeEach(() => { vi.stubEnv('VITE_MAP_TILE_URL', ''); vi.stubEnv('VITE_MAP_ATTRIBUTION', ''); });
 afterEach(() => { vi.unstubAllEnvs(); vi.restoreAllMocks(); });
 function prepared(participants = positions.participants, checkpoints = stage.checkpoints) {
-  return { route: { addTo: vi.fn().mockReturnThis() }, bounds: { isValid: () => true },
+  return { route: { toGeoJSON: vi.fn().mockReturnValue(stage.route_geojson) }, bounds: { isValid: () => true },
     hasRoute: true, participants, checkpoints } as unknown as MapData;
 }
 
