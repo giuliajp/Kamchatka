@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import './NotificationPrompt.css';
 import { Avatar, Button, ButtonGroup, ModalCard } from '@vkontakte/vkui';
 import { Icon28UserOutline } from '@vkontakte/icons';
 export interface NotificationPromptProps {

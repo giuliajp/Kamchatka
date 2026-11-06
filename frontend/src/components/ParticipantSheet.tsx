@@ -38,7 +38,7 @@ export function ParticipantSheet({ raceId, participantId, entryId, position, thr
   const rest = visits.filter(visit => visit.restMinutes > 0);
   const hasPosition = position?.position !== null && position !== undefined;
   const pointerStart = useRef(0);
-  return <ModalPage hideCloseButton className="participant-sheet" open onClose={onClose} aria-label="Карточка участника" height={expanded ? '92dvh' : 'calc(80dvh + 3px)'} settlingHeight={100}>
+  return <ModalPage disableOpenAnimation hideCloseButton className="participant-sheet" open onClose={onClose} aria-label="Карточка участника" height={expanded ? '92dvh' : 'calc(80dvh + 3px)'} settlingHeight={100}>
     <div className="map-participant" onPointerDown={event => { pointerStart.current = event.clientY; }}
       onPointerUp={event => { if (event.clientY - pointerStart.current > 100 && event.target === event.currentTarget) onClose(); }}>
       <button className="sheet-dismiss" aria-label="Свернуть" onClick={onClose}>×</button>

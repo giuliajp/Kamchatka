@@ -12,7 +12,7 @@ const meta = { tags: ['figma-unverified'], title: 'Компоненты созд
       onLater={() => { args.onLater(); update({ open: false }); }}
       onClose={() => { args.onClose(); update({ open: false }); }} /></>;
   },
-  parameters: { figma: { nodeId: '317:18332', status: 'Не проверено' }, docs: { description: { component: "Не проверено. Figma 317:18332. Modal Card 328 × 298. Подробные свойства недоступны, используется настоящая ModalCard VKUI. Полный аудит: docs/UI_KIT_FIGMA_AUDIT.md." } } },
+  parameters: { fullScreen: true, figma: { nodeId: '317:18332', status: 'Не проверено' }, docs: { description: { component: "Не проверено. Figma 317:18332. Modal Card 328 × 298. Подробные свойства недоступны, используется настоящая ModalCard VKUI. Полный аудит: docs/UI_KIT_FIGMA_AUDIT.md." } } },
 } satisfies Meta<typeof NotificationPrompt>;
 export default meta;
 type Story = StoryObj<typeof meta>;

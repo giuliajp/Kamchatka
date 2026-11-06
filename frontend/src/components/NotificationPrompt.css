@@ -1,0 +1,9 @@
+.notification-prompt {
+  max-block-size: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 14px;
+}
+.notification-prompt .vkuiButtonGroup__host { flex-wrap: wrap; }
+.notification-prompt .vkuiButton__host { height: auto; min-height: 44px; min-width: 0; flex: 1 1 10rem; }
+.notification-prompt .vkuiButton__content { white-space: normal; overflow-wrap: anywhere; text-align: center; }

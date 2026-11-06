@@ -29,7 +29,7 @@ export function ParticipantsScreen({ raceId, discipline, onSelect, mine = false,
     <div className="participants-list">{items?.map((participant,index)=><button className="participant-row" key={participant.race_participant_id} onClick={()=>onSelect(participant.participant_id,participant.race_participant_id)} aria-label={`Открыть карточку ${participant.full_name}`}>
       <span className="participant-row__rank">{index+1}.</span>
       <Avatar size={44} src={participant.photo_url ?? undefined} alt="" fallbackIcon={<Icon28UserOutline/>}/>
-      <span className="participant-row__body"><strong>{participant.full_name}</strong><span>{participant.discipline.name}</span><small><Icon20LikeOutline width={16} height={16} aria-hidden/>{participant.supporters_count} болельщиков</small></span>
+      <span className="participant-row__body"><strong>{participant.full_name}</strong><span className="participant-row__discipline" title={participant.discipline.name}>{participant.discipline.name}</span><small><Icon20LikeOutline width={16} height={16} aria-hidden/>{participant.supporters_count} болельщиков</small></span>
       <span className="participant-row__end"><span>№{participant.start_number}</span><Icon16Chevron aria-hidden/></span>
     </button>)}</div>
   </section>;

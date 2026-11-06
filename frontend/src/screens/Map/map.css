@@ -79,11 +79,13 @@
 .race-tabbar .vkuiTabbarItem__host { height: auto; min-height: 3rem; }
 .race-tabbar .vkuiTabbarItem__label { font-size: .5625rem; line-height: .75rem; white-space: normal; overflow-wrap: anywhere; }
 .race-screen__footer .race-tabbar { height: auto; min-height: 3rem; overflow: visible; }
-.race-screen__header [role='tablist'] { flex-wrap: wrap; height: auto; gap: 6px; }
-.race-screen__header [role='tab'] { flex: 0 1 auto; min-width: 0; max-width: 100%; height: auto; min-height: 40px; }
-.race-screen__header .vkuiTabsItem__label { white-space: normal; overflow-wrap: anywhere; }
-.race-screen__header .vkuiTabs__in { flex-wrap: wrap; gap: 6px; }
-.race-screen__header [role='tab'] { flex-shrink: 0; }
+/* Keep the discipline and Mine controls on one row; the menu retains full names. */
+.race-filters .vkuiTabs__in { flex-wrap: nowrap; gap: 6px; }
+.race-filters .vkuiTabs__in > :first-child { flex: 0 1 auto; min-width: 0; }
+.race-filters .vkuiTabs__in > :last-child:not(:first-child) { flex: 0 0 auto; }
+.race-filters [role='tab'] { min-width: 0; max-width: 100%; height: auto; }
+.race-filters .vkuiTabsItem__label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 
 .stage-hero[data-planned='true'] { padding-bottom: 48px; }
 .stage-hero[data-planned='true'] .stage-hero__action { min-width: min(100%, 210px); }
@@ -97,7 +99,6 @@
 .race-screen__header [role='tab'] { min-height: 34px; }
 .stage-hero[data-planned='true'] { min-height: max(571px, calc(100dvh - 212px)); }
 
-.notification-prompt .vkuiButtonGroup__host{flex-wrap:wrap;}.notification-prompt .vkuiButton__host{height:auto;min-height:44px;flex:1 1 120px;}.notification-prompt .vkuiButton__content{white-space:normal;text-align:center;}
 .race-screen[data-section=participants]{background:var(--vkui--color_background_tertiary);}
 .race-screen__header .participants-search{padding:2px 16px 4px;min-height:42px;}.race-screen[data-section=participants] .race-screen__header [role=tablist]{min-height:48px;}
 .participants-page{padding-top:0;}.participants-sort{display:flex;align-items:center;gap:8px;min-height:34px;border:0;border-radius:8px;padding:6px 12px;background:var(--vkui--color_background_content);color:var(--vkui--color_text_accent);font-family:inherit;font-size:.8125rem;line-height:1rem;font-weight:500;box-shadow:0 0 2px #00000014,0 4px 8px #00000014;cursor:pointer;}
@@ -118,3 +119,5 @@
 .race-screen[data-section='map'] .map-controls { position: relative; grid-row: 3; bottom: auto; right: auto; justify-self: end; }
 .race-screen[data-section='map'] .map-time { position: relative; grid-row: 4; bottom: auto; left: auto; right: auto; }
 .race-screen[data-section='map'] .map-empty { grid-row: 2; margin: 0; align-self: start; }
+
+.participant-row__discipline { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

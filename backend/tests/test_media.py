@@ -86,6 +86,8 @@ async def test_photos_grouped_by_kamchatka_day(client, vk):
 @pytest.mark.parametrize("path", ["/news", "/photos", "/photos/albums"])
 async def test_news_without_group_id(client, settings, monkeypatch, caplog, path):
     monkeypatch.setattr(settings, "vk_group_id", None)
+    # Alembic roundtrip tests reconfigure logging earlier in the full suite.
+    monkeypatch.setattr(media.logger, "disabled", False)
     response = await client.get("/api" + path)
     assert response.status_code == 503
     assert response.json()["error"]["message"] == "Материалы VK временно недоступны. Попробуйте позже"
