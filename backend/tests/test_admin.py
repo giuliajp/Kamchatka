@@ -4,6 +4,7 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from sqlalchemy import delete
 
 from app.models import (
     AdminUser, AlertType, Checkpoint, CheckpointRole, Discipline, Equipment, Participant, Race,
@@ -260,3 +261,15 @@ async def test_acknowledge_alert(client, auth, race):
     assert (await client.get(f"/api/admin/races/{race['race'].id}/alerts", headers=auth)).json()["data"] == []
     history = await client.get(f"/api/admin/races/{race['race'].id}/alerts?active=false", headers=auth)
     assert len(history.json()["data"]) == 1
+
+
+@pytest.mark.parametrize("status", [StageStatus.PLANNED, StageStatus.LIVE, StageStatus.FINISHED])
+async def test_monitoring_never_counts_a_tracker_without_points_as_online(client, session, auth, race, status):
+    race["stage"].status = status
+    await session.execute(delete(TrackerPosition).where(TrackerPosition.race_participant_id == race["e7"].id))
+    await session.commit()
+    data = (await client.get(f"/api/admin/stages/{race['stage'].id}/monitoring", headers=auth)).json()["data"]
+    row = next(r for r in data["rows"] if r["race_participant_id"] == race["e7"].id)
+    assert row["last_position"] is None
+    assert row["is_overdue"] is (status == StageStatus.LIVE)
+    assert data["summary"]["ok"] == (0 if status == StageStatus.LIVE else 1)

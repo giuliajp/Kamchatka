@@ -149,7 +149,7 @@ async def stage_monitoring(stage_id: int, session: SessionDep, admin: AdminDep):
     sos = sum(1 for r in rows if r["active_alerts"])
     overdue = sum(1 for r in rows if r["is_overdue"])
     no_tracker = sum(1 for r in rows if r["tracker"] is None)
-    healthy = sum(1 for r in rows if r["tracker"] and not r["active_alerts"] and not r["is_overdue"])
+    healthy = sum(1 for r in rows if r["tracker"] and r["last_position"] is not None and not r["active_alerts"] and not r["is_overdue"])
     return ok({
         "stage": stage_short(stage), "race_id": stage.race_id, "generated_at": now,
         "tracking_interval_minutes": stage.effective_interval_minutes,
