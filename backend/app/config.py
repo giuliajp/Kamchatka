@@ -67,6 +67,8 @@ class Settings(BaseSettings):
     vk_group_id: int | None = None
     # Альбом фотогалереи: "wall" — фото со стены, или номер альбома сообщества.
     vk_photo_album_id: str = "wall"
+    # Только для показа без ключа VK: демонстрационные новости и фото. В production не действует.
+    demo_media: bool = False
     # Сколько секунд держим новости и фото в памяти, чтобы не упираться в лимиты VK.
     vk_cache_seconds: int = 120
 

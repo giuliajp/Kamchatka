@@ -36,7 +36,7 @@ it('uses backend stage IDs, numbers and discipline codes; connects map, track an
   await user.click(screen.getByRole('button', { name: 'Обновить карту' }));
   await user.click(screen.getByRole('tab', { name: 'Дисциплина: все' }));
   await user.click(screen.getByRole('radio', { name: 'Нарта, 8 собак' }));
-  expect(await screen.findByText('Топ-3 по GPS в дисциплине')).toBeVisible();
+  expect(await screen.findByText('Топ-3 в дисциплине')).toBeVisible();
   expect(api).toHaveBeenCalledWith('/api/races/10/positions?stage=3&discipline=sled_8', expect.anything());
   await user.click(screen.getByRole('button', { name: /1. Алиса Иванова/ }));
   await user.click(await screen.findByRole('button', { name: 'Свернуть' }));
@@ -80,7 +80,7 @@ it('supports cancelled, planned and finished stages and the overall standings se
   expect(api).toHaveBeenCalledWith('/api/races/10/results', expect.anything());
   await userEvent.click(await screen.findByText('Подробная таблица',{selector:'summary'}));
   await user.click(screen.getByRole('button', { name: '№14 · Алиса Иванова' }));
-  expect(await screen.findByText(/Официальное место в дисциплине за гонку: 2/)).toBeVisible();
+  expect(await screen.findByText('2 место')).toBeVisible();
   expect(api).toHaveBeenCalledWith('/api/races/10/results?discipline=sled_8', expect.anything());
   await user.click(screen.getByRole('button', { name: 'Свернуть' }));
   await user.click(screen.getByRole('button', { name: 'Карта' }));

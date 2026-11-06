@@ -20,7 +20,7 @@ it('shares a participant story with identity and season while preserving the lin
  mockApi();render(<AppProviders><ParticipantSheet raceId={10} participantId={501} entryId={9001} threshold={45} onClose={()=>undefined}/></AppProviders>);
  await userEvent.click(await screen.findByRole('button',{name:'В историю VK'}));
  expect(await screen.findByRole('status')).toHaveTextContent('История передана в VK');expect(destination()).toContain('https://vk.com/app12345#race=10&person=501&participant=9001');expect(destination()).not.toContain('private');
- expect(createStoryImages).toHaveBeenCalledWith(expect.objectContaining({title:participant.full_name,heading:expect.stringContaining('2026'),lines:expect.arrayContaining([expect.stringContaining('14')])}));
+ expect(createStoryImages).toHaveBeenCalledWith(expect.objectContaining({title:'Алиса Иванова',heading:expect.stringContaining('2026'),lines:expect.arrayContaining([expect.stringContaining('14')])}));
  await userEvent.click(screen.getByRole('button',{name:'Поделиться участником'}));expect(bridge.send).toHaveBeenCalledWith('VKWebAppShare',{link:expect.stringContaining('participant=9001')});
 });
 it('shares the result with official race totals and a track route, including missing results',async()=>{

@@ -63,7 +63,7 @@ export function MapCanvas({ data, viewKey, threshold, track, refreshing, onSelec
   useEffect(() => {
     const instance = map.current!;
     const entries = new Map<L.Marker, Position>();
-    const group = L.markerClusterGroup({ zoomToBoundsOnClick: false, spiderfyOnMaxZoom: false, showCoverageOnHover: false, animate: false,
+    const group = L.markerClusterGroup({ zoomToBoundsOnClick: false, spiderfyOnMaxZoom: false, showCoverageOnHover: false, animate: false, maxClusterRadius: 30,
       iconCreateFunction: cluster => {
         const node = document.createElement('div'); node.className = 'race-participant-cluster';
         node.setAttribute('role', 'img'); node.setAttribute('aria-label', `Открыть список: ${cluster.getChildCount()} участников рядом`);

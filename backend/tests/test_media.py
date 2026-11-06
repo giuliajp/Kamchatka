@@ -145,3 +145,17 @@ async def test_visit_and_manual_push(client, session, vk):
     assert len((await client.get("/api/admin/push", headers=auth)).json()["data"]) == 3
     too_long = await client.post("/api/admin/push", headers=auth, json={"message": "x" * 300})
     assert too_long.status_code == 422
+
+
+async def test_demo_media_only_outside_production(client, settings, monkeypatch):
+    monkeypatch.setattr(settings, "vk_service_token", "")
+    monkeypatch.setattr(settings, "vk_group_id", None)
+    monkeypatch.setattr(settings, "demo_media", False)
+    assert (await client.get("/api/news")).status_code == 503
+    monkeypatch.setattr(settings, "demo_media", True)
+    news = (await client.get("/api/news")).json()["data"]["items"]
+    assert news[0]["title"] == "Этап 2 завершён" and news[0]["cover_url"].endswith(".jpg")
+    assert (await client.get("/api/photos")).json()["data"]["days"]
+    assert (await client.get("/api/photos/albums")).json()["data"]["items"]
+    monkeypatch.setattr(settings, "environment", "production")
+    assert (await client.get("/api/news")).status_code == 503

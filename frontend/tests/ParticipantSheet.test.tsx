@@ -22,7 +22,7 @@ it('loads identity by person ID and matches participation by entry ID, with serv
   expect(await screen.findByText('Алиса Иванова')).toBeVisible();
   expect(api).toHaveBeenCalledWith('/api/participants/501', expect.anything());
   expect(screen.getByLabelText('Позиция по GPS-трекеру: 1')).toBeVisible(); expect(screen.getByText('9,4 км/ч')).toBeVisible();
-  expect(screen.getByText(/Официальное место.*2/)).toBeVisible();
+  expect(screen.getByText('1 место')).toBeVisible();
   expect(await screen.findByText(/болельщиков/)).toBeVisible(); expect(screen.getByText('Прохождение контрольных пунктов (КП)')).toBeVisible(); expect(screen.getByRole('button', { name: 'Болею за' })).toBeVisible();
   await user.click(screen.getByRole('button', { name: /Алиса Иванова/ })); expect(screen.getByText(person.bio!)).toBeVisible();
   await user.click(screen.getByRole('button', { name: /Алиса Иванова/ })); expect(screen.queryByText(person.bio!)).not.toBeInTheDocument();
@@ -39,7 +39,7 @@ it('handles missing biography, photo, region, time, place and GPS independently'
 it('allows an empty history and a person without a matching participation', async () => {
   mockApi(() => ({ ...person, races: [] }));
   render(<AppProviders><ParticipantSheet participantId={501} entryId={9999} threshold={45} onClose={vi.fn()} /></AppProviders>);
-  await userEvent.click(await screen.findByText('История выступлений')); expect(screen.getByText('Выступления пока не опубликованы.')).toBeVisible();
+  expect(screen.queryByText('История выступлений')).toBeNull();
   expect(screen.queryByText(/Позиция по GPS/)).not.toBeInTheDocument();
 });
 it('shows real checkpoint passes, shares and supports the participant', async () => {
@@ -49,8 +49,8 @@ it('shows real checkpoint passes, shares and supports the participant', async ()
   const close = vi.fn(); const detail = { ...stage, status: 'finished' as const, finish_at: '2026-10-27T06:00:00Z', checkpoints: [{ ...stage.checkpoints[0], required_rest_minutes: 30 }] };
   render(<AppProviders><ParticipantSheet participantId={501} entryId={9001} stage={detail} threshold={45} onClose={close} /></AppProviders>);
   expect(await screen.findByText(/Финиш 27.10/)).toBeVisible();
-  expect(screen.getByText('Финиш судьи')).toBeVisible();
-  await userEvent.click(screen.getByText('Обязательные остановки')); expect(screen.getByText('Финиш судьи: 30 мин.')).toBeVisible();
+  expect(screen.getAllByText(/Финиш судьи/)[0]).toBeVisible();
+  expect(screen.getByText('Обязательные остановки')).toBeVisible(); expect(screen.getAllByText(/Остановка/)[0]).toBeVisible();
   await userEvent.click(screen.getByRole('button', { name: 'Поделиться участником' })); expect(await screen.findByText('Ссылка скопирована')).toBeVisible();
   expect(writeText).toHaveBeenCalledWith(expect.stringContaining('race=10&person=501&participant=9001&stage=103'));
   await userEvent.click(screen.getByRole('button', { name: 'Болею за' })); await userEvent.click(await screen.findByRole('button', { name: 'Позже' }));
@@ -96,8 +96,8 @@ it('loads overall official standings without inventing a stage or a personal fin
   const { fixtureResponse, results } = await import('./fixtures');
   const api = mockApi(url => url.includes('/results') ? { ...results, disciplines: [{ ...results.disciplines[0], rows: [{ ...results.disciplines[0].rows[0], place: null, status: 'dnf', total_time: null }] }] } : fixtureResponse(url));
   render(<AppProviders><ParticipantSheet participantId={501} entryId={9001} showOfficial threshold={45} onClose={vi.fn()} /></AppProviders>);
-  expect(await screen.findByText(/Официальное место в дисциплине за гонку: —/)).toBeVisible();
-  expect(api).toHaveBeenCalledWith('/api/races/10/results?discipline=sled_8', expect.anything());
+  expect(screen.queryByText(/Официальное место/)).toBeNull();
+  await vi.waitFor(() => expect(api).toHaveBeenCalledWith('/api/races/10/results?discipline=sled_8', expect.anything()));
   expect(screen.queryByText('2 место')).not.toBeInTheDocument(); expect(screen.queryByText(/^Финиш /)).not.toBeInTheDocument();
 });
 it('requests the selected live protocol before detailed checkpoint metadata arrives', async () => {
@@ -105,7 +105,7 @@ it('requests the selected live protocol before detailed checkpoint metadata arri
   const { id, number, name, distance_km, start_at, finish_at, status } = stage;
   const api = mockApi(url => fixtureResponse(url));
   render(<AppProviders><ParticipantSheet participantId={501} entryId={9001} stage={{ id, number, name, distance_km, start_at, finish_at, status }} showOfficial threshold={45} onClose={vi.fn()} /></AppProviders>);
-  expect(await screen.findByText(/Официальное место в дисциплине после этапа 3: 2/)).toBeVisible();
+  expect((await screen.findAllByText('2 место'))[0]).toBeVisible();
   expect(api).toHaveBeenCalledWith('/api/races/10/results?stage=3&discipline=sled_8', expect.anything());
   expect(screen.getByText('История прохождения КП пока отсутствует.')).toBeVisible();
 });

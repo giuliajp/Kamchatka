@@ -171,6 +171,8 @@ def parse_penalties(row: list[str], header: Header) -> list[tuple[int, str | Non
         note = cell(row, header.note)
         found = [(int(m["amount"]) * (60 if m["unit"].lower() == "мин" else 1), f"П.{m['rule']}", note)
                  for m in _PENALTY_NOTE.finditer(note)]
+        if not found and "штраф" in note.lower():
+            return [(0, None, note)]                 # штраф без штрафного времени — только факт
         if not found and "штр" in note.lower():
             raise ResultError(f"Не удалось распознать штраф: «{note}»")
         return found

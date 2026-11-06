@@ -67,7 +67,8 @@ class ProtocolPatch(BaseModel):
 
 
 class PenaltyCreate(BaseModel):
-    time: str = Field(description="Штрафное время ЧЧ:ММ:СС", examples=["00:02:00"])
+    time: str | None = Field(None, description="Штрафное время ЧЧ:ММ:СС; пусто — штраф без времени",
+                             examples=["00:02:00"])
     rule_reference: str | None = Field(None, max_length=50, examples=["П.14.11.14"])
     reason: str | None = Field(None, max_length=2000, description="За что — видно в протоколе")
     change_reason: str | None = Field(None, max_length=2000, description="Для журнала")
@@ -359,7 +360,7 @@ async def add_penalty(entry_id: int, body: PenaltyCreate, session: SessionDep, a
     if await session.get(RaceParticipant, entry_id) is None:
         raise HTTPException(status_code=404, detail="Участник гонки не найден")
     try:
-        seconds = parse_duration(body.time)
+        seconds = parse_duration(body.time) if body.time and body.time.strip() not in ("0", "00:00:00") else 0
     except ResultError as error:
         raise unprocessable(error)
     penalty = Penalty(race_participant_id=entry_id, seconds=seconds, rule_reference=body.rule_reference,
@@ -368,7 +369,7 @@ async def add_penalty(entry_id: int, body: PenaltyCreate, session: SessionDep, a
     await session.flush()
     session.add(ResultChangeLog(protocol_id=None, entity="penalty", entity_id=penalty.id,
                                 race_participant_id=entry_id, action=ChangeAction.CREATE,
-                                new_value=f"{body.time} {body.rule_reference or ''}".strip(),
+                                new_value=f"{body.time or 'без времени'} {body.rule_reference or ''}".strip(),
                                 changed_by=admin.full_name, reason=body.change_reason))
     await session.commit()
     return ok(penalty_out(penalty))

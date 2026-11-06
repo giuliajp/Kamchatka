@@ -136,11 +136,11 @@ function RaceView({ race, link, warning, season, notification, onNotificationReq
           </div>}
           {stage.status === 'live' && mapData.bounds.isValid() ? <section className="race-screen__map" aria-label="Маршрут и позиции участников">
             <MapCanvas data={mapData} viewKey={`${stage.id}:${discipline}:${tab}:${detail.data.route_updated_at}:${mapData.hasRoute}:${mapData.checkpoints.length}`} threshold={threshold} track={track.data} onSelect={selectMapPerson} onCluster={setCluster} onRefresh={refresh} onLegend={() => setLegend(true)} supported={supported} refreshing={positions.loading || detail.loading} />
-            {leaders.length > 0 && <div className="map-leaders-slot"><TopParticipantsCard compact title={discipline === '' ? 'Лидеры по GPS в дисциплинах' : 'Топ-3 по GPS в дисциплине'} entries={leaders}
+            {leaders.length > 0 && <div className="map-leaders-slot"><TopParticipantsCard compact title={discipline === '' ? 'Лидеры по дисциплинам' : 'Топ-3 в дисциплине'} entries={leaders}
               onSelect={id => selectMapPerson(visible.find(p => p.race_participant_id === Number(id))!)} /></div>}
             {stage.status === 'live' && positions.data && tab === 'all' && !latest && (positions.data.official_protocol_disciplines.length === 0 || visible.length > 0) && <div className="map-empty"><h2>Положения отсутствуют</h2><p>Координаты появятся после получения данных трекеров.</p></div>}
             {tab === 'mine' && mapped.length === 0 && <div className="map-empty"><h2>{supported.length ? 'У ваших участников пока нет координат' : 'Вы пока ни за кого не болеете'}</h2><p>Выберите участника во вкладке «Дисциплина: все» и нажмите «Болею за».</p></div>}
-            {latest && <div className="map-time"><TimeBadge state={stale(latestPosition, threshold) ? 'stale' : 'position'}>{stale(latestPosition, threshold) ? 'Последняя подтверждённая точка' : 'Положение'} на {raceTime(latest)} (Камчатка)</TimeBadge></div>}
+            {latest && <div className="map-time"><TimeBadge state={stale(latestPosition, threshold) ? 'stale' : 'position'}>{stale(latestPosition, threshold) ? 'Последняя подтверждённая точка' : 'Положение'} на {raceTime(latest)}</TimeBadge></div>}
           </section> : stage.status === 'live' && !mapData.bounds.isValid() && positions.data && <div className="race-content map-unavailable" role="status">
             <p>Маршрут пока не опубликован.</p>
             {tab === 'mine' && <p>У поддерживаемых участников пока нет подтверждённых координат.</p>}

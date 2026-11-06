@@ -54,7 +54,48 @@ async def cached(key: str, loader) -> tuple[Any, bool]:
     return data, False
 
 
+DEMO_OWNER = -1
+_IMG = "/api/demo-media/"
+DEMO_POSTS = [
+    ("Этап 2 завершён", "Первым финишировал №21 Иван Семёнов. Протоколы судей опубликованы в разделе «Результаты».",
+     _IMG + "9eae6.jpg", 5),
+    ("Стартовал третий этап", "Упряжки вышли со старта в Раздольном. Следите за участниками на карте.",
+     _IMG + "d6d50.jpg", 4),
+    ("Обряд встречи гостей", "В КВТЦ прошёл традиционный обряд встречи гостей фестиваля «Берингия».",
+     _IMG + "b1cb4.jpg", 26),
+    ("Мастер-классы для детей", "Каюры рассказали юным болельщикам, как устроена упряжь и как ухаживать за собаками.",
+     _IMG + "f31e1.jpg", 30),
+    ("Трасса готова", "Судьи прошли трассу третьего этапа: участки с наледями отмечены флажками.",
+     _IMG + "67f5d.jpg", 50),
+]
+
+
+def demo_media() -> bool:
+    settings = get_settings()
+    return settings.demo_media and not settings.is_production and not vk_api.is_configured()
+
+
+def demo_news() -> dict:
+    now = int(time.time())
+    items = [{"id": i + 1, "owner_id": DEMO_OWNER, "date": now - hours * 3600, "text": f"{title}\n{text}",
+              "attachments": [{"type": "photo", "photo": {"sizes": [{"url": image, "width": 1280, "height": 852}]}}],
+              "likes": {"count": 40 + i * 7}, "reposts": {"count": 3 + i}}
+             for i, (title, text, image, hours) in enumerate(DEMO_POSTS)]
+    return {"count": len(items), "items": items}
+
+
+def demo_photos() -> dict:
+    now = int(time.time())
+    images = ["02447", "21228", "547f5", "63fc6", "67f5d", "9eae6", "b1cb4", "b5483", "d6d50", "d7616",
+              "efbd4", "f31e1", "f9ed3", "c053b"]
+    return {"count": len(images), "items": [
+        {"id": i + 1, "owner_id": DEMO_OWNER, "date": now - i * 9 * 3600, "text": "",
+         "sizes": [{"url": f"{_IMG}{name}.jpg", "width": 1280, "height": 852}]} for i, name in enumerate(images)]}
+
+
 def group_owner() -> int:
+    if demo_media():
+        return DEMO_OWNER
     group_id = get_settings().vk_group_id
     if not group_id:
         logger.warning("VK media unavailable: VK_GROUP_ID is not configured")
@@ -100,8 +141,11 @@ def news_item(post: dict) -> dict:
 @router.get("/news", summary="Новости сообщества гонки (карточки-анонсы)")
 async def news(offset: int = Query(0, ge=0, le=1000), count: int = Query(20, ge=1, le=50)):
     owner = group_owner()
-    data, stale = await cached(f"news:{offset}:{count}", lambda: vk_api.call(
-        "wall.get", owner_id=owner, offset=offset, count=count, filter="owner"))
+    if demo_media():
+        data, stale = demo_news(), False
+    else:
+        data, stale = await cached(f"news:{offset}:{count}", lambda: vk_api.call(
+            "wall.get", owner_id=owner, offset=offset, count=count, filter="owner"))
     items = [news_item(p) for p in (data or {}).get("items", []) if p.get("post_type", "post") == "post"]
     return ok({"items": items, "total": (data or {}).get("count", 0), "stale": stale})
 
@@ -109,7 +153,11 @@ async def news(offset: int = Query(0, ge=0, le=1000), count: int = Query(20, ge=
 @router.get("/photos/albums", summary="Альбомы сообщества (архив: «Берингия. Авача-2026. Первый этап»…)")
 async def albums():
     owner = group_owner()
-    data, stale = await cached("albums", lambda: vk_api.call("photos.getAlbums", owner_id=owner, need_covers=1))
+    if demo_media():
+        data, stale = {"items": [{"id": 1, "title": "Берингия. Авача-2026. Первый этап", "size": 14,
+                                  "thumb_src": _IMG + "d7616.jpg"}]}, False
+    else:
+        data, stale = await cached("albums", lambda: vk_api.call("photos.getAlbums", owner_id=owner, need_covers=1))
     items = [{"id": a["id"], "title": a.get("title"), "size": a.get("size"), "cover_url": a.get("thumb_src"),
               "url": f"https://vk.com/album{owner}_{a['id']}"} for a in (data or {}).get("items", [])]
     return ok({"items": items, "stale": stale})
@@ -122,8 +170,11 @@ async def photos(count: int = Query(200, ge=1, le=1000),
     album = album_id or get_settings().vk_photo_album_id
     if not (album.isdigit() or album in ("wall", "profile")):
         raise HTTPException(status_code=422, detail="Неверный альбом")
-    data, stale = await cached(f"photos:{album}:{count}", lambda: vk_api.call(
-        "photos.get", owner_id=owner, album_id=album, rev=1, count=count))
+    if demo_media():
+        data, stale = demo_photos(), False
+    else:
+        data, stale = await cached(f"photos:{album}:{count}", lambda: vk_api.call(
+            "photos.get", owner_id=owner, album_id=album, rev=1, count=count))
     days: dict[str, list[dict]] = {}
     for p in (data or {}).get("items", []):
         taken = datetime.fromtimestamp(p["date"], tz=timezone.utc)

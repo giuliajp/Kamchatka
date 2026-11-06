@@ -5,6 +5,21 @@ export class ApiError extends Error {
   constructor(message: string, public status: number, public code?: string, public details?: unknown) { super(message); }
 }
 export interface Snapshot<T> { data: T; savedAt: string }
+// Подписи как в макетах: «Нарта, 8 собак», «Алиса Иванова». API отдаёт официальные формы
+// (полное название дисциплины, «Фамилия Имя Отчество»); меняем только отображение, копию данных.
+const SHORT_DISCIPLINES: Record<string, string> = { ski_2: 'Лыжи, 2 собаки', sled_8: 'Нарта, 8 собак', sled_8plus: 'Нарта, 8+ собак' };
+export function displayName(fullName: string): string {
+  const words = fullName.trim().split(/\s+/);
+  return words.length >= 2 ? `${words[1]} ${words[0]}` : fullName;
+}
+export function present<T>(value: T): T {
+  if (Array.isArray(value)) return value.map(present) as T;
+  if (!value || typeof value !== 'object') return value;
+  const copy: Record<string, unknown> = {};
+  for (const [key, item] of Object.entries(value)) copy[key] = key === 'full_name' && typeof item === 'string' ? displayName(item) : present(item);
+  if (typeof copy.code === 'string' && typeof copy.name === 'string' && SHORT_DISCIPLINES[copy.code]) copy.name = SHORT_DISCIPLINES[copy.code];
+  return copy as T;
+}
 const cacheKey = (path: string) => `avacha-api-v2:${apiBase}${path}`;
 export const canPersist = (path: string) => !/^\/me(?:\/|$)|\/support(?:\?|$)/.test(path);
 
@@ -12,7 +27,7 @@ export function readCache<T>(path: string): Snapshot<T> | undefined {
   if (!canPersist(path)) return;
   try {
     const saved = JSON.parse(localStorage.getItem(cacheKey(path)) || 'null');
-    if (saved && typeof saved === 'object' && saved.data !== undefined && saved.data !== null && validApiData(path, saved.data) && typeof saved.savedAt === 'string' && Number.isFinite(Date.parse(saved.savedAt))) return saved;
+    if (saved && typeof saved === 'object' && saved.data !== undefined && saved.data !== null && validApiData(path, saved.data) && typeof saved.savedAt === 'string' && Number.isFinite(Date.parse(saved.savedAt))) return { ...saved, data: present(saved.data) };
   } catch { /* Browser storage can be disabled or contain obsolete data. */ }
 }
 async function send<T>(path: string, init: RequestInit): Promise<T> {
@@ -26,16 +41,16 @@ async function send<T>(path: string, init: RequestInit): Promise<T> {
   return body.data as T;
 }
 export async function request<T>(path: string, signal: AbortSignal, persist = true): Promise<Snapshot<T>> {
-  const data = await send<T>(path, { signal });
-  const snapshot = { data, savedAt: new Date().toISOString() };
+  const raw = await send<T>(path, { signal });
+  const savedAt = new Date().toISOString();
   if (persist && canPersist(path) && !signal.aborted) {
-    try { localStorage.setItem(cacheKey(path), JSON.stringify(snapshot)); }
+    try { localStorage.setItem(cacheKey(path), JSON.stringify({ data: raw, savedAt })); }
     catch { /* Keep the successful response in memory if storage is unavailable. */ }
   }
-  return snapshot;
+  return { data: present(raw), savedAt };
 }
 export async function mutate<T>(path: string, method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', data?: unknown, signal?: AbortSignal): Promise<T> {
-  const result = await send<T>(path, { method, signal, ...(data === undefined ? {} : { body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }) });
+  const result = present(await send<T>(path, { method, signal, ...(data === undefined ? {} : { body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } }) }));
   if (!signal?.aborted) {
     const resource = /^\/me\/bookmarks(?:\/|$)/.test(path) ? '/me/bookmarks' : /^\/program\/\d+\/reminder$/.test(path) ? '/me/reminders' : undefined;
     window.dispatchEvent(new CustomEvent('avacha:changed', { detail: resource }));

@@ -55,3 +55,4 @@ __pycache__/
 
 # Full UI audit captures stay local; final comparisons and ledgers are tracked.
 /output/ui-review/fixes/
+backend/scripts/demo_media/avacha2026.json
