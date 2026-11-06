@@ -173,10 +173,11 @@ async def test_penalties_belong_to_race_participant(session, race):
     assert loaded_result.net_time_seconds is None
 
 
-@pytest.mark.parametrize("seconds", [0, -1])
-async def test_penalty_must_be_positive(session, race, seconds):
-    """База отклоняет нулевое и отрицательное штрафное время."""
-    session.add(Penalty(race_participant_id=race["entry"].id, seconds=seconds))
+async def test_penalty_time_not_negative(session, race):
+    """Отрицательное штрафное время база отклоняет; 0 — штраф без времени (только факт)."""
+    session.add(Penalty(race_participant_id=race["entry"].id, seconds=0, reason="Предупреждение"))
+    await session.commit()
+    session.add(Penalty(race_participant_id=race["entry"].id, seconds=-1))
     with pytest.raises(IntegrityError):
         await session.commit()
 

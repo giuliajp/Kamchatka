@@ -1,0 +1,1411 @@
+{
+  "source_filename": "Total_result_Avacha-2026.pdf",
+  "race": {
+    "name": "Берингия. Авача 2026",
+    "year": 2026,
+    "start_date": "2026-02-06",
+    "end_date": "2026-02-15",
+    "location": "Россия, Камчатский край, г. Петропавловск-Камчатский",
+    "raw_name": "Берингия. Авача",
+    "raw_dates": "06 - 15 февраля 2026 г."
+  },
+  "protocol_metadata": {
+    "weather": "температура воздуха -3 - 4С, влажность 70%, скорость ветра 7-9 м/с, давление 720 мм рт.ст.",
+    "chief_judge": "Отбеткин П. В., ССВК",
+    "chief_secretary": "Бурашов Ю.Ю., 1СК"
+  },
+  "stages": [
+    {
+      "number": 1,
+      "distance_km": 33.7
+    },
+    {
+      "number": 2,
+      "distance_km": 56.0
+    },
+    {
+      "number": 3,
+      "distance_km": 70.4
+    },
+    {
+      "number": 4,
+      "distance_km": 38.2
+    },
+    {
+      "number": 5,
+      "distance_km": 56.0
+    },
+    {
+      "number": 6,
+      "distance_km": 33.7
+    }
+  ],
+  "participants": [
+    {
+      "start_number": 4,
+      "full_name": "Филимонова Алиса Александровна",
+      "birth_year": 1997,
+      "region": "Камчатский край",
+      "results_text": "02:39:55 12,6 04:16:10 13,1 05:45:50 12,2 03:08:07 12,2 04:45:39 11,8 01:58:03 17,1 13,2 22:33:44 1 0",
+      "discipline_code": "ski_2",
+      "discipline_name": "Лыжи длинная дистанция 2 собаки",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "02:39:55",
+          "status": "finished",
+          "final_time_seconds": 9595,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:16:10",
+          "status": "finished",
+          "final_time_seconds": 15370,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "05:45:50",
+          "status": "finished",
+          "final_time_seconds": 20750,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "03:08:07",
+          "status": "finished",
+          "final_time_seconds": 11287,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "04:45:39",
+          "status": "finished",
+          "final_time_seconds": 17139,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "01:58:03",
+          "status": "finished",
+          "final_time_seconds": 7083,
+          "warning": null
+        }
+      ],
+      "summary_text": "13,2 22:33:44 1 0",
+      "summary": {
+        "raw_result": "22:33:44",
+        "status": "finished",
+        "total_time_seconds": 81224,
+        "source_place": 1,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 3,
+      "full_name": "Федорков Михаил Константинович",
+      "birth_year": 1982,
+      "region": "Ленинградская область",
+      "results_text": "03:32:24 9,5 05:49:36 9,6 07:22:27 9,5 03:53:23 9,8 06:07:22 9,1 02:22:35 14,2 10,3 29:07:47 2 0",
+      "discipline_code": "ski_2",
+      "discipline_name": "Лыжи длинная дистанция 2 собаки",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "03:32:24",
+          "status": "finished",
+          "final_time_seconds": 12744,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "05:49:36",
+          "status": "finished",
+          "final_time_seconds": 20976,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "07:22:27",
+          "status": "finished",
+          "final_time_seconds": 26547,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "03:53:23",
+          "status": "finished",
+          "final_time_seconds": 14003,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "06:07:22",
+          "status": "finished",
+          "final_time_seconds": 22042,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "02:22:35",
+          "status": "finished",
+          "final_time_seconds": 8555,
+          "warning": null
+        }
+      ],
+      "summary_text": "10,3 29:07:47 2 0",
+      "summary": {
+        "raw_result": "29:07:47",
+        "status": "finished",
+        "total_time_seconds": 104867,
+        "source_place": 2,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 2,
+      "full_name": "Апсалихова Алёна Сергеевна",
+      "birth_year": 1989,
+      "region": "Новосибирская область",
+      "results_text": "03:35:24 9,4 06:51:46 8,2 07:08:00 9,9 03:46:13 10,1 06:32:34 8,6 02:17:31 14,7 10,1 30:11:28 3 0",
+      "discipline_code": "ski_2",
+      "discipline_name": "Лыжи длинная дистанция 2 собаки",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "03:35:24",
+          "status": "finished",
+          "final_time_seconds": 12924,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "06:51:46",
+          "status": "finished",
+          "final_time_seconds": 24706,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "07:08:00",
+          "status": "finished",
+          "final_time_seconds": 25680,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "03:46:13",
+          "status": "finished",
+          "final_time_seconds": 13573,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "06:32:34",
+          "status": "finished",
+          "final_time_seconds": 23554,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "02:17:31",
+          "status": "finished",
+          "final_time_seconds": 8251,
+          "warning": null
+        }
+      ],
+      "summary_text": "10,1 30:11:28 3 0",
+      "summary": {
+        "raw_result": "30:11:28",
+        "status": "finished",
+        "total_time_seconds": 108688,
+        "source_place": 3,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 5,
+      "full_name": "Урюпин Максим Иванович",
+      "birth_year": 1981,
+      "region": "ХМАО",
+      "results_text": "04:59:02 6,8 06:59:15 8,0 08:40:54 8,1 05:33:26 6,9 07:36:55 7,4 03:22:15 10,0 7,9 37:11:47 4 0",
+      "discipline_code": "ski_2",
+      "discipline_name": "Лыжи длинная дистанция 2 собаки",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "04:59:02",
+          "status": "finished",
+          "final_time_seconds": 17942,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "06:59:15",
+          "status": "finished",
+          "final_time_seconds": 25155,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "08:40:54",
+          "status": "finished",
+          "final_time_seconds": 31254,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "05:33:26",
+          "status": "finished",
+          "final_time_seconds": 20006,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "07:36:55",
+          "status": "finished",
+          "final_time_seconds": 27415,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "03:22:15",
+          "status": "finished",
+          "final_time_seconds": 12135,
+          "warning": null
+        }
+      ],
+      "summary_text": "7,9 37:11:47 4 0",
+      "summary": {
+        "raw_result": "37:11:47",
+        "status": "finished",
+        "total_time_seconds": 133907,
+        "source_place": 4,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 1,
+      "full_name": "Хухлаева Алина Михайловна",
+      "birth_year": 1998,
+      "region": "Магаданская область",
+      "results_text": "DNF #ЗНАЧ! 00:00:00 #ДЕЛ/0! 00:00:00 #ДЕЛ/0! 00:00:00 #ДЕЛ/0! 00:00:00 #ДЕЛ/0! 00:00:00 #ДЕЛ/0! #ЗНАЧ! DNF 5 0",
+      "discipline_code": "ski_2",
+      "discipline_name": "Лыжи длинная дистанция 2 собаки",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "DNF",
+          "status": "dnf",
+          "final_time_seconds": null,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "00:00:00",
+          "status": null,
+          "final_time_seconds": null,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "00:00:00",
+          "status": null,
+          "final_time_seconds": null,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "00:00:00",
+          "status": null,
+          "final_time_seconds": null,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "00:00:00",
+          "status": null,
+          "final_time_seconds": null,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "00:00:00",
+          "status": null,
+          "final_time_seconds": null,
+          "warning": null
+        }
+      ],
+      "summary_text": "#ЗНАЧ! DNF 5 0",
+      "summary": {
+        "raw_result": "DNF",
+        "status": "dnf",
+        "total_time_seconds": null,
+        "source_place": 5,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 11,
+      "full_name": "Воронова Алиса Романовна",
+      "birth_year": 1999,
+      "region": "Камчатский край",
+      "results_text": "02:22:42 14,2 04:36:30 12,2 05:05:14 13,8 02:36:25 14,7 03:56:34 14,2 01:44:47 19,3 14,7 20:22:12 1 0",
+      "discipline_code": "sled_8",
+      "discipline_name": "Нарта-длинная дистанция 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "02:22:42",
+          "status": "finished",
+          "final_time_seconds": 8562,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:36:30",
+          "status": "finished",
+          "final_time_seconds": 16590,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "05:05:14",
+          "status": "finished",
+          "final_time_seconds": 18314,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "02:36:25",
+          "status": "finished",
+          "final_time_seconds": 9385,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "03:56:34",
+          "status": "finished",
+          "final_time_seconds": 14194,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "01:44:47",
+          "status": "finished",
+          "final_time_seconds": 6287,
+          "warning": null
+        }
+      ],
+      "summary_text": "14,7 20:22:12 1 0",
+      "summary": {
+        "raw_result": "20:22:12",
+        "status": "finished",
+        "total_time_seconds": 73332,
+        "source_place": 1,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 9,
+      "full_name": "Семашкина Анна Андреевна",
+      "birth_year": 2003,
+      "region": "Камчатский край",
+      "results_text": "02:26:46 13,8 04:22:56 12,8 05:12:01 13,5 02:44:09 14,0 03:52:17 14,5 01:45:41 19,1 14,6 20:23:50 2 0",
+      "discipline_code": "sled_8",
+      "discipline_name": "Нарта-длинная дистанция 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "02:26:46",
+          "status": "finished",
+          "final_time_seconds": 8806,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:22:56",
+          "status": "finished",
+          "final_time_seconds": 15776,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "05:12:01",
+          "status": "finished",
+          "final_time_seconds": 18721,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "02:44:09",
+          "status": "finished",
+          "final_time_seconds": 9849,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "03:52:17",
+          "status": "finished",
+          "final_time_seconds": 13937,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "01:45:41",
+          "status": "finished",
+          "final_time_seconds": 6341,
+          "warning": null
+        }
+      ],
+      "summary_text": "14,6 20:23:50 2 0",
+      "summary": {
+        "raw_result": "20:23:50",
+        "status": "finished",
+        "total_time_seconds": 73430,
+        "source_place": 2,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 8,
+      "full_name": "Кривогорницына Дарья Александровна",
+      "birth_year": 2000,
+      "region": "Камчатский край",
+      "results_text": "02:31:26 13,4 04:01:32 13,9 05:35:13 12,6 02:37:34 14,5 04:23:13 12,8 02:08:15 15,8 13,8 21:17:13 3 0",
+      "discipline_code": "sled_8",
+      "discipline_name": "Нарта-длинная дистанция 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "02:31:26",
+          "status": "finished",
+          "final_time_seconds": 9086,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:01:32",
+          "status": "finished",
+          "final_time_seconds": 14492,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "05:35:13",
+          "status": "finished",
+          "final_time_seconds": 20113,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "02:37:34",
+          "status": "finished",
+          "final_time_seconds": 9454,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "04:23:13",
+          "status": "finished",
+          "final_time_seconds": 15793,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "02:08:15",
+          "status": "finished",
+          "final_time_seconds": 7695,
+          "warning": null
+        }
+      ],
+      "summary_text": "13,8 21:17:13 3 0",
+      "summary": {
+        "raw_result": "21:17:13",
+        "status": "finished",
+        "total_time_seconds": 76633,
+        "source_place": 3,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 6,
+      "full_name": "Ревенок Владислав Валерьевич",
+      "birth_year": 1972,
+      "region": "Камчатский край",
+      "results_text": "03:02:03 11,1 04:41:46 11,9 05:48:44 12,1 03:12:00 11,9 05:01:05 11,2 02:16:41 14,8 12,2 24:02:19 4 0",
+      "discipline_code": "sled_8",
+      "discipline_name": "Нарта-длинная дистанция 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "03:02:03",
+          "status": "finished",
+          "final_time_seconds": 10923,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:41:46",
+          "status": "finished",
+          "final_time_seconds": 16906,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "05:48:44",
+          "status": "finished",
+          "final_time_seconds": 20924,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "03:12:00",
+          "status": "finished",
+          "final_time_seconds": 11520,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "05:01:05",
+          "status": "finished",
+          "final_time_seconds": 18065,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "02:16:41",
+          "status": "finished",
+          "final_time_seconds": 8201,
+          "warning": null
+        }
+      ],
+      "summary_text": "12,2 24:02:19 4 0",
+      "summary": {
+        "raw_result": "24:02:19",
+        "status": "finished",
+        "total_time_seconds": 86539,
+        "source_place": 4,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 7,
+      "full_name": "Евстратова Светлана Андреевна",
+      "birth_year": 1996,
+      "region": "Камчатский край",
+      "results_text": "03:13:50 10,4 05:02:32 11,1 07:32:30 9,3 03:18:05 11,6 05:30:31 10,2 03:02:17 11,1 10,6 27:39:45 5 0",
+      "discipline_code": "sled_8",
+      "discipline_name": "Нарта-длинная дистанция 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "03:13:50",
+          "status": "finished",
+          "final_time_seconds": 11630,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "05:02:32",
+          "status": "finished",
+          "final_time_seconds": 18152,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "07:32:30",
+          "status": "finished",
+          "final_time_seconds": 27150,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "03:18:05",
+          "status": "finished",
+          "final_time_seconds": 11885,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "05:30:31",
+          "status": "finished",
+          "final_time_seconds": 19831,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "03:02:17",
+          "status": "finished",
+          "final_time_seconds": 10937,
+          "warning": null
+        }
+      ],
+      "summary_text": "10,6 27:39:45 5 0",
+      "summary": {
+        "raw_result": "27:39:45",
+        "status": "finished",
+        "total_time_seconds": 99585,
+        "source_place": 5,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 10,
+      "full_name": "Яганова София Алексеевна",
+      "birth_year": 2004,
+      "region": "Камчатский край",
+      "results_text": "03:09:14 10,7 04:59:47 11,2 DNS #ЗНАЧ! 00:00:00 #ДЕЛ/0! 00:00:00 #ДЕЛ/0! 00:00:00 #ДЕЛ/0! #ЗНАЧ! DNS 0",
+      "discipline_code": "sled_8",
+      "discipline_name": "Нарта-длинная дистанция 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "03:09:14",
+          "status": "finished",
+          "final_time_seconds": 11354,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:59:47",
+          "status": "finished",
+          "final_time_seconds": 17987,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "DNS",
+          "status": "dns",
+          "final_time_seconds": null,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "00:00:00",
+          "status": null,
+          "final_time_seconds": null,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "00:00:00",
+          "status": null,
+          "final_time_seconds": null,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "00:00:00",
+          "status": null,
+          "final_time_seconds": null,
+          "warning": null
+        }
+      ],
+      "summary_text": "#ЗНАЧ! DNS 0",
+      "summary": {
+        "raw_result": "DNS",
+        "status": "dns",
+        "total_time_seconds": null,
+        "source_place": null,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 18,
+      "full_name": "Шевчук Георгий Геннадьевич",
+      "birth_year": 1993,
+      "region": "Камчатский край",
+      "results_text": "02:10:02 15,5 03:42:14 15,1 04:37:54 15,2 02:34:30 14,8 03:46:33 14,8 01:33:57 21,5 16,2 18:25:10 1 штр.вр. 2 мин. п.П.14.11.14",
+      "discipline_code": "sled_8plus",
+      "discipline_name": "Нарта-длинная дистанция более 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "02:10:02",
+          "status": "finished",
+          "final_time_seconds": 7802,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "03:42:14",
+          "status": "finished",
+          "final_time_seconds": 13334,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "04:37:54",
+          "status": "finished",
+          "final_time_seconds": 16674,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "02:34:30",
+          "status": "finished",
+          "final_time_seconds": 9270,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "03:46:33",
+          "status": "finished",
+          "final_time_seconds": 13593,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "01:33:57",
+          "status": "finished",
+          "final_time_seconds": 5637,
+          "warning": null
+        }
+      ],
+      "summary_text": "16,2 18:25:10 1 штр.вр. 2 мин. п.П.14.11.14",
+      "summary": {
+        "raw_result": "18:25:10",
+        "status": "finished",
+        "total_time_seconds": 66310,
+        "source_place": 1,
+        "raw_note": "штр.вр. 2 мин. п.П.14.11.14",
+        "total_penalty_seconds": 120
+      },
+      "penalties": [
+        {
+          "seconds": 120,
+          "rule_reference": "П.14.11.14",
+          "stage_number": null,
+          "raw_note": "штр.вр. 2 мин. п.П.14.11.14"
+        }
+      ],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 13,
+      "full_name": "Попов Алексей Викторович",
+      "birth_year": 1972,
+      "region": "Камчатский край",
+      "results_text": "02:22:49 14,2 04:04:00 13,8 04:59:00 14,1 02:44:43 13,9 03:43:48 15,0 01:42:47 19,7 15,1 19:37:07 2 0",
+      "discipline_code": "sled_8plus",
+      "discipline_name": "Нарта-длинная дистанция более 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "02:22:49",
+          "status": "finished",
+          "final_time_seconds": 8569,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:04:00",
+          "status": "finished",
+          "final_time_seconds": 14640,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "04:59:00",
+          "status": "finished",
+          "final_time_seconds": 17940,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "02:44:43",
+          "status": "finished",
+          "final_time_seconds": 9883,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "03:43:48",
+          "status": "finished",
+          "final_time_seconds": 13428,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "01:42:47",
+          "status": "finished",
+          "final_time_seconds": 6167,
+          "warning": null
+        }
+      ],
+      "summary_text": "15,1 19:37:07 2 0",
+      "summary": {
+        "raw_result": "19:37:07",
+        "status": "finished",
+        "total_time_seconds": 70627,
+        "source_place": 2,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 21,
+      "full_name": "Семашкина Мария Андреевна",
+      "birth_year": 2005,
+      "region": "Камчатский край",
+      "results_text": "02:23:59 14,0 04:01:25 13,9 05:17:52 13,3 02:41:53 14,2 04:12:10 13,3 01:51:07 18,2 14,5 20:28:26 3 0",
+      "discipline_code": "sled_8plus",
+      "discipline_name": "Нарта-длинная дистанция более 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "02:23:59",
+          "status": "finished",
+          "final_time_seconds": 8639,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:01:25",
+          "status": "finished",
+          "final_time_seconds": 14485,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "05:17:52",
+          "status": "finished",
+          "final_time_seconds": 19072,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "02:41:53",
+          "status": "finished",
+          "final_time_seconds": 9713,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "04:12:10",
+          "status": "finished",
+          "final_time_seconds": 15130,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "01:51:07",
+          "status": "finished",
+          "final_time_seconds": 6667,
+          "warning": null
+        }
+      ],
+      "summary_text": "14,5 20:28:26 3 0",
+      "summary": {
+        "raw_result": "20:28:26",
+        "status": "finished",
+        "total_time_seconds": 73706,
+        "source_place": 3,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 16,
+      "full_name": "Кривогорницын Александр Юрьевич",
+      "birth_year": 1975,
+      "region": "Камчатский край",
+      "results_text": "02:29:27 13,5 04:09:00 13,5 05:15:37 13,4 02:45:52 13,8 04:15:24 13,2 01:59:31 16,9 14,0 20:54:51 4 0",
+      "discipline_code": "sled_8plus",
+      "discipline_name": "Нарта-длинная дистанция более 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "02:29:27",
+          "status": "finished",
+          "final_time_seconds": 8967,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:09:00",
+          "status": "finished",
+          "final_time_seconds": 14940,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "05:15:37",
+          "status": "finished",
+          "final_time_seconds": 18937,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "02:45:52",
+          "status": "finished",
+          "final_time_seconds": 9952,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "04:15:24",
+          "status": "finished",
+          "final_time_seconds": 15324,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "01:59:31",
+          "status": "finished",
+          "final_time_seconds": 7171,
+          "warning": null
+        }
+      ],
+      "summary_text": "14,0 20:54:51 4 0",
+      "summary": {
+        "raw_result": "20:54:51",
+        "status": "finished",
+        "total_time_seconds": 75291,
+        "source_place": 4,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 14,
+      "full_name": "Левковский Валентин Николаевич",
+      "birth_year": 1989,
+      "region": "Камчатский край",
+      "results_text": "02:28:52 13,6 04:21:37 12,8 05:39:25 12,4 02:45:23 13,9 04:08:14 13,5 01:57:00 17,3 13,9 21:20:31 5 0",
+      "discipline_code": "sled_8plus",
+      "discipline_name": "Нарта-длинная дистанция более 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "02:28:52",
+          "status": "finished",
+          "final_time_seconds": 8932,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:21:37",
+          "status": "finished",
+          "final_time_seconds": 15697,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "05:39:25",
+          "status": "finished",
+          "final_time_seconds": 20365,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "02:45:23",
+          "status": "finished",
+          "final_time_seconds": 9923,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "04:08:14",
+          "status": "finished",
+          "final_time_seconds": 14894,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "01:57:00",
+          "status": "finished",
+          "final_time_seconds": 7020,
+          "warning": null
+        }
+      ],
+      "summary_text": "13,9 21:20:31 5 0",
+      "summary": {
+        "raw_result": "21:20:31",
+        "status": "finished",
+        "total_time_seconds": 76831,
+        "source_place": 5,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 17,
+      "full_name": "Семашкин Андрей Викторович",
+      "birth_year": 1973,
+      "region": "Камчатский край",
+      "results_text": "02:35:56 13,0 04:20:27 12,9 05:34:10 12,6 02:43:42 14,0 04:13:56 13,2 01:55:50 17,5 13,9 21:24:01 6 0",
+      "discipline_code": "sled_8plus",
+      "discipline_name": "Нарта-длинная дистанция более 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "02:35:56",
+          "status": "finished",
+          "final_time_seconds": 9356,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:20:27",
+          "status": "finished",
+          "final_time_seconds": 15627,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "05:34:10",
+          "status": "finished",
+          "final_time_seconds": 20050,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "02:43:42",
+          "status": "finished",
+          "final_time_seconds": 9822,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "04:13:56",
+          "status": "finished",
+          "final_time_seconds": 15236,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "01:55:50",
+          "status": "finished",
+          "final_time_seconds": 6950,
+          "warning": null
+        }
+      ],
+      "summary_text": "13,9 21:24:01 6 0",
+      "summary": {
+        "raw_result": "21:24:01",
+        "status": "finished",
+        "total_time_seconds": 77041,
+        "source_place": 6,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 19,
+      "full_name": "Тишкин Виталий Викторович",
+      "birth_year": 1996,
+      "region": "Камчатский край",
+      "results_text": "02:52:27 11,7 04:39:45 12,0 05:51:19 12,0 03:00:58 12,7 04:55:16 11,4 02:07:32 15,9 12,6 23:27:17 7 штр.вр. 3 сек. п.П.14.11.13",
+      "discipline_code": "sled_8plus",
+      "discipline_name": "Нарта-длинная дистанция более 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "02:52:27",
+          "status": "finished",
+          "final_time_seconds": 10347,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:39:45",
+          "status": "finished",
+          "final_time_seconds": 16785,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "05:51:19",
+          "status": "finished",
+          "final_time_seconds": 21079,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "03:00:58",
+          "status": "finished",
+          "final_time_seconds": 10858,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "04:55:16",
+          "status": "finished",
+          "final_time_seconds": 17716,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "02:07:32",
+          "status": "finished",
+          "final_time_seconds": 7652,
+          "warning": null
+        }
+      ],
+      "summary_text": "12,6 23:27:17 7 штр.вр. 3 сек. п.П.14.11.13",
+      "summary": {
+        "raw_result": "23:27:17",
+        "status": "finished",
+        "total_time_seconds": 84437,
+        "source_place": 7,
+        "raw_note": "штр.вр. 3 сек. п.П.14.11.13",
+        "total_penalty_seconds": 3
+      },
+      "penalties": [
+        {
+          "seconds": 3,
+          "rule_reference": "П.14.11.13",
+          "stage_number": null,
+          "raw_note": "штр.вр. 3 сек. п.П.14.11.13"
+        }
+      ],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 12,
+      "full_name": "Майватов Захар Сергеевич",
+      "birth_year": 1997,
+      "region": "Камчатский край",
+      "results_text": "02:48:52 12,0 04:42:22 11,9 06:36:46 10,6 03:25:39 11,1 04:50:50 11,6 02:08:13 15,8 12,2 24:32:42 8 штр.вр. 6 мин. п,П.14.11.10",
+      "discipline_code": "sled_8plus",
+      "discipline_name": "Нарта-длинная дистанция более 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "02:48:52",
+          "status": "finished",
+          "final_time_seconds": 10132,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:42:22",
+          "status": "finished",
+          "final_time_seconds": 16942,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "06:36:46",
+          "status": "finished",
+          "final_time_seconds": 23806,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "03:25:39",
+          "status": "finished",
+          "final_time_seconds": 12339,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "04:50:50",
+          "status": "finished",
+          "final_time_seconds": 17450,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "02:08:13",
+          "status": "finished",
+          "final_time_seconds": 7693,
+          "warning": null
+        }
+      ],
+      "summary_text": "12,2 24:32:42 8 штр.вр. 6 мин. п,П.14.11.10",
+      "summary": {
+        "raw_result": "24:32:42",
+        "status": "finished",
+        "total_time_seconds": 88362,
+        "source_place": 8,
+        "raw_note": "штр.вр. 6 мин. п,П.14.11.10",
+        "total_penalty_seconds": 360
+      },
+      "penalties": [
+        {
+          "seconds": 360,
+          "rule_reference": "П.14.11.10",
+          "stage_number": null,
+          "raw_note": "штр.вр. 6 мин. п,П.14.11.10"
+        }
+      ],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 15,
+      "full_name": "Родичкин Денис Валерьевич",
+      "birth_year": 1991,
+      "region": "Сахалинская область",
+      "results_text": "03:26:16 9,8 04:33:50 12,3 05:56:08 11,9 03:31:51 10,8 05:30:16 10,2 02:44:34 12,3 11,2 25:42:55 9 0",
+      "discipline_code": "sled_8plus",
+      "discipline_name": "Нарта-длинная дистанция более 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "03:26:16",
+          "status": "finished",
+          "final_time_seconds": 12376,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:33:50",
+          "status": "finished",
+          "final_time_seconds": 16430,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "05:56:08",
+          "status": "finished",
+          "final_time_seconds": 21368,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "03:31:51",
+          "status": "finished",
+          "final_time_seconds": 12711,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "05:30:16",
+          "status": "finished",
+          "final_time_seconds": 19816,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "02:44:34",
+          "status": "finished",
+          "final_time_seconds": 9874,
+          "warning": null
+        }
+      ],
+      "summary_text": "11,2 25:42:55 9 0",
+      "summary": {
+        "raw_result": "25:42:55",
+        "status": "finished",
+        "total_time_seconds": 92575,
+        "source_place": 9,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    },
+    {
+      "start_number": 20,
+      "full_name": "Бородай Евгений Игоревич",
+      "birth_year": 1986,
+      "region": "Камчатский край",
+      "results_text": "03:23:28 9,9 04:51:38 11,5 07:18:55 9,6 03:46:16 10,1 05:31:30 10,1 02:16:15 14,8 11,0 27:08:02 10 0",
+      "discipline_code": "sled_8plus",
+      "discipline_name": "Нарта-длинная дистанция более 8 собак",
+      "stage_results": [
+        {
+          "stage_number": 1,
+          "raw_result": "03:23:28",
+          "status": "finished",
+          "final_time_seconds": 12208,
+          "warning": null
+        },
+        {
+          "stage_number": 2,
+          "raw_result": "04:51:38",
+          "status": "finished",
+          "final_time_seconds": 17498,
+          "warning": null
+        },
+        {
+          "stage_number": 3,
+          "raw_result": "07:18:55",
+          "status": "finished",
+          "final_time_seconds": 26335,
+          "warning": null
+        },
+        {
+          "stage_number": 4,
+          "raw_result": "03:46:16",
+          "status": "finished",
+          "final_time_seconds": 13576,
+          "warning": null
+        },
+        {
+          "stage_number": 5,
+          "raw_result": "05:31:30",
+          "status": "finished",
+          "final_time_seconds": 19890,
+          "warning": null
+        },
+        {
+          "stage_number": 6,
+          "raw_result": "02:16:15",
+          "status": "finished",
+          "final_time_seconds": 8175,
+          "warning": null
+        }
+      ],
+      "summary_text": "11,0 27:08:02 10 0",
+      "summary": {
+        "raw_result": "27:08:02",
+        "status": "finished",
+        "total_time_seconds": 97682,
+        "source_place": 10,
+        "raw_note": "0",
+        "total_penalty_seconds": 0
+      },
+      "penalties": [],
+      "penalty_warnings": []
+    }
+  ],
+  "warnings": []
+}

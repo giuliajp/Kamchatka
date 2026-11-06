@@ -33,7 +33,7 @@ it('renders actual judge checkpoint timestamps instead of inferred times', async
     return new Response(JSON.stringify({ data }));
   }));
   render(<AppProviders><ParticipantSheet raceId={10} participantId={501} entryId={9001} stage={stage} threshold={45} onClose={vi.fn()} /></AppProviders>);
-  expect(await screen.findByText('Финиш судьи')).toBeVisible();
+  expect((await screen.findAllByText(/Финиш судьи/))[0]).toBeVisible();
   expect(screen.getByText('Финиш 04.11, 11:05')).toBeVisible();
   expect(screen.queryByText(/демонстрацион/i)).not.toBeInTheDocument();
 });

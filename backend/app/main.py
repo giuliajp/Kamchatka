@@ -6,9 +6,11 @@
 """
 
 import asyncio
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import (
@@ -67,6 +69,11 @@ def create_app() -> FastAPI:
     register_error_handlers(app)
 
     # ── Маршруты ─────────────────────────────────────────────────────────
+    # Картинки демо-сезона (scripts/demo_season.py) — только вне production.
+    demo_media = Path(__file__).resolve().parents[1] / "scripts" / "demo_media"
+    if not settings.is_production and demo_media.is_dir():
+        app.mount("/api/demo-media", StaticFiles(directory=demo_media), name="demo-media")
+
     app.include_router(health.router)  # /health — без префикса, для мониторинга
 
     app.include_router(races.router, prefix="/api")         # гонки, участники гонки, зачёт

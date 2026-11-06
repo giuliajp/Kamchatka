@@ -33,3 +33,14 @@ def test_docs_hidden_in_production(monkeypatch):
     monkeypatch.setattr(settings, "environment", "production")
     app = create_app()
     assert app.docs_url is None and app.openapi_url is None
+
+
+async def test_demo_media_served_only_outside_production(monkeypatch):
+    import httpx
+    settings = get_settings()
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=create_app()), base_url="http://t") as c:
+        response = await c.get("/api/demo-media/alisa.jpg")
+        assert response.status_code == 200 and response.headers["content-type"] == "image/jpeg"
+    monkeypatch.setattr(settings, "environment", "production")
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=create_app()), base_url="http://t") as c:
+        assert (await c.get("/api/demo-media/alisa.jpg")).status_code == 404

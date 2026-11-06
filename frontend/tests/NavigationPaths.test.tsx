@@ -6,7 +6,7 @@ import {fixtureResponse,race,participant,mockApi} from './fixtures';
 vi.mock('../src/screens/Map/MapCanvas',()=>({MapCanvas:()=> <div>Карта</div>}));
 afterEach(()=>{vi.unstubAllGlobals();localStorage.clear();history.replaceState(null,'','/');});
 it('opens a participant-only push link after locating the season and loads real participant details',async()=>{
- history.replaceState(null,'','/#participant=9001');mockApi(url=>url.endsWith('/races')?[{...race,id:11,is_current:false},race]:url.includes('/races/10/participants')?[participant]:fixtureResponse(url));render(<App/>);expect(screen.getByText('Открываем участника…')).toBeVisible();expect(await screen.findByRole('dialog',{name:'Карточка участника'})).toBeVisible();expect(await screen.findByText(participant.full_name)).toBeVisible();
+ history.replaceState(null,'','/#participant=9001');mockApi(url=>url.endsWith('/races')?[{...race,id:11,is_current:false},race]:url.includes('/races/10/participants')?[participant]:fixtureResponse(url));render(<App/>);expect(screen.getByText('Открываем участника…')).toBeVisible();expect(await screen.findByRole('dialog',{name:'Карточка участника'})).toBeVisible();expect(await screen.findByText('Алиса Иванова')).toBeVisible();
 });
 it('uses the linked stage’s season and resolves an entry when the season is already provided',async()=>{
  history.replaceState(null,'','/#map&stage=103');const fetcher=mockApi();render(<App/>);await screen.findByRole('heading',{name:race.name});expect(fetcher).toHaveBeenCalledWith('/api/stages/103',expect.anything());act(()=>{history.replaceState(null,'','/#race=10&participant=9001');fireEvent(window,new HashChangeEvent('hashchange'));});expect(await screen.findByRole('dialog',{name:'Карточка участника'})).toBeVisible();

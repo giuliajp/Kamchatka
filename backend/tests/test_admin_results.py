@@ -233,3 +233,17 @@ async def test_add_and_delete_rows_and_penalties(client, session, setup):
     assert removed.status_code == 200
     log = (await client.get(f"/api/admin/races/{setup['race'].id}/changes", headers=auth)).json()["data"]
     assert [c["entity"] for c in log[:4]] == ["penalty", "penalty", "stage_result", "stage_result"]
+
+
+async def test_penalty_without_time(client, setup):
+    auth, entry = setup["auth"], setup["popov"].id
+    text = ("Дисциплина;Стартовый номер;ФИО;Этап 1;Примечания\n"
+            "Нарта — длинная дистанция, более 8 собак;13;Попов Алексей;02:22:49;Штраф: предупреждение\n")
+    report = (await upload(client, setup, text)).json()["data"]
+    assert report["penalties_changed"] == 1
+    created = await client.post(f"/api/admin/race-participants/{entry}/penalties", headers=auth,
+                                json={"reason": "Предупреждение за помеху", "time": "00:00:00"})
+    assert created.status_code == 201 and created.json()["data"]["seconds"] == 0
+    penalties = (await client.get(f"/api/admin/race-participants/{entry}/penalties", headers=auth)).json()["data"]
+    assert [(p["seconds"], p["reason"]) for p in penalties] == [
+        (0, "Штраф: предупреждение"), (0, "Предупреждение за помеху")]

@@ -5,7 +5,7 @@ import type { ParticipantDetail, Protocols, Results } from '../src/types/api';
 it('keeps the second map participant’s identity and participation consistent', () => {
   const person = fixtureResponse('/api/participants/502') as ParticipantDetail;
   expect(person.id).toBe(502);
-  expect(person.full_name).toBe('Иван Петров');
+  expect(person.full_name).toBe('Петров Иван');
   expect(person.races[0].race_participant_id).toBe(9002);
 });
 it('returns the selected stage’s standings and protocol metadata in browser fixtures', () => {

@@ -302,6 +302,11 @@ python backend/scripts/import_protocol.py --json .cache/protocols/avacha-2026.js
 при ошибке импорт откатывается. Подготовка JSON, отчёт и правила повторного
 импорта описаны в [документации импорта](../docs/protocol-import.md).
 
+## Демо-сезон для показа
+
+Заполнить все экраны как в макетах: `python backend/scripts/demo_season.py`. Подробно —
+[docs/demo.md](../docs/demo.md).
+
 ## Организаторы админки
 
 Создать организатора (пароль спросит скрипт, не короче 10 символов):

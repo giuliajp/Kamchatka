@@ -132,7 +132,7 @@ class Penalty(TimestampMixin, Base):
     Пример из протокола 2026: «штр. вр. 2 мин. п. П.14.11.14».
     """
     __tablename__ = "penalties"
-    __table_args__ = (CheckConstraint("seconds > 0", name="seconds_positive"),)
+    __table_args__ = (CheckConstraint("seconds >= 0", name="seconds_non_negative"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     race_participant_id: Mapped[int] = mapped_column(

@@ -83,3 +83,10 @@
 .race-screen[data-section=participants] .race-screen__header [role=tab]{margin-block:7px}
 
 .race-screen:is([data-section=map],[data-section=results]) .race-screen__header [role=tablist]{min-height:48px;margin-bottom:2px}.race-screen:is([data-section=map],[data-section=results]) .race-screen__header [role=tab]{margin-block:7px}
+
+/* Как в макетах: без системного треугольника у раскрывающихся блоков, шеврон справа. */
+.content-page summary, .results-page summary { list-style: none; position: relative; padding-right: 24px; }
+.content-page summary::-webkit-details-marker, .results-page summary::-webkit-details-marker { display: none; }
+.content-page summary::after, .results-page summary::after { content: ''; position: absolute; right: 4px; top: .55em; width: 7px; height: 7px; border-right: 1.5px solid var(--vkui--color_icon_secondary, #99a2ad); border-bottom: 1.5px solid var(--vkui--color_icon_secondary, #99a2ad); transform: rotate(45deg); transition: transform .15s; }
+.content-page details[open] > summary::after, .results-page details[open] > summary::after { transform: rotate(-135deg); top: .8em; }
+.program-page > details > summary::after, .program-date > summary::after { display: none; }
